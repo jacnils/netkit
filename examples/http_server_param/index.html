@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML test</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<script>
+    window.onload = function() {
+        const img = document.querySelector('img');
+        const button = document.createElement('button');
+        button.innerText = 'Download Image';
+        button.onclick = function() {
+            window.location.href = img.src;
+        };
+        document.body.insertBefore(button, img.nextSibling);
+    };
+</script>
+<body>
+    <img src="/files/bliss.png" alt="Bliss"/>
+    <h1>HTML test</h1>
+    <p>This is a simple HTML file to test the HTTP server.</p>
+</body>
+</html>
