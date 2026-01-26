@@ -11,7 +11,7 @@ C++23 cross-platform networking toolkit library providing safe Unix-style socket
 - IPv4 and IPv6 support
 - TCP and UDP support
 - TLS/SSL sockets and HTTP abstraction (OpenSSL integration)
-- DNS resolution*
+- DNS resolution
 - Network interface enumeration
 - Exceptions for errors
 - Inheritable classes for easy extension
@@ -28,6 +28,7 @@ Still missing:
 
 ## Dependencies
 
+- OpenSSL
 - C++23 compiler
 - CMake
 
