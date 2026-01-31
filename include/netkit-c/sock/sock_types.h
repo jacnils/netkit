@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 #define NETKIT_SOCK_OPT_HAS(mask, opt) (((mask) & (opt)) != 0)
 
 typedef enum netkit_sock_type {
