@@ -6,7 +6,7 @@ extern "C" {
 
 #include <netkit-c/sock/sock_addr_types.h>
 #include <netkit-c/export.h>
-#include <stdint.h>
+#include <stddef.h>
 
 typedef struct netkit_sock_addr netkit_sock_addr_t;
 
