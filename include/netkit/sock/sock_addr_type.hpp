@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file query_builder.hpp
+ *  @file sock_addr_type.hpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Provides common socket types, options, and related enums and structs.
