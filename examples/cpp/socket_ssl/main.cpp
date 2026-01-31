@@ -4,11 +4,11 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.cpp
+ *  @file main.c
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @note Only functional if Netkit was built with OpenSSL support.
- *  @note See examples/socket/main.cpp for a non-SSL/TLS version.
+ *  @note See examples/socket/main.c for a non-SSL/TLS version.
  *  @brief A lower-level example demonstrating the usage of sync_sock to make a simple HTTP request, with SSL/TLS.
  */
 #include <iostream>

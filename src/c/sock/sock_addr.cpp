@@ -1,15 +1,17 @@
+#include <cstddef>
+
 #include <netkit-c/sock/sock_addr.h>
 #include <netkit-c/sock/sock_addr_types.h>
+
 #include <netkit/sock/sock_addr.hpp>
-#include <memory>
 
 struct netkit_sock_addr {
-	std::shared_ptr<netkit::sock::sock_addr> impl;
+	std::unique_ptr<netkit::sock::sock_addr> impl;
 	netkit_sock_addr_type_t impl_type = NETKIT_SOCK_ADDR_NONE;
 
 	explicit netkit_sock_addr() = default;
 	explicit netkit_sock_addr(const char* file_path) : impl_type(NETKIT_SOCK_ADDR_FILENAME) {
-		impl = std::make_shared<netkit::sock::sock_addr>(file_path);
+		impl = std::make_unique<netkit::sock::sock_addr>(file_path);
 	}
 
 	netkit_sock_addr(const char* hostname, int port, netkit_sock_addr_type_t type) : impl_type(type) {
@@ -39,7 +41,7 @@ struct netkit_sock_addr {
 				break;
 		}
 
-		impl = std::make_shared<netkit::sock::sock_addr>(hostname, port, t);
+		impl = std::make_unique<netkit::sock::sock_addr>(hostname, port, t);
 	}
 };
 
@@ -117,6 +119,7 @@ extern "C" NETKIT_C_API netkit_sock_addr_status_t netkit_sock_addr_get_hostname(
 			if (len == 0) {
 				return NETKIT_SOCK_ADDR_STATUS_FAILED;
 			}
+
 			std::snprintf(hostname, len, "%s", host.c_str());
 		}
 

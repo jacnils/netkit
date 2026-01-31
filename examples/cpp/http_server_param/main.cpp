@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.cpp
+ *  @file main.c
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @brief Slightly more advanced/useful HTTP file server that serves files from a specified index file and directory.

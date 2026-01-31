@@ -161,7 +161,8 @@ endif()
 if (NETKIT_ENABLE_C_BINDINGS)
     message(STATUS "C bindings enabled")
     add_library(netkit-c SHARED
-            src/c/netkit.cpp
+            src/c/sock/sock_addr.cpp
+            src/c/sock/sync_sock.cpp
     )
 
     set_target_properties(netkit-c PROPERTIES

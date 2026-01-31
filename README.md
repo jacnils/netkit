@@ -52,7 +52,7 @@ find_package(netkit)
 
 add_executable(
         MY_TARGET
-        main.cpp
+        main.c
 )
 target_link_libraries(netkit-example PRIVATE
 	netkit::netkit

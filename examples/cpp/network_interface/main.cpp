@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.cpp
+ *  @file main.c
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @brief A clone of the 'ifconfig' command that lists network interfaces and their addresses.

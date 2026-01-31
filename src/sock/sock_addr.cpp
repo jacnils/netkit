@@ -159,3 +159,7 @@ int netkit::sock::sock_addr::get_port() const {
 
     return port;
 }
+
+netkit::sock::sock_addr_type netkit::sock::sock_addr::get_type() const {
+	return type;
+}

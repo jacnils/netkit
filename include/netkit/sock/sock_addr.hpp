@@ -76,6 +76,11 @@ namespace netkit::sock {
          * @return The stored port.
          */
         [[nodiscard]] int get_port() const;
+		/**
+		 * @brief Get the stored type.
+		 * @return The stored type.
+		 */
+		[[nodiscard]] sock_addr_type get_type() const;
         ~sock_addr() = default;
     };
 }
