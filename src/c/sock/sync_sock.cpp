@@ -8,74 +8,74 @@
 struct netkit_sync_sock {
 	std::unique_ptr<netkit::sock::basic_sync_sock> impl;
 	explicit netkit_sync_sock() = default;
-	static netkit::sock::sock_type get_type(netkit_sock_type_t type) {
+	static netkit::sock::type get_type(netkit_sock_type_t type) {
 		switch (type) {
-			case NETKIT_SOCK_UDP:
-				return netkit::sock::sock_type::udp;
-			case NETKIT_SOCK_UNIX:
-				return netkit::sock::sock_type::unix;
+			case SOCK_UDP:
+				return netkit::sock::type::udp;
+			case SOCK_UNIX:
+				return netkit::sock::type::unix;
 			default:
-				return netkit::sock::sock_type::tcp;
+				return netkit::sock::type::tcp;
 		}
 	}
-	static netkit::sock::sock_addr_type get_addr_type(netkit_sock_addr_type_t type) {
+	static netkit::sock::addr_type get_addr_type(netkit_sock_addr_type_t type) {
 		switch (type) {
-			case NETKIT_SOCK_ADDR_FILENAME:
-				return netkit::sock::sock_addr_type::filename;
-			case NETKIT_SOCK_ADDR_IPV4:
-				return netkit::sock::sock_addr_type::ipv4;
-			case NETKIT_SOCK_ADDR_IPV6:
-				return netkit::sock::sock_addr_type::ipv6;
-			case NETKIT_SOCK_ADDR_HOSTNAME_IPV4:
-				return netkit::sock::sock_addr_type::hostname_ipv4;
-			case NETKIT_SOCK_ADDR_HOSTNAME_IPV6:
-				return netkit::sock::sock_addr_type::hostname_ipv6;
+			case SOCK_ADDR_FILENAME:
+				return netkit::sock::addr_type::filename;
+			case SOCK_ADDR_IPV4:
+				return netkit::sock::addr_type::ipv4;
+			case SOCK_ADDR_IPV6:
+				return netkit::sock::addr_type::ipv6;
+			case SOCK_ADDR_HOSTNAME_IPV4:
+				return netkit::sock::addr_type::hostname_ipv4;
+			case SOCK_ADDR_HOSTNAME_IPV6:
+				return netkit::sock::addr_type::hostname_ipv6;
 			default:
-				return netkit::sock::sock_addr_type::hostname;
+				return netkit::sock::addr_type::hostname;
 		}
 	}
-	static netkit_sock_addr_type_t get_addr_type(netkit::sock::sock_addr_type type) {
+	static netkit_sock_addr_type_t get_addr_type(netkit::sock::addr_type type) {
 		switch (type) {
-		case netkit::sock::sock_addr_type::filename:
-			return NETKIT_SOCK_ADDR_FILENAME;
-		case netkit::sock::sock_addr_type::ipv4:
-			return NETKIT_SOCK_ADDR_IPV4;
-		case netkit::sock::sock_addr_type::ipv6:
-			return NETKIT_SOCK_ADDR_IPV6;
-		case netkit::sock::sock_addr_type::hostname_ipv4:
-			return NETKIT_SOCK_ADDR_HOSTNAME_IPV4;
-		case netkit::sock::sock_addr_type::hostname_ipv6:
-			return NETKIT_SOCK_ADDR_HOSTNAME_IPV6;
+		case netkit::sock::addr_type::filename:
+			return SOCK_ADDR_FILENAME;
+		case netkit::sock::addr_type::ipv4:
+			return SOCK_ADDR_IPV4;
+		case netkit::sock::addr_type::ipv6:
+			return SOCK_ADDR_IPV6;
+		case netkit::sock::addr_type::hostname_ipv4:
+			return SOCK_ADDR_HOSTNAME_IPV4;
+		case netkit::sock::addr_type::hostname_ipv6:
+			return SOCK_ADDR_HOSTNAME_IPV6;
 		default:
-			return NETKIT_SOCK_ADDR_HOSTNAME;
+			return SOCK_ADDR_HOSTNAME;
 		}
 	}
-	static netkit::sock::sock_opt get_opt(netkit_sock_opt_t type) {
-		netkit::sock::sock_opt opt{};
+	static netkit::sock::opt get_opt(netkit_sock_opt_t type) {
+		netkit::sock::opt opt{};
 
-		if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_NONE)) {
-			return netkit::sock::sock_opt::no_reuse_addr | netkit::sock::sock_opt::no_delay | netkit::sock::sock_opt::blocking;
+		if (SOCK_OPT_HAS(type, SOCK_OPT_NONE)) {
+			return netkit::sock::opt::no_reuse_addr | netkit::sock::opt::no_delay | netkit::sock::opt::blocking;
 		}
 
-		if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_BLOCKING)) {
-			opt = opt | netkit::sock::sock_opt::blocking;
-		} else if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_NON_BLOCKING)) {
-			opt = opt | netkit::sock::sock_opt::no_blocking;
+		if (SOCK_OPT_HAS(type, SOCK_OPT_BLOCKING)) {
+			opt = opt | netkit::sock::opt::blocking;
+		} else if (SOCK_OPT_HAS(type, SOCK_OPT_NON_BLOCKING)) {
+			opt = opt | netkit::sock::opt::no_blocking;
 		}
-		if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_KEEP_ALIVE)) {
-			opt = opt | netkit::sock::sock_opt::keep_alive;
-		} else if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_NO_KEEP_ALIVE)) {
-			opt = opt | netkit::sock::sock_opt::no_keep_alive;
+		if (SOCK_OPT_HAS(type, SOCK_OPT_KEEP_ALIVE)) {
+			opt = opt | netkit::sock::opt::keep_alive;
+		} else if (SOCK_OPT_HAS(type, SOCK_OPT_NO_KEEP_ALIVE)) {
+			opt = opt | netkit::sock::opt::no_keep_alive;
 		}
-		if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_REUSE_ADDR)) {
-			opt = opt | netkit::sock::sock_opt::reuse_addr;
-		} else if (NETKIT_SOCK_OPT_HAS(type, NETKIT_SOCK_OPT_NO_REUSE_ADDR)) {
-			opt = opt | netkit::sock::sock_opt::no_reuse_addr;
+		if (SOCK_OPT_HAS(type, SOCK_OPT_REUSE_ADDR)) {
+			opt = opt | netkit::sock::opt::reuse_addr;
+		} else if (SOCK_OPT_HAS(type, SOCK_OPT_NO_REUSE_ADDR)) {
+			opt = opt | netkit::sock::opt::no_reuse_addr;
 		}
 
 		return opt;
 	}
-	static netkit::sock::sock_addr get_sock_addr(netkit_sock_addr_t* addr) {
+	static netkit::sock::addr get_sock_addr(netkit_sock_addr_t* addr) {
 		if (!addr) {
 			throw std::invalid_argument("invalid sock_addr");
 		}
@@ -132,84 +132,84 @@ extern "C" NETKIT_C_API netkit_sync_sock_t* netkit_sync_sock_create(netkit_sock_
 
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_destroy(netkit_sync_sock_t* sock) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		delete sock;
-		return NETKIT_SOCK_STATUS_SUCCESS;
+		return SOCK_STATUS_SUCCESS;
 	} catch (...) {
 	}
 
-	return NETKIT_SOCK_STATUS_FAILED;
+	return SOCK_STATUS_FAILED;
 }
 
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_connect(netkit_sync_sock_t* sock) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		sock->impl->connect();
 	} catch (...) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
-	return NETKIT_SOCK_STATUS_SUCCESS;
+	return SOCK_STATUS_SUCCESS;
 }
 
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_bind(netkit_sync_sock_t* sock) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		sock->impl->bind();
 	} catch (...) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
-	return NETKIT_SOCK_STATUS_SUCCESS;
+	return SOCK_STATUS_SUCCESS;
 }
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_unbind(netkit_sync_sock_t* sock) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		sock->impl->unbind();
 	} catch (...) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
-	return NETKIT_SOCK_STATUS_SUCCESS;
+	return SOCK_STATUS_SUCCESS;
 }
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_listen(netkit_sync_sock_t* sock) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		sock->impl->listen();
 	} catch (...) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
-	return NETKIT_SOCK_STATUS_SUCCESS;
+	return SOCK_STATUS_SUCCESS;
 }
 
 extern "C" NETKIT_C_API netkit_sock_status_t netkit_sync_sock_listen_n(netkit_sync_sock_t* sock, int backlog) {
 	if (!sock) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
 	try {
 		sock->impl->listen(backlog);
 	} catch (...) {
-		return NETKIT_SOCK_STATUS_FAILED;
+		return SOCK_STATUS_FAILED;
 	}
 
-	return NETKIT_SOCK_STATUS_SUCCESS;
+	return SOCK_STATUS_SUCCESS;
 }
 extern "C" NETKIT_C_API netkit_sync_sock_t* netkit_sync_sock_accept(netkit_sync_sock_t* sock) {
 	if (!sock) {
@@ -272,7 +272,7 @@ extern "C" NETKIT_C_API void netkit_recv_result_destroy(netkit_recv_result_t* re
 
 extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out, int timeout_seconds, char* match, size_t eof) {
 	if (!sock || !out) {
-		return NETKIT_RECV_ERROR;
+		return RECV_ERROR;
 	}
 
 	try {
@@ -288,19 +288,19 @@ extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_s
 		out->data[out->size] = '\0';
 
 		switch (ret.status) {
-			case netkit::sock::sock_recv_status::success:
-				return NETKIT_RECV_SUCCESS;
-			case netkit::sock::sock_recv_status::timeout:
-				return NETKIT_RECV_TIMEOUT;
-			case netkit::sock::sock_recv_status::closed:
-				return NETKIT_RECV_CLOSED;
+			case netkit::sock::recv_status::success:
+				return RECV_SUCCESS;
+			case netkit::sock::recv_status::timeout:
+				return RECV_TIMEOUT;
+			case netkit::sock::recv_status::closed:
+				return RECV_CLOSED;
 			default:
-				return NETKIT_RECV_ERROR;
+				return RECV_ERROR;
 		}
 	} catch (const std::exception& e) {
-		return NETKIT_RECV_ERROR;
+		return RECV_ERROR;
 	} catch (...) {
-		return NETKIT_RECV_ERROR;
+		return RECV_ERROR;
 	}
 }
 

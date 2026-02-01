@@ -10,13 +10,13 @@
  *  @brief Implementation of the sock_addr class.
  */
 #include <filesystem>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/definitions.hpp>
+#include <netkit/dns/nameserver_list.hpp>
 #include <netkit/dns/record_type.hpp>
 #include <netkit/dns/sync_resolver.hpp>
-#include <netkit/dns/nameserver_list.hpp>
 #include <netkit/except.hpp>
-#include <netkit/definitions.hpp>
 #include <netkit/network/utility.hpp>
+#include <netkit/sock/addr.hpp>
 
 /* solely for use internally */
 [[nodiscard]] static netkit::sock::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
@@ -59,7 +59,7 @@
     return {v4, v6};
 }
 
-netkit::sock::sock_addr::sock_addr(const std::string& hostname, int port, sock_addr_type t) :
+netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     hostname(hostname), port(port), type(t) {
 
     const auto resolve_host = [](const std::string& h, bool t) -> std::string {
@@ -72,9 +72,9 @@ netkit::sock::sock_addr::sock_addr(const std::string& hostname, int port, sock_a
         }
     };
 
-    if (type == sock_addr_type::hostname) {
+    if (type == addr_type::hostname) {
         ip = resolve_host(hostname, true);
-        type = netkit::sock::sock_addr_type::ipv6;
+        type = netkit::sock::addr_type::ipv6;
 
         if (!netkit::network::usable_ipv6_address_exists()) {
             ip.clear();
@@ -82,15 +82,15 @@ netkit::sock::sock_addr::sock_addr(const std::string& hostname, int port, sock_a
 
         if (ip.empty()) {
             ip = resolve_host(hostname, false);
-            type = netkit::sock::sock_addr_type::ipv4;
+            type = netkit::sock::addr_type::ipv4;
         }
-    } else if (type == sock_addr_type::hostname_ipv4) {
+    } else if (type == addr_type::hostname_ipv4) {
         ip = resolve_host(hostname, false);
-        type = netkit::sock::sock_addr_type::ipv4;
-    } else if (type == sock_addr_type::hostname_ipv6) {
+        type = netkit::sock::addr_type::ipv4;
+    } else if (type == addr_type::hostname_ipv6) {
         ip = resolve_host(hostname, true);
-        type = netkit::sock::sock_addr_type::ipv6;
-    } else if (type == sock_addr_type::ipv4 || type == sock_addr_type::ipv6) {
+        type = netkit::sock::addr_type::ipv6;
+    } else if (type == addr_type::ipv4 || type == addr_type::ipv6) {
         ip = hostname;
     } else {
         throw ip_error("sock_addr(): invalid address type");
@@ -109,57 +109,57 @@ netkit::sock::sock_addr::sock_addr(const std::string& hostname, int port, sock_a
     }
 }
 
-netkit::sock::sock_addr::sock_addr(const std::filesystem::path& path) : path(path), type(sock_addr_type::filename) {
+netkit::sock::addr::addr(const std::filesystem::path& path) : path(path), type(addr_type::filename) {
     if (!std::filesystem::exists(path)) {
         throw parsing_error("sock_addr(): path does not exist");
     }
 }
 
-bool netkit::sock::sock_addr::is_ipv4() const noexcept {
-    return type == sock_addr_type::ipv4;
+bool netkit::sock::addr::is_ipv4() const noexcept {
+    return type == addr_type::ipv4;
 }
 
-bool netkit::sock::sock_addr::is_ipv6() const noexcept {
-    return type == sock_addr_type::ipv6;
+bool netkit::sock::addr::is_ipv6() const noexcept {
+    return type == addr_type::ipv6;
 }
 
-bool netkit::sock::sock_addr::is_file_path() const noexcept {
-    return type == sock_addr_type::filename;
+bool netkit::sock::addr::is_file_path() const noexcept {
+    return type == addr_type::filename;
 }
 
-std::string netkit::sock::sock_addr::get_ip() const {
-    if (type == sock_addr_type::filename) {
+std::string netkit::sock::addr::get_ip() const {
+    if (type == addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get IP from a file path");
     }
 
     return this->ip;
 }
 
-[[nodiscard]] std::filesystem::path netkit::sock::sock_addr::get_path() const {
-    if (type != sock_addr_type::filename) {
+[[nodiscard]] std::filesystem::path netkit::sock::addr::get_path() const {
+    if (type != addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get path from an IP address or hostname");
     }
     return this->path;
 }
 
-std::string netkit::sock::sock_addr::get_hostname() const {
+std::string netkit::sock::addr::get_hostname() const {
     if (hostname.empty()) {
         throw parsing_error("hostname is empty, use get_ip() instead");
     }
-    if (type == sock_addr_type::filename) {
+    if (type == addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get hostname from a file path");
     }
     return hostname;
 }
 
-int netkit::sock::sock_addr::get_port() const {
-    if (type == sock_addr_type::filename) {
+int netkit::sock::addr::get_port() const {
+    if (type == addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get port from a file path");
     }
 
     return port;
 }
 
-netkit::sock::sock_addr_type netkit::sock::sock_addr::get_type() const {
+netkit::sock::addr_type netkit::sock::addr::get_type() const {
 	return type;
 }

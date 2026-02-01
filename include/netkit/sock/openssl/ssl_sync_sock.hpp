@@ -60,10 +60,10 @@ namespace netkit::sock {
         std::unique_ptr<ssl_sync_sock> accept();
         int send(const void* buf, size_t len) const;
         void send(const std::string& buf) const;
-        sock_recv_result recv(int timeout_seconds) const;
-        sock_recv_result recv(int timeout_seconds, const std::string& match) const;
-        sock_recv_result recv(int timeout_seconds, const std::string& match, size_t eof) const;
-        sock_recv_result recv(int timeout_seconds, size_t eof) const;
+        recv_result recv(int timeout_seconds) const;
+        recv_result recv(int timeout_seconds, const std::string& match) const;
+        recv_result recv(int timeout_seconds, const std::string& match, size_t eof) const;
+        recv_result recv(int timeout_seconds, size_t eof) const;
         std::string overflow_bytes() const;
         void clear_overflow_bytes() const;
         void close();
@@ -96,7 +96,7 @@ namespace netkit::sock {
         void drain_write_bio() const;
         void feed_read_bio_blocking() const;
         void ensure_ready() const;
-        sock_recv_result recv_internal(int, const std::string* match, size_t eof) const;
+        recv_result recv_internal(int, const std::string* match, size_t eof) const;
         static void throw_ssl_error(const std::string& msg);
     };
 #endif

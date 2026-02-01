@@ -18,7 +18,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <afunix.h>
-#include <cstring>
 #elif NETKIT_UNIX
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -89,21 +88,21 @@ void netkit::sock::sync_sock::prep_sa() {
 	}
 }
 #ifdef NETKIT_UNIX
-void netkit::sock::sync_sock::set_sock_opts(sock_opt opts) const {
-    if (opts & sock_opt::reuse_addr) {
+void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
+    if (opts & opt::reuse_addr) {
         ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
-    } else if (opts & sock_opt::no_reuse_addr) {
+    } else if (opts & opt::no_reuse_addr) {
         ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, nullptr, 0);
     }
-    if (opts & sock_opt::no_delay) {
+    if (opts & opt::no_delay) {
         ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opts, sizeof(opts));
     }
-    if (opts & sock_opt::keep_alive) {
+    if (opts & opt::keep_alive) {
         ::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
-    } else if (opts & sock_opt::no_keep_alive) {
+    } else if (opts & opt::no_keep_alive) {
         ::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, nullptr, 0);
     }
-    if (opts & sock_opt::no_blocking) {
+    if (opts & opt::no_blocking) {
         int flags = fcntl(this->sockfd, F_GETFL, 0);
         if (flags < 0) {
             ::close(this->sockfd);
@@ -113,7 +112,7 @@ void netkit::sock::sync_sock::set_sock_opts(sock_opt opts) const {
             ::close(this->sockfd);
             throw socket_error("failed to set socket to non-blocking mode");
         }
-    } else if (opts & sock_opt::blocking) {
+    } else if (opts & opt::blocking) {
         int flags = fcntl(this->sockfd, F_GETFL, 0);
         if (flags < 0) {
             ::close(this->sockfd);
@@ -127,47 +126,47 @@ void netkit::sock::sync_sock::set_sock_opts(sock_opt opts) const {
 }
 #endif
 #ifdef NETKIT_WINDOWS
-void netkit::sock::sync_sock::set_sock_opts(sock_opt opts) const {
-    if (opts & sock_opt::reuse_addr) {
+void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
+    if (opts & opt::reuse_addr) {
         BOOL optval = TRUE;
         if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to set SO_REUSEADDR");
         }
-    } else if (opts & sock_opt::no_reuse_addr) {
+    } else if (opts & opt::no_reuse_addr) {
         BOOL optval = FALSE;
         if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to clear SO_REUSEADDR");
         }
     }
-	if ((opts & sock_opt::no_delay) && type == sock_type::tcp) {
+	if ((opts & opt::no_delay) && type == type::tcp) {
         BOOL optval = TRUE;
         if (setsockopt(this->sockfd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to set TCP_NODELAY");
         }
     }
-    if (opts & sock_opt::keep_alive) {
+    if (opts & opt::keep_alive) {
         BOOL optval = TRUE;
         if (setsockopt(this->sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to set SO_KEEPALIVE");
         }
-    } else if (opts & sock_opt::no_keep_alive) {
+    } else if (opts & opt::no_keep_alive) {
         BOOL optval = FALSE;
         if (setsockopt(this->sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to clear SO_KEEPALIVE");
         }
     }
-    if (opts & sock_opt::no_blocking) {
+    if (opts & opt::no_blocking) {
         u_long mode = 1;
         if (ioctlsocket(this->sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
             closesocket(this->sockfd);
             throw socket_error("failed to set socket to non-blocking mode");
         }
-    } else if (opts & sock_opt::blocking) {
+    } else if (opts & opt::blocking) {
         u_long mode = 0;
         if (ioctlsocket(this->sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
             closesocket(this->sockfd);
@@ -178,16 +177,16 @@ void netkit::sock::sync_sock::set_sock_opts(sock_opt opts) const {
 #endif
 
 #ifdef NETKIT_UNIX
-netkit::sock::sync_sock::sync_sock(const sock_addr& addr, sock_type t, sock_opt opts) : addr(addr), type(t) {
+netkit::sock::sync_sock::sync_sock(const addr& addr, type t, opt opts) : addr(addr), type(t) {
     this->sockfd = -1;
 
     if (addr.get_ip().empty() && !addr.is_file_path()) {
         throw socket_error("IP address/file path is empty");
     }
 
-    if (t != sock_type::unix) {
+    if (t != type::unix) {
         this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
-                                                          t == sock_type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+                                                          t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
     } else {
         this->sockfd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     }
@@ -205,7 +204,7 @@ netkit::sock::sync_sock::sync_sock(const sock_addr& addr, sock_type t, sock_opt 
     this->prep_sa();
 }
 
-netkit::sock::sync_sock::sync_sock(int existing_fd, const sock_addr& peer, sock_type t, sock_opt opts)
+netkit::sock::sync_sock::sync_sock(int existing_fd, const addr& peer, type t, opt opts)
     : addr(peer), type(t), sockfd(existing_fd) {
     if (sockfd < 0) throw socket_error("invalid fd");
     if (this->sockfd >= 0) {
@@ -218,10 +217,10 @@ netkit::sock::sync_sock::sync_sock(int existing_fd, const sock_addr& peer, sock_
 }
 #endif
 #ifdef NETKIT_WINDOWS
-netkit::sock::sync_sock::sync_sock(const sock_addr& addr, sock_type t, sock_opt opts)
-    : addr(addr), type(t) {
+netkit::sock::sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt opts)
+    : addr(in_addr), type(t) {
 
-    if (addr.get_ip().empty() && !addr.is_file_path()) {
+    if (this->addr.get_ip().empty() && !this->addr.is_file_path()) {
         throw socket_error("IP address or file path is empty");
     }
 
@@ -229,10 +228,10 @@ netkit::sock::sync_sock::sync_sock(const sock_addr& addr, sock_type t, sock_opt 
     int sock_type = SOCK_STREAM;
     int protocol = 0;
 
-    if (t != sock_type::unix) {
-        domain = addr.is_ipv6() ? AF_INET6 : AF_INET;
-        sock_type = (t == sock_type::tcp) ? SOCK_STREAM : SOCK_DGRAM;
-        protocol = (t == sock_type::tcp) ? IPPROTO_TCP : IPPROTO_UDP;
+    if (t != type::unix) {
+        domain = this->addr.is_ipv6() ? AF_INET6 : AF_INET;
+        sock_type = (t == type::tcp) ? SOCK_STREAM : SOCK_DGRAM;
+        protocol = (t == type::tcp) ? IPPROTO_TCP : IPPROTO_UDP;
     } else {
         protocol = 0;
     }
@@ -270,11 +269,11 @@ netkit::sock::sync_sock::~sync_sock() {
 }
 #endif
 
-netkit::sock::sock_addr& netkit::sock::sync_sock::get_addr() {
+netkit::sock::addr& netkit::sock::sync_sock::get_addr() {
     return this->addr;
 }
 
-const netkit::sock::sock_addr& netkit::sock::sync_sock::get_addr() const {
+const netkit::sock::addr& netkit::sock::sync_sock::get_addr() const {
     return this->addr;
 }
 #ifdef NETKIT_UNIX
@@ -435,7 +434,7 @@ void netkit::sock::sync_sock::clear_overflow_bytes() const {
     old_bytes.clear();
 }
 #ifdef NETKIT_UNIX
-netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match, size_t eof) {
+netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match, size_t eof) {
     std::string data = old_bytes;
     old_bytes.clear();
 
@@ -444,7 +443,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
             old_bytes = data.substr(eof);
             data.resize(eof);
         }
-        return {data, sock_recv_status::success};
+        return {data, recv_status::success};
     }
 
     if (!match.empty()) {
@@ -452,7 +451,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
         if (pos != std::string::npos) {
             old_bytes = data.substr(pos + match.size());
             data.resize(pos + match.size());
-            return {data, sock_recv_status::success};
+            return {data, recv_status::success};
         }
     }
 
@@ -462,7 +461,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
         auto elapsed = std::chrono::steady_clock::now() - start;
         auto remaining = std::chrono::seconds(timeout_seconds) - elapsed;
         if (remaining <= std::chrono::seconds(0) && timeout_seconds != -1) {
-            return {data, sock_recv_status::timeout};
+            return {data, recv_status::timeout};
         }
 
         timeval tv{};
@@ -477,7 +476,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
         int ret = ::select(this->sockfd + 1, &readfds, nullptr, nullptr,
                                                timeout_seconds == -1 ? nullptr : &tv);
         if (ret < 0) throw socket_error("select() failed");
-        if (ret == 0) return {data, sock_recv_status::timeout};
+        if (ret == 0) return {data, recv_status::timeout};
 
         if (FD_ISSET(this->sockfd, &readfds)) {
             size_t bytes_to_read = 8192;
@@ -491,7 +490,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 if (errno == EINTR) continue;
                 throw socket_error("recv() failed");
             }
-            if (received == 0) return {data, sock_recv_status::closed};
+            if (received == 0) return {data, recv_status::closed};
 
             data.append(buf, static_cast<std::size_t>(received));
 
@@ -500,7 +499,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 data.resize(eof);
             }
             if (eof != 0 && data.length() >= eof) {
-                return {data, sock_recv_status::success};
+                return {data, recv_status::success};
             }
 
             if (!match.empty()) {
@@ -508,21 +507,21 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 if (pos != std::string::npos) {
                     old_bytes = data.substr(pos + match.size());
                     data.resize(pos + match.size());
-                    return {data, sock_recv_status::success};
+                    return {data, recv_status::success};
                 }
             }
         }
     }
 }
 
-netkit::sock::sock_recv_result netkit::sock::sync_sock::primitive_recv() {
+netkit::sock::recv_result netkit::sock::sync_sock::primitive_recv() {
     for (;;) {
         char buf[8192];
         ssize_t n = ::recv(this->sockfd, buf, sizeof(buf), 0);
         if (n > 0)
-            return {{buf, buf + n}, sock_recv_status::success};
+            return {{buf, buf + n}, recv_status::success};
         if (n == 0)
-            return {{}, sock_recv_status::closed};
+            return {{}, recv_status::closed};
         if (errno == EINTR)
             continue;
         throw netkit::socket_error("recv failed");
@@ -530,7 +529,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::primitive_recv() {
 }
 #endif
 #ifdef NETKIT_WINDOWS
-netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match, size_t eof) {
+netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match, size_t eof) {
     std::string data = old_bytes;
     old_bytes.clear();
 
@@ -539,7 +538,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
             old_bytes = data.substr(eof);
             data.resize(eof);
         }
-        return {data, sock_recv_status::success};
+        return {data, recv_status::success};
     }
 
     if (!match.empty()) {
@@ -547,7 +546,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
         if (pos != std::string::npos) {
             old_bytes = data.substr(pos + match.size());
             data.resize(pos + match.size());
-            return {data, sock_recv_status::success};
+            return {data, recv_status::success};
         }
     }
 
@@ -560,7 +559,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
             remaining = std::chrono::hours(24 * 365 * 100);
         }
         if (remaining <= std::chrono::seconds(0) && timeout_seconds != -1) {
-            return {data, sock_recv_status::timeout};
+            return {data, recv_status::timeout};
         }
 
         timeval tv{};
@@ -578,7 +577,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
             throw socket_error("select() failed");
         }
         if (ret == 0) {
-            return {data, sock_recv_status::timeout};
+            return {data, recv_status::timeout};
         }
 
         if (FD_ISSET(this->sockfd, &readfds)) {
@@ -595,7 +594,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 throw socket_error("recv() failed");
             }
             if (received == 0) {
-                return {data, sock_recv_status::closed};
+                return {data, recv_status::closed};
             }
 
             data.append(buf, static_cast<std::size_t>(received));
@@ -605,7 +604,7 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 data.resize(eof);
             }
             if (eof != 0 && data.length() >= eof) {
-                return {data, sock_recv_status::success};
+                return {data, recv_status::success};
             }
 
             if (!match.empty()) {
@@ -613,23 +612,23 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_s
                 if (pos != std::string::npos) {
                     old_bytes = data.substr(pos + match.size());
                     data.resize(pos + match.size());
-                    return {data, sock_recv_status::success};
+                    return {data, recv_status::success};
                 }
             }
         }
     }
 }
 
-netkit::sock::sock_recv_result netkit::sock::sync_sock::primitive_recv() {
+netkit::sock::recv_result netkit::sock::sync_sock::primitive_recv() {
     constexpr size_t buffer_size = 8192;
     char buf[buffer_size];
 
     for (;;) {
         int n = ::recv(this->sockfd, buf, static_cast<int>(buffer_size), 0);
         if (n > 0) {
-            return {std::string(buf, buf + n), sock_recv_status::success};
+            return {std::string(buf, buf + n), recv_status::success};
         } else if (n == 0) {
-            return {{}, sock_recv_status::closed};
+            return {{}, recv_status::closed};
         } else {
             int err = WSAGetLastError();
             if (err == WSAEINTR || err == WSAEWOULDBLOCK || err == WSAEINPROGRESS) {
@@ -641,15 +640,15 @@ netkit::sock::sock_recv_result netkit::sock::sync_sock::primitive_recv() {
 }
 #endif
 
-netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_seconds) {
+netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_seconds) {
     return recv(timeout_seconds, "", 0);
 }
 
-netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match) {
+netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, const std::string& match) {
     return this->recv(timeout_seconds, match, 0);
 }
 
-netkit::sock::sock_recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, size_t eof) {
+netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_seconds, size_t eof) {
     return this->recv(timeout_seconds, "", eof);
 }
 
@@ -678,6 +677,6 @@ void netkit::sock::sync_sock::close() {
     sockfd = INVALID_SOCKET;
 }
 #endif
-[[nodiscard]] netkit::sock::sock_addr netkit::sock::sync_sock::get_peer() const {
+[[nodiscard]] netkit::sock::addr netkit::sock::sync_sock::get_peer() const {
     return netkit::sock::get_peer(this->sockfd);
 }

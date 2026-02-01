@@ -18,7 +18,7 @@
 
 #include <openssl/ssl.h>
 
-bool netkit::crypto::windows::is_outdated(const std::wstring &path) {
+bool netkit::crypto::windows::is_outdated(const std::wstring& path) {
     WIN32_FILE_ATTRIBUTE_DATA data;
 
     if (!GetFileAttributesExW(path.c_str(),
@@ -43,7 +43,7 @@ bool netkit::crypto::windows::is_outdated(const std::wstring &path) {
     return age > max_age;
 }
 
-bool netkit::crypto::windows::export_certs(const std::wstring &path) {
+bool netkit::crypto::windows::export_certs(const std::wstring& path) {
     FILE* f = _wfopen(path.c_str(), L"wb");
     if (!f) return false;
 

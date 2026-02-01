@@ -12,9 +12,8 @@
 #pragma once
 
 #include <memory>
-
-#include <netkit/sock/sock_addr_type.hpp>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr.hpp>
+#include <netkit/sock/addr_type.hpp>
 
 namespace netkit::sock {
     /**
@@ -34,16 +33,16 @@ namespace netkit::sock {
         virtual std::unique_ptr<basic_sync_sock> accept() = 0;
         virtual int send(const void* buf, size_t len) = 0;
         virtual void send(const std::string& buf) = 0;
-        [[nodiscard]] virtual sock_recv_result recv(int timeout_seconds) = 0;
-        [[nodiscard]] virtual sock_recv_result recv(int timeout_seconds, const std::string& match) = 0;
-        [[nodiscard]] virtual sock_recv_result recv(int timeout_seconds, const std::string& match, size_t eof) = 0;
-        [[nodiscard]] virtual sock_recv_result recv(int timeout_seconds, size_t eof) = 0;
-        [[nodiscard]] virtual sock_recv_result primitive_recv() = 0;
+        [[nodiscard]] virtual recv_result recv(int timeout_seconds) = 0;
+        [[nodiscard]] virtual recv_result recv(int timeout_seconds, const std::string& match) = 0;
+        [[nodiscard]] virtual recv_result recv(int timeout_seconds, const std::string& match, size_t eof) = 0;
+        [[nodiscard]] virtual recv_result recv(int timeout_seconds, size_t eof) = 0;
+        [[nodiscard]] virtual recv_result primitive_recv() = 0;
         [[nodiscard]] virtual std::string overflow_bytes() const = 0;
-        virtual sock_addr& get_addr() = 0;
-        [[nodiscard]] virtual const sock_addr& get_addr() const = 0;
+        virtual addr& get_addr() = 0;
+        [[nodiscard]] virtual const addr& get_addr() const = 0;
         virtual void clear_overflow_bytes() const = 0;
         virtual void close() = 0;
-        [[nodiscard]] virtual sock_addr get_peer() const = 0;
+        [[nodiscard]] virtual addr get_peer() const = 0;
     };
 }

@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr.hpp>
 
 namespace netkit::sock {
-    sock_addr get_peer(sock_fd_t sockfd);
+    addr get_peer(fd_t sockfd);
 }

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NETKIT_EXPORT_H
+#define NETKIT_EXPORT_H
 
 #ifdef _WIN32
 #ifdef NETKIT_C_BUILD_DLL
@@ -8,4 +9,6 @@
 #endif
 #else
 #define NETKIT_C_API
+#endif
+
 #endif

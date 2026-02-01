@@ -14,19 +14,19 @@
 #pragma once
 
 #include <filesystem>
+#include <netkit/sock/addr_type.hpp>
 #include <string>
-#include <netkit/sock/sock_addr_type.hpp>
 
 namespace netkit::sock {
-    class NETKIT_API sock_addr final {
+    class NETKIT_API addr final {
         std::filesystem::path path{};
         std::string hostname{};
         std::string ip{};
         int port{};
-        sock_addr_type type{sock_addr_type::hostname};
-        friend sock_addr get_peer(sock_fd_t);
+        addr_type type{addr_type::hostname};
+        friend addr get_peer(fd_t);
 
-        sock_addr() = default;
+        addr() = default;
     public:
         /**
          * @brief Constructs a sock_addr object.
@@ -34,13 +34,13 @@ namespace netkit::sock {
          * @param port The port to use.
          * @param t The address type (ipv4, ipv6, hostname_ipv4, hostname_ipv6).
          */
-        sock_addr(const std::string& hostname, int port, sock_addr_type t);
+        addr(const std::string& hostname, int port, addr_type t);
         /**
          * @brief Constructs a sock_addr object for a file path.
          * @param path The file path to use.
          * @throws parsing_error if the path does not exist.
          */
-        explicit sock_addr(const std::filesystem::path& path);
+        explicit addr(const std::filesystem::path& path);
         /**
          * @brief Check whether the address is IPv4 or IPv6.
          * @return True if the address is IPv4, false if it is IPv6 or invalid.
@@ -80,7 +80,7 @@ namespace netkit::sock {
 		 * @brief Get the stored type.
 		 * @return The stored type.
 		 */
-		[[nodiscard]] sock_addr_type get_type() const;
-        ~sock_addr() = default;
+		[[nodiscard]] addr_type get_type() const;
+        ~addr() = default;
     };
 }

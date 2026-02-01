@@ -17,18 +17,18 @@
 #include <string.h>
 
 int main(void) {
-	netkit_sock_addr_t* addr = netkit_sock_addr_create("google.com", 80, NETKIT_SOCK_ADDR_HOSTNAME);
+	netkit_sock_addr_t* addr = netkit_sock_addr_create("google.com", 80, SOCK_ADDR_HOSTNAME);
 	if (!addr) {
 		return 1;
 	}
 
-	netkit_sync_sock_t* sock = netkit_sync_sock_create(addr, NETKIT_SOCK_TCP, NETKIT_SOCK_OPT_NONE);
+	netkit_sync_sock_t* sock = netkit_sync_sock_create(addr, SOCK_TCP, SOCK_OPT_NONE);
 	if (!sock) {
 		fprintf(stderr, "%s\n", "Failed to create socket.");
 		return 1;
 	}
 
-	if (netkit_sync_sock_connect(sock) != NETKIT_SOCK_STATUS_SUCCESS) {
+	if (netkit_sync_sock_connect(sock) != SOCK_STATUS_SUCCESS) {
 		fprintf(stderr, "%s\n", "Failed to connect.");
 	}
 
@@ -45,10 +45,10 @@ int main(void) {
 	}
 
 	netkit_recv_status_t status = netkit_sync_sock_recv(sock, result, 5, "", 0);
-	if (status == NETKIT_RECV_ERROR) {
+	if (status == RECV_ERROR) {
 		fprintf(stderr, "Error.\n");
 		return 1;
-	} else if (status == NETKIT_RECV_TIMEOUT) {
+	} else if (status == RECV_TIMEOUT) {
 		fprintf(stderr, "Timeout.\n");
 		return 1;
 	}

@@ -10,11 +10,10 @@
  *  @brief Implementation of the function to get the peer address of a socket.
  */
 #include <cstring>
-
-#include <netkit/sock/sock_peer.hpp>
-#include <netkit/sock/sock_addr.hpp>
-#include <netkit/except.hpp>
 #include <netkit/definitions.hpp>
+#include <netkit/except.hpp>
+#include <netkit/sock/addr.hpp>
+#include <netkit/sock/sock_peer.hpp>
 #ifdef NETKIT_UNIX
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -24,7 +23,7 @@
 #include <ws2tcpip.h>
 #endif
 
-netkit::sock::sock_addr netkit::sock::get_peer(sock_fd_t sockfd) {
+netkit::sock::addr netkit::sock::get_peer(fd_t sockfd) {
     sockaddr_storage addr_storage{};
     socklen_t addr_len = sizeof(addr_storage);
 
@@ -47,11 +46,11 @@ netkit::sock::sock_addr netkit::sock::get_peer(sock_fd_t sockfd) {
         throw ip_error("unsupported address family");
     }
 
-    sock_addr addr{};
+    addr addr{};
     addr.ip = ip_str;
     addr.port = port;
     addr.type = (addr_storage.ss_family == AF_INET) ?
-        sock_addr_type::ipv4 : sock_addr_type::ipv6;
+        addr_type::ipv4 : addr_type::ipv6;
 
     return addr;
 }

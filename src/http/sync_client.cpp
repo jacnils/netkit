@@ -16,21 +16,21 @@
 #include <netkit/network/utility.hpp>
 
 std::string netkit::http::client::sync_client::make_request(const std::string& request) const {
-    sock::sock_addr addr(hostname, port, sock::sock_addr_type::hostname);
+    sock::addr addr(hostname, port, sock::addr_type::hostname);
 
     std::optional<variant_sock> sock{std::nullopt};
 #ifdef NETKIT_OPENSSL
     if (port == 443) {
-        auto tcp_sock = std::make_unique<netkit::sock::sync_sock>(addr, netkit::sock::sock_type::tcp);
+        auto tcp_sock = std::make_unique<netkit::sock::sync_sock>(addr, netkit::sock::type::tcp);
         sock.emplace(std::in_place_type<netkit::sock::ssl_sync_sock>,
                      std::move(tcp_sock),
                      netkit::sock::ssl_sync_sock::mode::client);
     } else {
-        sock.emplace(netkit::sock::sync_sock(addr, netkit::sock::sock_type::tcp));
+        sock.emplace(netkit::sock::sync_sock(addr, netkit::sock::type::tcp));
         std::get<netkit::sock::sync_sock>(*sock).connect();
     }
 #else
-    sock.emplace(sock::sync_sock(addr, sock::sock_type::tcp));
+    sock.emplace(sock::sync_sock(addr, sock::type::tcp));
     std::get<sock::sync_sock>(*sock).connect();
 #endif
 
@@ -42,10 +42,10 @@ std::string netkit::http::client::sync_client::make_request(const std::string& r
     std::string s_headers;
     while (true) {
         auto result = std::visit([&](auto& sckt) { return sckt.recv(timeout, "\r\n\r\n", 0); }, s);
-        if (result.status == sock::sock_recv_status::timeout) {
+        if (result.status == sock::recv_status::timeout) {
             throw std::runtime_error("timeout while reading headers");
         }
-        if (result.status == sock::sock_recv_status::closed) {
+        if (result.status == sock::recv_status::closed) {
             throw std::runtime_error("connection closed during headers");
         }
         if (result.data.empty()) {

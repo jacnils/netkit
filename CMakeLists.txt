@@ -25,7 +25,7 @@ add_library(netkit SHARED
         src/network/ip_list.cpp
         src/dns/record_type.cpp
         src/dns/nameserver_list.cpp
-        src/sock/sock_addr.cpp
+        src/sock/addr.cpp
         src/dns/response_parser.cpp
         src/dns/query_builder.cpp
         src/sock/sock_peer.cpp
@@ -161,7 +161,7 @@ endif()
 if (NETKIT_ENABLE_C_BINDINGS)
     message(STATUS "C bindings enabled")
     add_library(netkit-c SHARED
-            src/c/sock/sock_addr.cpp
+            src/c/sock/addr.cpp
             src/c/sock/sync_sock.cpp
     )
 

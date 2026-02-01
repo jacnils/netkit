@@ -1,5 +1,5 @@
-#ifndef NETKIT_SOCK_ADDR_H
-#define NETKIT_SOCK_ADDR_H
+#ifndef NETKIT_DEFINITIONS_H
+#define NETKIT_DEFINITIONS_H
 
 #if defined(__APPLE__)
 #define NETKIT_MACOS 1
