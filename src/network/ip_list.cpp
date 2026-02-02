@@ -9,10 +9,10 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the IP address list class.
  */
-#include <netkit/sock/ip_list.hpp>
+#include <netkit/network/ip_list.hpp>
 #include <netkit/network/utility.hpp>
 
-netkit::sock::ip_list::ip_list(const std::string& any, const std::string& second) {
+netkit::network::ip_list::ip_list(const std::string& any, const std::string& second) {
     if (netkit::network::is_ipv4(any) && !any.empty()) {
         this->v4 = any;
     } else if (netkit::network::is_ipv6(any) && !any.empty()) {
@@ -25,22 +25,22 @@ netkit::sock::ip_list::ip_list(const std::string& any, const std::string& second
     }
 }
 
-bool netkit::sock::ip_list::contains_ipv4() const {
+bool netkit::network::ip_list::contains_ipv4() const {
     return !this->v4.empty();
 }
 
-bool netkit::sock::ip_list::contains_ipv6() const {
+bool netkit::network::ip_list::contains_ipv6() const {
     return !this->v6.empty();
 }
 
-std::string netkit::sock::ip_list::get_ipv4() const {
+std::string netkit::network::ip_list::get_ipv4() const {
     return this->v4;
 }
 
-std::string netkit::sock::ip_list::get_ipv6() const {
+std::string netkit::network::ip_list::get_ipv6() const {
     return this->v6;
 }
 
-std::string netkit::sock::ip_list::get_ip() const {
+std::string netkit::network::ip_list::get_ip() const {
     return this->v6.empty() ? this->v4 : this->v6;
 }

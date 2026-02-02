@@ -22,9 +22,9 @@ int main() {
         addr, netkit::sock::sock_type::tcp);
 
     netkit::sock::ssl_sync_sock sock((std::move(_sock)),
-        netkit::sock::ssl_sync_sock::mode::client,
-        netkit::sock::ssl_sync_sock::version::TLS_1_2,
-        netkit::sock::ssl_sync_sock::verification::peer
+        netkit::sock::mode::client,
+        netkit::sock::version::TLS_1_2,
+        netkit::sock::verification::peer
         );
 
     sock.connect();

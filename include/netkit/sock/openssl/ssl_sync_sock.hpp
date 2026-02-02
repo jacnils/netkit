@@ -15,6 +15,7 @@
 
 #include <netkit/export.hpp>
 #include <netkit/sock/basic_sync_sock.hpp>
+#include <netkit/sock/addr.hpp>
 
 #ifdef NETKIT_OPENSSL
 #include <openssl/ssl.h>
@@ -26,25 +27,26 @@
 
 namespace netkit::sock {
 #ifdef NETKIT_OPENSSL
+	enum class mode {
+		client,
+		server
+	};
+
+	enum class version {
+		SSL_2 = SSL2_VERSION,
+		SSL_3 = SSL3_VERSION,
+		TLS_1_1 = TLS1_1_VERSION,
+		TLS_1_2 = TLS1_2_VERSION,
+		TLS_1_3 = TLS1_3_VERSION,
+	};
+
+	enum class verification {
+		peer = SSL_VERIFY_PEER,
+		none = SSL_VERIFY_NONE,
+	};
+
     class NETKIT_API ssl_sync_sock {
     public:
-        enum class mode {
-            client, server
-        };
-
-        enum class version {
-            SSL2 = SSL2_VERSION,
-            SSL3 = SSL3_VERSION,
-            TLS_1_1 = TLS1_1_VERSION,
-            TLS_1_2 = TLS1_2_VERSION,
-            TLS_1_3 = TLS1_3_VERSION,
-        };
-
-        enum class verification {
-            peer = SSL_VERIFY_PEER,
-            none = SSL_VERIFY_NONE,
-        };
-
         explicit ssl_sync_sock(std::unique_ptr<sock::basic_sync_sock> underlying,
                                mode ssl_mode, version ssl_version = version::TLS_1_2,
                                verification ssl_verification = verification::peer,
@@ -68,6 +70,7 @@ namespace netkit::sock {
         void clear_overflow_bytes() const;
         void close();
         void perform_handshake();
+    	[[nodiscard]] netkit::sock::addr get_peer() const;
     private:
         mutable std::string overflow_;
         mutable std::mutex state_mtx_;

@@ -18,7 +18,7 @@ namespace netkit::dns {
     class dns_resolver;   // forward declaration
 }
 
-namespace netkit::sock {
+namespace netkit::network {
 
     class NETKIT_API ip_list final {
     protected:

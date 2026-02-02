@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file sock_addr.cpp
+ *  @file addr.cpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Implementation of the sock_addr class.
@@ -19,7 +19,7 @@
 #include <netkit/sock/addr.hpp>
 
 /* solely for use internally */
-[[nodiscard]] static netkit::sock::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
+[[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
     if (hostname == "localhost") {
         return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
     }

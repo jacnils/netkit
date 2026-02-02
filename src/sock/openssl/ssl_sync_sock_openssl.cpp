@@ -155,6 +155,10 @@ void netkit::sock::ssl_sync_sock::clear_overflow_bytes() const {
     overflow_.clear();
 }
 
+netkit::sock::addr netkit::sock::ssl_sync_sock::get_peer() const {
+	return underlying_sock_->get_peer();
+}
+
 void netkit::sock::ssl_sync_sock::close() {
     std::scoped_lock lk(state_mtx_);
 
@@ -400,7 +404,7 @@ netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(int, const 
             }
         }
 
-        if (match) {
+        if (match && !match->empty()) {
             auto pos = result.data.find(*match);
             if (pos != std::string::npos) {
                 overflow_ = result.data.substr(pos + match->size());

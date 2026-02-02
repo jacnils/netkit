@@ -104,7 +104,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/netkitConfigVersion.cmake"
-        VERSION 1.0.0
+        VERSION 0.1.0
         COMPATIBILITY SameMajorVersion
 )
 
@@ -163,6 +163,7 @@ if (NETKIT_ENABLE_C_BINDINGS)
     add_library(netkit-c SHARED
             src/c/sock/addr.cpp
             src/c/sock/sync_sock.cpp
+            src/c/sock/openssl/ssl_sync_sock.cpp
     )
 
     set_target_properties(netkit-c PROPERTIES

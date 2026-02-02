@@ -4,15 +4,15 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file sock_addr_type.hpp
+ *  @file addr_type.hpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Provides common socket types, options, and related enums and structs.
  */
 #pragma once
 
+#include <netkit/network/ip_list.hpp>
 #include <netkit/definitions.hpp>
-#include <netkit/sock/ip_list.hpp>
 
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
@@ -26,7 +26,7 @@ namespace netkit::sock {
 #ifdef NETKIT_WINDOWS
     using fd_t = SOCKET;
 #elifdef NETKIT_UNIX
-    using sock_fd_t = int;
+    using fd_t = int;
 #endif
 
     enum class addr_type {

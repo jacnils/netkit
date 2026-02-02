@@ -24,7 +24,7 @@ std::string netkit::http::client::sync_client::make_request(const std::string& r
         auto tcp_sock = std::make_unique<netkit::sock::sync_sock>(addr, netkit::sock::type::tcp);
         sock.emplace(std::in_place_type<netkit::sock::ssl_sync_sock>,
                      std::move(tcp_sock),
-                     netkit::sock::ssl_sync_sock::mode::client);
+                     netkit::sock::mode::client);
     } else {
         sock.emplace(netkit::sock::sync_sock(addr, netkit::sock::type::tcp));
         std::get<netkit::sock::sync_sock>(*sock).connect();

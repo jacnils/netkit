@@ -270,7 +270,7 @@ extern "C" NETKIT_C_API void netkit_recv_result_destroy(netkit_recv_result_t* re
 	delete recv_result;
 }
 
-extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out, int timeout_seconds, char* match, size_t eof) {
+extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out, int timeout_seconds, const char* match, size_t eof) {
 	if (!sock || !out) {
 		return RECV_ERROR;
 	}
