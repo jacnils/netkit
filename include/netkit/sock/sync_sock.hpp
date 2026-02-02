@@ -28,8 +28,8 @@
 
 namespace netkit::sock {
     class NETKIT_API sync_sock : public basic_sync_sock {
-        addr addr;
-        type type{};
+        addr addr_;
+        type type_{};
 #ifdef NETKIT_WINDOWS
         fd_t sockfd{INVALID_SOCKET};
 #else

@@ -34,10 +34,10 @@ const sockaddr* netkit::sock::sync_sock::get_sa() const {
 }
 
 socklen_t netkit::sock::sync_sock::get_sa_len() const {
-    if (addr.is_ipv4()) return sizeof(sockaddr_in);
-    if (addr.is_ipv6()) return sizeof(sockaddr_in6);
-    if (addr.is_file_path()) {
-        const auto& path = addr.get_path();
+    if (addr_.is_ipv4()) return sizeof(sockaddr_in);
+    if (addr_.is_ipv6()) return sizeof(sockaddr_in6);
+    if (addr_.is_file_path()) {
+        const auto& path = addr_.get_path();
         return static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + path.string().size() + 1);
     }
 
@@ -47,19 +47,19 @@ socklen_t netkit::sock::sync_sock::get_sa_len() const {
 void netkit::sock::sync_sock::prep_sa() {
 	memset(&sa_storage, 0, sizeof(sa_storage));
 
-	if (addr.is_ipv4()) {
+	if (addr_.is_ipv4()) {
 		auto* sa4 = reinterpret_cast<sockaddr_in*>(&sa_storage);
 		sa4->sin_family = AF_INET;
-		sa4->sin_port = htons(addr.get_port());
-		if (inet_pton(AF_INET, addr.get_ip().c_str(), &sa4->sin_addr) <= 0) {
+		sa4->sin_port = htons(addr_.get_port());
+		if (inet_pton(AF_INET, addr_.get_ip().c_str(), &sa4->sin_addr) <= 0) {
 			throw parsing_error("invalid IPv4 address");
 		}
-	} else if (addr.is_ipv6()) {
+	} else if (addr_.is_ipv6()) {
 		auto* sa6 = reinterpret_cast<sockaddr_in6*>(&sa_storage);
 		sa6->sin6_family = AF_INET6;
-		sa6->sin6_port = htons(addr.get_port());
+		sa6->sin6_port = htons(addr_.get_port());
 
-		std::string ip = addr.get_ip();
+		std::string ip = addr_.get_ip();
 		unsigned long scope = 0;
 
 		auto pos = ip.find('%');
@@ -75,10 +75,10 @@ void netkit::sock::sync_sock::prep_sa() {
 		if (scope != 0) {
 			sa6->sin6_scope_id = scope;
 		}
-	} else if (addr.is_file_path()) {
+	} else if (addr_.is_file_path()) {
 		auto* sa_un = reinterpret_cast<sockaddr_un*>(&sa_storage);
 		sa_un->sun_family = AF_UNIX;
-		const auto& path = addr.get_path().string();
+		const auto& path = addr_.get_path().string();
 		if (path.size() >= sizeof(sa_un->sun_path)) {
 			throw socket_error("UNIX socket path too long");
 		}
@@ -177,7 +177,7 @@ void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
 #endif
 
 #ifdef NETKIT_UNIX
-netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr(addr), type(t) {
+netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr_(addr), type_(t) {
     this->sockfd = -1;
 
     if (addr.get_ip().empty() && !addr.is_file_path()) {
@@ -205,7 +205,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opt
 }
 
 netkit::sock::sync_sock::sync_sock(int existing_fd, const sock::addr& peer, sock::type t, opt opts)
-    : addr(peer), type(t), sockfd(existing_fd) {
+    : addr_(peer), type_(t), sockfd(existing_fd) {
     if (sockfd < 0) throw socket_error("invalid fd");
     if (this->sockfd >= 0) {
         this->set_sock_opts(opts);
@@ -270,11 +270,11 @@ netkit::sock::sync_sock::~sync_sock() {
 #endif
 
 netkit::sock::addr& netkit::sock::sync_sock::get_addr() {
-    return this->addr;
+    return this->addr_;
 }
 
 const netkit::sock::addr& netkit::sock::sync_sock::get_addr() const {
-    return this->addr;
+    return this->addr_;
 }
 #ifdef NETKIT_UNIX
 void netkit::sock::sync_sock::connect() {
@@ -365,7 +365,7 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::sync_sock::accept()
 
     auto peer = sock::get_peer(client_sockfd);
 
-    return std::make_unique<sync_sock>(client_sockfd, peer, this->type);
+    return std::make_unique<sync_sock>(client_sockfd, peer, this->type_);
 }
 #endif
 #ifdef NETKIT_WINDOWS
