@@ -140,7 +140,7 @@ void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
             throw socket_error("failed to clear SO_REUSEADDR");
         }
     }
-	if ((opts & opt::no_delay) && type == type::tcp) {
+	if ((opts & opt::no_delay) && type_ == type::tcp) {
         BOOL optval = TRUE;
         if (setsockopt(this->sockfd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
             closesocket(this->sockfd);
@@ -380,7 +380,7 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::sync_sock::accept()
     }
 
     auto peer = sock::get_peer(client_sockfd);
-    auto handle = std::make_unique<sync_sock>(peer, this->type);
+    auto handle = std::make_unique<sync_sock>(peer, this->type_);
     handle->sockfd = client_sockfd;
 
     return handle;
