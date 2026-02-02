@@ -218,9 +218,9 @@ netkit::sock::sync_sock::sync_sock(int existing_fd, const sock::addr& peer, sock
 #endif
 #ifdef NETKIT_WINDOWS
 netkit::sock::sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt opts)
-    : addr(in_addr), type(t) {
+    : addr_(in_addr), type_(t) {
 
-    if (this->addr.get_ip().empty() && !this->addr.is_file_path()) {
+    if (this->addr_.get_ip().empty() && !this->addr_.is_file_path()) {
         throw socket_error("IP address or file path is empty");
     }
 
@@ -229,7 +229,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt 
     int protocol = 0;
 
     if (t != type::unix) {
-        domain = this->addr.is_ipv6() ? AF_INET6 : AF_INET;
+        domain = this->addr_.is_ipv6() ? AF_INET6 : AF_INET;
         sock_type = (t == type::tcp) ? SOCK_STREAM : SOCK_DGRAM;
         protocol = (t == type::tcp) ? IPPROTO_TCP : IPPROTO_UDP;
     } else {
