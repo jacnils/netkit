@@ -177,7 +177,7 @@ void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
 #endif
 
 #ifdef NETKIT_UNIX
-netkit::sock::sync_sock::sync_sock(const addr& addr, type t, opt opts) : addr(addr), type(t) {
+netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr(addr), type(t) {
     this->sockfd = -1;
 
     if (addr.get_ip().empty() && !addr.is_file_path()) {
@@ -204,7 +204,7 @@ netkit::sock::sync_sock::sync_sock(const addr& addr, type t, opt opts) : addr(ad
     this->prep_sa();
 }
 
-netkit::sock::sync_sock::sync_sock(int existing_fd, const addr& peer, type t, opt opts)
+netkit::sock::sync_sock::sync_sock(int existing_fd, const sock::addr& peer, sock::type t, opt opts)
     : addr(peer), type(t), sockfd(existing_fd) {
     if (sockfd < 0) throw socket_error("invalid fd");
     if (this->sockfd >= 0) {

@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_TRIES 3
+
 int main(void) {
 	netkit_sock_addr_t* addr = netkit_sock_addr_create("www.google.com", 443, SOCK_ADDR_HOSTNAME);
 	if (!addr) {
@@ -65,13 +67,17 @@ int main(void) {
 		return 1;
 	}
 
-	netkit_recv_status_t status = netkit_ssl_sync_sock_recv(ssl_sock, result, -1, NULL, 0);
-	if (status == RECV_TIMEOUT) {
-		fprintf(stderr, "%s\n", "Failed to receive: timeout.");
-		return 1;
-	} else if (status == RECV_ERROR) {
-		fprintf(stderr, "%s\n", "Failed to receive: error.");
-		return 1;
+	int tries = 0;
+
+	while (tries++ < MAX_TRIES) {
+		netkit_recv_status_t status = netkit_ssl_sync_sock_recv(ssl_sock, result, -1, NULL, 0);
+		if (status == RECV_TIMEOUT) {
+			fprintf(stderr, "%s\n", "Failed to receive: timeout.");
+			return 1;
+		} else if (status == RECV_ERROR) {
+			fprintf(stderr, "%s\n", "Failed to receive: error.");
+			return 1;
+		}
 	}
 
 	netkit_ssl_sync_sock_close(ssl_sock);

@@ -33,8 +33,8 @@
 #include <netkit/dns/query_builder.hpp>
 
 // Socket headers
-#include <netkit/sock/sock_addr_type.hpp>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr_type.hpp>
+#include <netkit/sock/addr.hpp>
 #include <netkit/sock/sock_peer.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>

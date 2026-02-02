@@ -2,32 +2,13 @@
 #include <fstream>
 #include <string_view>
 #include <netkit/netkit.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch_test_macros.hpp>
 
-int main() {
-    netkit::sock::sock_addr addr("google.com", 443, netkit::sock::sock_addr_type::hostname);
-    std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
-        addr, netkit::sock::sock_type::tcp);
-
-    netkit::sock::ssl_sync_sock sock((std::move(_sock)),
-        netkit::sock::ssl_sync_sock::mode::client,
-        netkit::sock::ssl_sync_sock::version::TLS_1_2,
-        netkit::sock::ssl_sync_sock::verification::peer
-        );
-
-    sock.connect();
-    sock.perform_handshake();
-
-    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
-    sock.send(request.data());
-    std::string response = sock.recv(-1).data;
-    sock.close();
-
-    std::ofstream file("response.txt");
-    if (file.is_open()) {
-        file << response;
-        file.close();
-    } else {
-        std::cerr << "Failed to open file" << std::endl;
-    }
-    std::cout << "Response written to response.txt" << std::endl;
+TEST_CASE("Ensure addr works", "[sock_addr]") {
+	netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
+	REQUIRE(addr.get_hostname() == "google.com");
+	REQUIRE(addr.get_ip().empty() == false);
+	REQUIRE(addr.get_port() == 443);
+	REQUIRE(addr.is_file_path() == false);
 }

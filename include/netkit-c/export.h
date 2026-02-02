@@ -8,7 +8,7 @@
 #define NETKIT_C_API __declspec(dllimport)
 #endif
 #else
-#define NETKIT_C_API
+#define NETKIT_C_API __attribute__((visibility("default")))
 #endif
 
 #endif

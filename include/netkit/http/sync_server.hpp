@@ -13,7 +13,7 @@
 #pragma once
 
 #include <thread>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr.hpp>
 
 namespace netkit::http::server {
     /**
@@ -38,9 +38,9 @@ namespace netkit::http::server {
                 throw parsing_error("invalid port");
             }
 
-            sock::sock_addr addr = {"localhost", settings.port, netkit::sock::sock_addr_type::hostname};
-            this->sock = std::make_unique<sock::sync_sock>(addr, netkit::sock::sock_type::tcp,
-                netkit::sock::sock_opt::reuse_addr|netkit::sock::sock_opt::no_delay|netkit::sock::sock_opt::blocking);
+            sock::addr addr = {"localhost", settings.port, netkit::sock::addr_type::hostname};
+            this->sock = std::make_unique<sock::sync_sock>(addr, netkit::sock::type::tcp,
+                netkit::sock::opt::reuse_addr|netkit::sock::opt::no_delay|netkit::sock::opt::blocking);
 
             try {
                 sock->bind();

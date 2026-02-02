@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 project(netkit LANGUAGES C CXX)
 
 option(NETKIT_ENABLE_OPENSSL "Enable OpenSSL support in netkit" ON)
-option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
+option(NETKIT_ENABLE_TESTS "Enable building tests" ON)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
 option(NETKIT_ENABLE_C_TESTS "Enable C building tests" ON)
 
