@@ -17,6 +17,7 @@
 #include <netkit/except.hpp>
 #include <netkit/network/utility.hpp>
 #include <netkit/sock/addr.hpp>
+#include <utility>
 
 /* solely for use internally */
 [[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
@@ -109,11 +110,7 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     }
 }
 
-netkit::sock::addr::addr(const std::filesystem::path& path) : path(path), type(addr_type::filename) {
-    if (!std::filesystem::exists(path)) {
-        throw parsing_error("sock_addr(): path does not exist");
-    }
-}
+netkit::sock::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {}
 
 bool netkit::sock::addr::is_ipv4() const noexcept {
     return type == addr_type::ipv4;

@@ -40,7 +40,7 @@ namespace netkit::sock {
          * @param path The file path to use.
          * @throws parsing_error if the path does not exist.
          */
-        explicit addr(const std::filesystem::path& path);
+        explicit addr(std::filesystem::path  path);
         /**
          * @brief Check whether the address is IPv4 or IPv6.
          * @return True if the address is IPv4, false if it is IPv6 or invalid.

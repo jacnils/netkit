@@ -164,6 +164,7 @@ if (NETKIT_ENABLE_C_BINDINGS)
             src/c/sock/addr.cpp
             src/c/sock/sync_sock.cpp
             src/c/sock/openssl/ssl_sync_sock.cpp
+            src/c/network/utility.cpp
     )
 
     set_target_properties(netkit-c PROPERTIES
@@ -207,6 +208,8 @@ if (NETKIT_ENABLE_C_BINDINGS)
 
         add_executable(netkit-c-tests
             tests/c/test_sock_addr.c
+            tests/c/test_network_utility.c
+            tests/c/test_main.c
         )
 
         add_dependencies(netkit-c-tests
