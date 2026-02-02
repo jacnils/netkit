@@ -131,19 +131,19 @@ void netkit::sock::ssl_sync_sock::send(const std::string& buf) const {
     static_cast<void>(send(buf.data(), buf.size()));
 }
 
-netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds) const {
     return recv_internal(timeout_seconds, nullptr, 0);
 }
 
-netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match) const {
     return recv_internal(timeout_seconds, &match, 0);
 }
 
-netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match, size_t eof) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match, size_t eof) const {
     return recv_internal(timeout_seconds, &match, eof);
 }
 
-netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, size_t eof) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, size_t eof) const {
     return recv_internal(timeout_seconds, nullptr, eof);
 }
 
@@ -153,6 +153,10 @@ std::string netkit::sock::ssl_sync_sock::overflow_bytes() const {
 
 void netkit::sock::ssl_sync_sock::clear_overflow_bytes() const {
     overflow_.clear();
+}
+
+netkit::sock::addr netkit::sock::ssl_sync_sock::get_peer() const {
+	return underlying_sock_->get_peer();
 }
 
 void netkit::sock::ssl_sync_sock::close() {
@@ -343,7 +347,7 @@ void netkit::sock::ssl_sync_sock::drain_write_bio() const {
 void netkit::sock::ssl_sync_sock::feed_read_bio_blocking() const {
     auto res = underlying_sock_->primitive_recv();
 
-    if (res.status == sock::sock_recv_status::closed) {
+    if (res.status == sock::recv_status::closed) {
         if (!handshake_complete_) {
             throw std::runtime_error("Socket closed during TLS handshake");
         }
@@ -352,7 +356,7 @@ void netkit::sock::ssl_sync_sock::feed_read_bio_blocking() const {
         return;
     }
 
-    if (res.status != sock::sock_recv_status::success)
+    if (res.status != sock::recv_status::success)
         throw std::runtime_error("Socket read failed");
 
     if (!res.data.empty()) {
@@ -369,9 +373,9 @@ void netkit::sock::ssl_sync_sock::ensure_ready() const {
     if (!ssl_) throw std::runtime_error("SSL socket closed");
 }
 
-netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv_internal(int, const std::string* match, size_t eof) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(int, const std::string* match, size_t eof) const {
     ensure_ready();
-    sock::sock_recv_result result;
+    sock::recv_result result;
 
     if (!overflow_.empty()) {
         result.data = std::exchange(overflow_, "");
@@ -392,15 +396,15 @@ netkit::sock::sock_recv_result netkit::sock::ssl_sync_sock::recv_internal(int, c
             } else if (err == SSL_ERROR_WANT_WRITE) {
                 continue;
             } else if (err == SSL_ERROR_ZERO_RETURN) {
-                result.status = sock::sock_recv_status::closed;
+                result.status = sock::recv_status::closed;
                 break;
             } else {
-                result.status = sock::sock_recv_status::error;
+                result.status = sock::recv_status::error;
                 break;
             }
         }
 
-        if (match) {
+        if (match && !match->empty()) {
             auto pos = result.data.find(*match);
             if (pos != std::string::npos) {
                 overflow_ = result.data.substr(pos + match->size());

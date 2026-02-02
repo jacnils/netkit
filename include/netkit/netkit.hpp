@@ -22,6 +22,7 @@
 #include <netkit/network/utility.hpp>
 #include <netkit/network/local_address.hpp>
 #include <netkit/network/network_interface.hpp>
+#include <netkit/network/ip_list.hpp>
 
 // DNS headers
 #include <netkit/dns/record_type.hpp>
@@ -32,12 +33,11 @@
 #include <netkit/dns/query_builder.hpp>
 
 // Socket headers
-#include <netkit/sock/sock_addr_type.hpp>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr_type.hpp>
+#include <netkit/sock/addr.hpp>
 #include <netkit/sock/sock_peer.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
-#include <netkit/sock/ip_list.hpp>
 
 // HTTP headers
 #include <netkit/http/predefined.hpp>

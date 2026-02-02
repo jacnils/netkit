@@ -11,15 +11,14 @@
  */
 #pragma once
 
-#include <vector>
+#include <netkit/network/ip_list.hpp>
+#include <chrono>
 #include <string>
 #include <variant>
-#include <chrono>
-
-#include <netkit/sock/ip_list.hpp>
+#include <vector>
 
 namespace netkit::dns {
-    using ip_list = netkit::sock::ip_list;
+    using ip_list = netkit::network::ip_list;
 
     enum class record_type {
         A = 1,

@@ -205,8 +205,8 @@ namespace netkit::http::server {
 
                 while (chunked.find("0\r\n\r\n") == std::string::npos) {
                     auto res = client_sock->recv(5, "", 0); // no eof
-                    if (res.status == sock::sock_recv_status::closed) break;
-                    if (res.status == sock::sock_recv_status::timeout) throw socket_error("recv timeout");
+                    if (res.status == sock::recv_status::closed) break;
+                    if (res.status == sock::recv_status::timeout) throw socket_error("recv timeout");
                     if (res.data.empty()) continue;
                     chunked += res.data;
                 }
@@ -221,8 +221,8 @@ namespace netkit::http::server {
 
                 while (body.size() < content_length) {
                     auto res = client_sock->recv(30, "", 0);
-                    if (res.status == sock::sock_recv_status::closed) break;
-                    if (res.status == sock::sock_recv_status::timeout) throw socket_error("recv timeout");
+                    if (res.status == sock::recv_status::closed) break;
+                    if (res.status == sock::recv_status::timeout) throw socket_error("recv timeout");
                     if (res.data.empty()) continue;
                     body += res.data;
                 }

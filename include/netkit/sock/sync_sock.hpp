@@ -22,18 +22,18 @@
 #include <sys/socket.h>
 #endif
 
-#include <netkit/sock/sock_addr_type.hpp>
-#include <netkit/sock/sock_addr.hpp>
+#include <netkit/sock/addr.hpp>
+#include <netkit/sock/addr_type.hpp>
 #include <netkit/sock/basic_sync_sock.hpp>
 
 namespace netkit::sock {
     class NETKIT_API sync_sock : public basic_sync_sock {
-        sock_addr addr;
-        sock_type type{};
+        addr addr_;
+        type type_{};
 #ifdef NETKIT_WINDOWS
-        sock_fd_t sockfd{INVALID_SOCKET};
+        fd_t sockfd{INVALID_SOCKET};
 #else
-        sock_fd_t sockfd{-1};
+        fd_t sockfd{-1};
 #endif
         sockaddr_storage sa_storage{};
         bool bound{false};
@@ -42,7 +42,7 @@ namespace netkit::sock {
         [[nodiscard]] const sockaddr* get_sa() const;
         [[nodiscard]] socklen_t get_sa_len() const;
     	void prep_sa();
-        void set_sock_opts(sock_opt opts) const;
+        void set_sock_opts(opt opts) const;
     public:
         /**
          * @brief Constructs a sync_sock object.
@@ -51,7 +51,7 @@ namespace netkit::sock {
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
 #ifdef NETKIT_UNIX
-        sync_sock(const sock_addr& addr, sock_type t, sock_opt opts = sock_opt::no_reuse_addr|sock_opt::no_delay|sock_opt::blocking);
+        sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
         /**
          * @brief Constructs a sync_sock object from an existing file descriptor.
          * @param existing_fd The existing file descriptor.
@@ -59,14 +59,14 @@ namespace netkit::sock {
          * @param t The socket type (tcp, udp, unix).
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
-        sync_sock(int existing_fd, const sock_addr& peer, sock_type t, sock_opt opts = sock_opt::no_reuse_addr|sock_opt::no_delay|sock_opt::blocking);
+        sync_sock(int existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
 #endif
 #ifdef NETKIT_WINDOWS
-        sync_sock(const sock_addr& addr, sock_type t, sock_opt opts = sock_opt::no_reuse_addr|sock_opt::no_delay|sock_opt::blocking);
+        sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
 #endif
         ~sync_sock() override;
-        sock_addr& get_addr() override;
-        [[nodiscard]] const sock_addr& get_addr() const override;
+        sock::addr& get_addr() override;
+        [[nodiscard]] const sock::addr& get_addr() const override;
         void connect() override;
         /**
          * @brief Bind the socket to the address.
@@ -123,32 +123,32 @@ namespace netkit::sock {
          * @param eof The number of bytes to read before considering the match complete.
          * @return The received data as a sock_recv_result object.
          */
-        [[nodiscard]] sock_recv_result recv(int timeout_seconds, const std::string& match, size_t eof) override;
-        [[nodiscard]] sock_recv_result primitive_recv() override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, const std::string& match, size_t eof) override;
+        [[nodiscard]] recv_result primitive_recv() override;
 
         /* @brief Receive data from the server.
          * @param timeout_seconds The timeout in seconds (-1 means wait indefinitely).
          * @return The received data as a sock_recv_result
          */
-        [[nodiscard]] sock_recv_result recv(int timeout_seconds) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds) override;
         /**
          * @brief Receive data from the server until a specific match is found.
          * @param timeout_seconds The timeout in seconds (-1 means wait indefinitely).
          * @param match The substring to look for in received data.
          * @return The received data as a sock_recv_result object.
          */
-        [[nodiscard]] sock_recv_result recv(int timeout_seconds, const std::string& match) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, const std::string& match) override;
         /**
          * @brief Receive data from the server until a specific match is found or a certain amount of data is received.
          * @param timeout_seconds The timeout in seconds (-1 means wait indefinitely).
          * @param eof The number of bytes to read before considering the match complete.
          * @return The received data as a sock_recv_result object.
          */
-        [[nodiscard]] sock_recv_result recv(int timeout_seconds, size_t eof) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, size_t eof) override;
         /**
          * @brief Close the socket.
          */
         void close() override;
-        [[nodiscard]] sock_addr get_peer() const override;
+        [[nodiscard]] sock::addr get_peer() const override;
     };
 }

@@ -12,14 +12,14 @@
 #pragma once
 
 #include <netkit/dns/cache.hpp>
-#include <netkit/dns/record_type.hpp>
-#include <netkit/dns/query_builder.hpp>
-#include <netkit/dns/response_parser.hpp>
 #include <netkit/dns/nameserver_list.hpp>
-#include <netkit/sock/sock_addr.hpp>
-#include <netkit/sock/sock_addr_type.hpp>
-#include <netkit/sock/sync_sock.hpp>
+#include <netkit/dns/query_builder.hpp>
+#include <netkit/dns/record_type.hpp>
+#include <netkit/dns/response_parser.hpp>
 #include <netkit/network/utility.hpp>
+#include <netkit/sock/addr.hpp>
+#include <netkit/sock/addr_type.hpp>
+#include <netkit/sock/sync_sock.hpp>
 
 #ifdef NETKIT_UNIX
 #include <arpa/inet.h>
@@ -83,13 +83,13 @@ namespace netkit::dns {
 			std::vector<dns::record> all_records;
 
 			auto send_udp = [&query](const std::string &server,
-                                netkit::sock::sock_addr_type family) -> std::optional<std::vector<uint8_t> > {
-				netkit::sock::sock_addr addr(server, 53, family);
+                                netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t> > {
+				netkit::sock::addr addr(server, 53, family);
 				netkit::sock::sync_sock sock(
 					addr,
-					netkit::sock::sock_type::udp,
-					netkit::sock::sock_opt::blocking |
-					netkit::sock::sock_opt::no_delay
+					netkit::sock::type::udp,
+					netkit::sock::opt::blocking |
+					netkit::sock::opt::no_delay
 				);
 
 				sock.connect();
@@ -108,13 +108,13 @@ namespace netkit::dns {
 			};
 
 
-			auto send_tcp = [&](const std::string& server, netkit::sock::sock_addr_type family) -> std::optional<std::vector<uint8_t>> {
-				netkit::sock::sock_addr addr(server, 53, family);
+			auto send_tcp = [&](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
+				netkit::sock::addr addr(server, 53, family);
 				netkit::sock::sync_sock sock(
 					addr,
-					netkit::sock::sock_type::tcp,
-					netkit::sock::sock_opt::blocking |
-					netkit::sock::sock_opt::no_delay
+					netkit::sock::type::tcp,
+					netkit::sock::opt::blocking |
+					netkit::sock::opt::no_delay
 				);
 				sock.connect();
 
@@ -148,7 +148,7 @@ namespace netkit::dns {
 				return std::vector<uint8_t>(resp.begin(), resp.end());
 			};
 
-			auto try_server = [&](const std::string& server, netkit::sock::sock_addr_type family) -> bool {
+			auto try_server = [&](const std::string& server, netkit::sock::addr_type family) -> bool {
 				auto udp_resp = send_udp(server, family);
 				std::optional<std::vector<uint8_t>> final_resp;
 
@@ -174,7 +174,7 @@ namespace netkit::dns {
 
 			if (network::usable_ipv6_address_exists() && list.contains_ipv6()) {
 				for (const auto& s : list.get_ipv6()) {
-					if (try_server(s, netkit::sock::sock_addr_type::ipv6)) {
+					if (try_server(s, netkit::sock::addr_type::ipv6)) {
 						success = true;
 						break;
 					}
@@ -183,7 +183,7 @@ namespace netkit::dns {
 
 			if (!success && list.contains_ipv4()) {
 				for (const auto& s : list.get_ipv4()) {
-					if (try_server(s, netkit::sock::sock_addr_type::ipv4)) {
+					if (try_server(s, netkit::sock::addr_type::ipv4)) {
 						success = true;
 						break;
 					}

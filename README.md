@@ -6,7 +6,7 @@ C++23 cross-platform networking toolkit library providing safe Unix-style socket
 
 ## Features
 
-- Binding, connecting, sending, receiving and closing synchronous sockets
+- Binding, connecting, sending, receiving and closing synchronous TCP/UDP sockets
 - HTTP/1.0 and HTTP/1.1 body parser, including headers and body.
 - IPv4 and IPv6 support
 - TCP and UDP support
@@ -15,7 +15,7 @@ C++23 cross-platform networking toolkit library providing safe Unix-style socket
 - Network interface enumeration
 - Exceptions for errors
 - Inheritable classes for easy extension
-- C++23
+- Designed for C++23, with optional C bindings for use in non-C++ projects and interoperability with other programming languages entirely
 - Support for Windows, Linux, macOS and other Unix-compatible systems.
 - Permissive MIT license, allowing use in both open source and proprietary software.
 
@@ -24,7 +24,6 @@ Still missing:
 - Asynchronous I/O
 - Schannel support for Windows
 - WebSocket abstraction
-- C bindings
 
 ## Dependencies
 
@@ -61,7 +60,9 @@ target_link_libraries(netkit-example PRIVATE
 ...
 ```
 
-See `examples/` for further examples of how to use the library.
+If you wish to use the C bindings, link with `netkit::netkit-c` instead.
+
+See `examples/c/` and `examples/cpp/` for further examples of how to use the library.
 
 ## License
 

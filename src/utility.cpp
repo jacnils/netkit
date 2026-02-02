@@ -69,7 +69,7 @@ namespace netkit::utility {
             if (isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
                 ret += ch;
             } else if (ch == ' ') {
-                ret += '+';
+                ret += "%20";
             } else {
                 ret += '%';
                 ret += "0123456789ABCDEF"[ch >> 4];
