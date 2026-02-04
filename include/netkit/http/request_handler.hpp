@@ -18,6 +18,8 @@
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/network/utility.hpp>
+#include <netkit/http/predefined.hpp>
+#include <netkit/utility.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>

@@ -13,6 +13,10 @@
 #pragma once
 
 #include <thread>
+#include <functional>
+#include <netkit/except.hpp>
+#include <netkit/http/server_predefined.hpp>
+#include <netkit/http/basic_sync_server.hpp>
 #include <netkit/sock/addr.hpp>
 
 namespace netkit::http::server {
