@@ -27,6 +27,7 @@ NETKIT_C_API netkit_recv_result_t* netkit_recv_result_create(void);
 NETKIT_C_API void netkit_recv_result_destroy(netkit_recv_result_t* recv_result);
 
 NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out, int timeout_seconds, const char* match, size_t eof);
+NETKIT_C_API netkit_recv_status_t netkit_sync_sock_basic_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out);
 NETKIT_C_API void netkit_sync_sock_close(netkit_sync_sock_t* sock);
 NETKIT_C_API netkit_sock_addr_t* netkit_sync_sock_get_peer(netkit_sync_sock_t* sock);
 

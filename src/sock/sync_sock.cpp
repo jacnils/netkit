@@ -514,7 +514,7 @@ netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_second
     }
 }
 
-netkit::sock::recv_result netkit::sock::sync_sock::primitive_recv() {
+netkit::sock::recv_result netkit::sock::sync_sock::recv() {
     for (;;) {
         char buf[8192];
         ssize_t n = ::recv(this->sockfd, buf, sizeof(buf), 0);

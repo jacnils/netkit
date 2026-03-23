@@ -124,7 +124,12 @@ namespace netkit::sock {
          * @return The received data as a sock_recv_result object.
          */
         [[nodiscard]] recv_result recv(int timeout_seconds, const std::string& match, size_t eof) override;
-        [[nodiscard]] recv_result primitive_recv() override;
+        /**
+         * @brief Receive data from the server.
+         * @note This is a recv() implementation that behaves like a Unix recv() call would.
+         * @return The received data as a sock_recv_result object.
+         */
+        [[nodiscard]] recv_result recv() override;
 
         /* @brief Receive data from the server.
          * @param timeout_seconds The timeout in seconds (-1 means wait indefinitely).

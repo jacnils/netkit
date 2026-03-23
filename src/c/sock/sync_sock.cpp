@@ -304,6 +304,38 @@ extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_s
 	}
 }
 
+extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_basic_recv(netkit_sync_sock_t* sock, netkit_recv_result_t* out) {
+	if (!sock || !out) {
+		return RECV_ERROR;
+	}
+
+	try {
+		auto ret = sock->impl->recv();
+		delete[] out->data;
+
+		out->size = ret.data.size();
+		out->data = new char[out->size + 1];
+
+		std::memcpy(out->data, ret.data.data(), out->size);
+		out->data[out->size] = '\0';
+
+		switch (ret.status) {
+			case netkit::sock::recv_status::success:
+				return RECV_SUCCESS;
+			case netkit::sock::recv_status::timeout:
+				return RECV_TIMEOUT;
+			case netkit::sock::recv_status::closed:
+				return RECV_CLOSED;
+			default:
+				return RECV_ERROR;
+		}
+	} catch (const std::exception& e) {
+		return RECV_ERROR;
+	} catch (...) {
+		return RECV_ERROR;
+	}
+}
+
 extern "C" NETKIT_C_API void netkit_sync_sock_close(netkit_sync_sock_t* sock) {
 	if (!sock) {
 		return;

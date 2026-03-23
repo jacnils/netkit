@@ -37,7 +37,7 @@ namespace netkit::sock {
         [[nodiscard]] virtual recv_result recv(int timeout_seconds, const std::string& match) = 0;
         [[nodiscard]] virtual recv_result recv(int timeout_seconds, const std::string& match, size_t eof) = 0;
         [[nodiscard]] virtual recv_result recv(int timeout_seconds, size_t eof) = 0;
-        [[nodiscard]] virtual recv_result primitive_recv() = 0;
+        [[nodiscard]] virtual recv_result recv() = 0;
         [[nodiscard]] virtual std::string overflow_bytes() const = 0;
         virtual addr& get_addr() = 0;
         [[nodiscard]] virtual const addr& get_addr() const = 0;
