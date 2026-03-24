@@ -619,7 +619,7 @@ netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_second
     }
 }
 
-netkit::sock::recv_result netkit::sock::sync_sock::primitive_recv() {
+netkit::sock::recv_result netkit::sock::sync_sock::recv() {
     constexpr size_t buffer_size = 8192;
     char buf[buffer_size];
 
