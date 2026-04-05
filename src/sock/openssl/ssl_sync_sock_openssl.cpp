@@ -345,7 +345,7 @@ void netkit::sock::ssl_sync_sock::drain_write_bio() const {
 }
 
 void netkit::sock::ssl_sync_sock::feed_read_bio_blocking() const {
-    auto res = underlying_sock_->primitive_recv();
+    auto res = underlying_sock_->recv();
 
     if (res.status == sock::recv_status::closed) {
         if (!handshake_complete_) {
