@@ -180,9 +180,11 @@ void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
 netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr_(addr), type_(t) {
     this->sockfd = -1;
 
-    if (addr.get_ip().empty() && !addr.is_file_path()) {
-        throw socket_error("IP address/file path is empty");
-    }
+	if (!addr.is_file_path()) {
+		if (addr.get_ip().empty()) {
+			throw socket_error("IP address/file path is empty");
+		}
+	}
 
     if (t != type::unix) {
         this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
@@ -362,6 +364,10 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::sync_sock::accept()
     if (client_sockfd < 0) {
         throw socket_error("failed to accept connection: " + std::string(strerror(errno)));
     }
+
+	if (this->type_ == type::unix) {
+		return std::make_unique<sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
+	}
 
     auto peer = sock::get_peer(client_sockfd);
 
