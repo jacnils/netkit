@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <set>
 #include <unordered_set>
+#include <thread>
 
 TEST_CASE("Ensure addr works", "[sock_addr]") {
 	netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
@@ -128,4 +129,47 @@ TEST_CASE("Ensure general utility functions work", "[utility]") {
 	REQUIRE(tokens[4] == "five");
 	std::string joined = netkit::utility::join(tokens, ",");
 	REQUIRE(joined == to_split);
+}
+
+TEST_CASE("Ensure basic sockets work", "[socket]") {
+	std::thread t([]() {
+		netkit::sock::addr addr("127.0.0.1", 1337, netkit::sock::addr_type::ipv4);
+		netkit::sock::sync_sock sock(addr, netkit::sock::type::tcp);
+
+		sock.bind();
+		sock.listen();
+
+		while (true) {
+			auto result = sock.recv(-1);
+			if (result.status != netkit::sock::recv_status::success) {
+				return;
+			}
+
+			if (result.status == netkit::sock::recv_status::success) {
+				std::string data = result.data;
+				REQUIRE(data == "Hello, World!");
+				sock.send("Hello, World!");
+			}
+		}
+
+		sock.unbind();
+	});
+	t.detach();
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+	netkit::sock::addr addr("127.0.0.1", 1337, netkit::sock::addr_type::ipv4);
+	netkit::sock::sync_sock sock(addr, netkit::sock::type::tcp);
+
+	sock.connect();
+	sock.send("Hello, World!");
+	auto result = sock.recv(-1);
+	if (result.status == netkit::sock::recv_status::success) {
+		std::string data = result.data;
+		REQUIRE(data == "Hello, World!");
+	} else {
+		REQUIRE(false); // fail the test if we didn't receive a response
+	}
+
+	t.join();
 }

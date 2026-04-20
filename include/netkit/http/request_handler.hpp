@@ -423,6 +423,9 @@ namespace netkit::http::server {
                 }
 
                 for (const auto& it : response.headers) {
+                    if (it.name == "Content-Length") {
+                        continue;
+                    }
                     net_response << it.name << ": " << it.data << "\r\n";
                 }
 

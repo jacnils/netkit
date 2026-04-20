@@ -39,9 +39,9 @@ netkit::sock::addr netkit::sock::get_peer(fd_t sockfd) {
         inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
         port = ntohs(addr_in->sin_port);
     } else if (addr_storage.ss_family == AF_INET6) {
-        auto* addr_in6 = reinterpret_cast<sockaddr_in6*>(&addr_storage);
-        inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
-        port = ntohs(addr_in6->sin6_port);
+	    auto* addr_in6 = reinterpret_cast<sockaddr_in6*>(&addr_storage);
+    	inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
+    	port = ntohs(addr_in6->sin6_port);
     } else {
         throw ip_error("unsupported address family");
     }
