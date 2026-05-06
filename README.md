@@ -4,6 +4,8 @@
 
 C++23 cross-platform networking toolkit library providing safe Unix-style sockets and protocol abstractions.
 
+Please note, this library is still work in progress. Usage is not recommended yet, aside from tests. Contributions and bug reports are much appreciated!
+
 ## Features
 
 - Binding, connecting, sending, receiving and closing synchronous TCP/UDP sockets
