@@ -186,7 +186,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opt
 		}
 	}
 
-    if (t != type::unix) {
+    if (t != type::uds) {
         this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
                                                           t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
     } else {
@@ -230,7 +230,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt 
     int sock_type = SOCK_STREAM;
     int protocol = 0;
 
-    if (t != type::unix) {
+    if (t != type::uds) {
         domain = this->addr_.is_ipv6() ? AF_INET6 : AF_INET;
         sock_type = (t == type::tcp) ? SOCK_STREAM : SOCK_DGRAM;
         protocol = (t == type::tcp) ? IPPROTO_TCP : IPPROTO_UDP;
@@ -365,7 +365,7 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::sync_sock::accept()
         throw socket_error("failed to accept connection: " + std::string(strerror(errno)));
     }
 
-	if (this->type_ == type::unix) {
+	if (this->type_ == type::uds) {
 		return std::make_unique<sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
 	}
 
