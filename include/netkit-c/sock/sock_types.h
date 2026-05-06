@@ -17,7 +17,7 @@ typedef enum netkit_sock_type {
 	SOCK_NONE,
 	SOCK_TCP,
 	SOCK_UDP,
-	SOCK_UNIX
+	SOCK_UDS
 } netkit_sock_type_t;
 
 typedef enum netkit_sock_status {
