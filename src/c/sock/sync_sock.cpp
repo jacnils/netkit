@@ -12,8 +12,8 @@ struct netkit_sync_sock {
 		switch (type) {
 			case SOCK_UDP:
 				return netkit::sock::type::udp;
-			case SOCK_UNIX:
-				return netkit::sock::type::unix;
+			case SOCK_UDS:
+				return netkit::sock::type::uds;
 			default:
 				return netkit::sock::type::tcp;
 		}
