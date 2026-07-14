@@ -11,10 +11,11 @@
  */
 #pragma once
 
+#include <netkit/http/multipart_part.hpp>
+
 #include <functional>
-#include <unordered_map>
 #include <string>
-#include <cstdint>
+#include <unordered_map>
 
 namespace netkit::http::server {
     /**
@@ -81,6 +82,7 @@ namespace netkit::http::server {
         std::unordered_map<std::string, std::string> session{};
         std::string session_id{};
         std::unordered_map<std::string, std::string> fields{};
+    	std::vector<multipart_part> multipart{};
     };
 
     /**
