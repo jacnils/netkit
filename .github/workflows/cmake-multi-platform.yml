@@ -33,7 +33,7 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             sudo apt update
-            sudo apt install -y libssl-dev
+            sudo apt install -y libssl-dev libwolfssl-dev
             echo "CMAKE_PREFIX_PATH=/usr" >> $GITHUB_ENV
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             brew update

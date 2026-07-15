@@ -86,7 +86,22 @@ if (NETKIT_ENABLE_OPENSSL)
         message(FATAL_ERROR "OpenSSL requested but not found.")
     endif()
 elseif (NETKIT_ENABLE_WOLFSSL)
-    find_package(wolfSSL REQUIRED)
+    find_package(wolfSSL)
+
+    if (NOT wolfSSL_FOUND)
+        message(STATUS "wolfSSL not found. You can install it via system package manager or vcpkg.")
+
+        if (DEFINED ENV{VCPKG_ROOT})
+            set(CMAKE_TOOLCHAIN_FILE
+                    "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                    CACHE STRING ""
+            )
+            find_package(wolfSSL REQUIRED)
+        else()
+            message(STATUS "Not using VCPKG")
+        endif()
+    endif()
+
     target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
     target_link_libraries(netkit PUBLIC wolfssl)
 
