@@ -14,9 +14,7 @@
 #pragma comment(lib, "crypt32.lib")
 
 #ifdef NETKIT_WINDOWS
-#ifdef NETKIT_OPENSSL
-
-#include <openssl/ssl.h>
+#if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
 
 bool netkit::crypto::windows::is_outdated(const std::wstring& path) {
     WIN32_FILE_ATTRIBUTE_DATA data;

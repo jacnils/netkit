@@ -38,6 +38,7 @@
 #include <netkit/sock/sock_peer.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
+#include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
 
 // HTTP headers
 #include <netkit/http/predefined.hpp>
@@ -50,5 +51,6 @@
 #include <netkit/http/basic_sync_server.hpp>
 #include <netkit/http/sync_server.hpp>
 #include <netkit/http/sync_client.hpp>
+#include <netkit/http/multipart_part.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

@@ -11,6 +11,7 @@
  */
 #include <netkit/http/sync_client.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
+#include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
 #include <netkit/utility.hpp>
 #include <netkit/except.hpp>
 #include <netkit/network/utility.hpp>
@@ -19,7 +20,7 @@ std::string netkit::http::client::sync_client::make_request(const std::string& r
     sock::addr addr(hostname, port, sock::addr_type::hostname);
 
     std::optional<variant_sock> sock{std::nullopt};
-#ifdef NETKIT_OPENSSL
+#if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
     if (port == 443) {
         auto tcp_sock = std::make_unique<netkit::sock::sync_sock>(addr, netkit::sock::type::tcp);
         sock.emplace(std::in_place_type<netkit::sock::ssl_sync_sock>,

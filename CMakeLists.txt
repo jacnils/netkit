@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 project(netkit LANGUAGES C CXX)
 
-option(NETKIT_ENABLE_OPENSSL "Enable OpenSSL support in netkit" ON)
+option(NETKIT_ENABLE_OPENSSL "Enable OpenSSL support in netkit" OFF)
+option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" ON)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
 option(NETKIT_ENABLE_C_TESTS "Enable C building tests" ON)
@@ -32,6 +33,7 @@ add_library(netkit SHARED
         src/sock/sync_sock.cpp
         src/dns/cache.cpp
         src/sock/openssl/ssl_sync_sock_openssl.cpp
+        src/sock/wolfssl/ssl_sync_sock_wolfssl.cpp
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
@@ -53,6 +55,11 @@ target_include_directories(netkit
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+
+if (NETKIT_ENABLE_OPENSSL AND NETKIT_ENABLE_WOLFSSL)
+    message(STATUS "NETKIT_ENABLE_WOLFSSL AND NETKIT_ENABLE_OPENSSL cannot be used simultaneously.")
+    set(NETKIT_ENABLE_OPENSSL Off)
+endif()
 
 if (NETKIT_ENABLE_OPENSSL)
     find_package(OpenSSL)
@@ -78,6 +85,12 @@ if (NETKIT_ENABLE_OPENSSL)
     else()
         message(FATAL_ERROR "OpenSSL requested but not found.")
     endif()
+elseif (NETKIT_ENABLE_WOLFSSL)
+    find_package(wolfSSL REQUIRED)
+    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
+    target_link_libraries(netkit PUBLIC wolfssl)
+
+    message(STATUS "WolfSSL enabled in netkit")
 endif()
 
 if (WIN32)

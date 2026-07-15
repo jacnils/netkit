@@ -686,3 +686,6 @@ void netkit::sock::sync_sock::close() {
 [[nodiscard]] netkit::sock::addr netkit::sock::sync_sock::get_peer() const {
     return netkit::sock::get_peer(this->sockfd);
 }
+netkit::sock::fd_t netkit::sock::sync_sock::native_handle() const {
+	return this->sockfd;
+}

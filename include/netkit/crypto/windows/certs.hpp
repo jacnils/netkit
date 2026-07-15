@@ -17,10 +17,9 @@
 #include <netkit/definitions.hpp>
 
 #ifdef NETKIT_WINDOWS
-#ifdef NETKIT_OPENSSL
+#if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
 
 #include <string>
-#include <openssl/types.h>
 
 namespace netkit::crypto::windows {
     bool is_outdated(const std::wstring& path);

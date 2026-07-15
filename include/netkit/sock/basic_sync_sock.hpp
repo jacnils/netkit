@@ -16,15 +16,14 @@
 #include <netkit/sock/addr_type.hpp>
 
 namespace netkit::sock {
-    /**
-     * @brief A class that represents a synchronous socket.
-     * @note This class is an abstract base class and should not be instantiated directly.
-     * @note Use the sync_sock class instead.
-     */
+	/**
+	* @brief A class that represents a synchronous socket.
+	* @note This class is an abstract base class and should not be instantiated directly.
+	* @note Use the sync_sock class instead.
+	*/
     class NETKIT_API basic_sync_sock {
     public:
         virtual ~basic_sync_sock() = default;
-
         virtual void connect() = 0;
         virtual void bind() = 0;
         virtual void unbind() = 0;
@@ -44,5 +43,6 @@ namespace netkit::sock {
         virtual void clear_overflow_bytes() const = 0;
         virtual void close() = 0;
         [[nodiscard]] virtual addr get_peer() const = 0;
+    	[[nodiscard]] virtual fd_t native_handle() const = 0;
     };
 }

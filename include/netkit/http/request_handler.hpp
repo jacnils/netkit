@@ -18,6 +18,7 @@
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/network/utility.hpp>
+#include <netkit/http/multipart_part.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/utility.hpp>
 
@@ -133,6 +134,112 @@ namespace netkit::http::server {
             }
             return line;
         }
+
+    	static std::string extract_boundary(const std::string& content_type) { // takes in Content-Disposition
+        	const std::string key = "boundary=";
+        	auto pos = content_type.find(key);
+        	if (pos == std::string::npos) return "";
+
+        	std::string boundary = content_type.substr(pos + key.size());
+
+        	if (!boundary.empty() && boundary.front() == '"')
+        		boundary = boundary.substr(1, boundary.size() - 2);
+
+        	return boundary;
+        }
+
+    	static std::vector<multipart_part>
+		parse_multipart_form_data(const char* body, std::size_t size,
+								  const std::string& content_type) {
+			std::vector<multipart_part> parts;
+
+			std::string boundary = extract_boundary(content_type);
+			if (boundary.empty())
+				return parts;
+
+			std::string full_boundary = "--" + boundary;
+			std::string end_boundary  = full_boundary + "--";
+
+			const char* ptr = body;
+			const char* end = body + size;
+
+			auto find_boundary = [&](const char* start) -> const char* {
+				return std::search(start, end, full_boundary.begin(), full_boundary.end());
+			};
+
+			const char* cur = find_boundary(ptr);
+			if (cur == end)
+				return parts;
+
+			cur += full_boundary.size();
+
+			while (cur < end) {
+				if (cur + 2 <= end && cur[0] == '\r' && cur[1] == '\n')
+					cur += 2;
+
+				if (std::search(cur, end, end_boundary.begin(), end_boundary.end()) == cur)
+					break;
+
+				const char* header_end = std::search(cur, end, "\r\n\r\n", "\r\n\r\n" + 4);
+				if (header_end == end)
+					break;
+
+				std::string headers_block(cur, header_end);
+				cur = header_end + 4;
+
+				multipart_part part;
+
+				std::istringstream stream(headers_block);
+				std::string		   line;
+
+				while (std::getline(stream, line)) {
+					if (!line.empty() && line.back() == '\r')
+						line.pop_back();
+
+					if (line.starts_with("Content-Disposition:")) {
+						auto name_pos = line.find("name=\"");
+						if (name_pos != std::string::npos) {
+							name_pos += 6;
+							auto end_pos = line.find('"', name_pos);
+							part.name	 = line.substr(name_pos, end_pos - name_pos);
+						}
+
+						auto file_pos = line.find("filename=\"");
+						if (file_pos != std::string::npos) {
+							file_pos += 10;
+							auto end_pos  = line.find('"', file_pos);
+							part.filename = line.substr(file_pos, end_pos - file_pos);
+						}
+					}
+
+					if (line.starts_with("Content-Type:")) {
+						part.content_type = line.substr(13);
+						if (!part.content_type.empty() && part.content_type[0] == ' ')
+							part.content_type.erase(0, 1);
+					}
+				}
+
+				const char* next_boundary = find_boundary(cur);
+				if (next_boundary == end)
+					break;
+
+				const char* data_end = next_boundary;
+				if (data_end - body >= 2 &&
+					data_end[-2] == '\r' &&
+					data_end[-1] == '\n')
+				{
+					data_end -= 2;
+				}
+
+				part.data.assign(cur, data_end);
+
+				parts.push_back(std::move(part));
+
+				cur = next_boundary + full_boundary.size();
+			}
+
+			return parts;
+		}
     public:
         void handle(std::unique_ptr<sock::basic_sync_sock>& client_sock, server_settings& settings, const request_callback& callback) const override {
             if (!client_sock) {
@@ -286,8 +393,7 @@ namespace netkit::http::server {
                     req.endpoint = full_path;
                 }
 
-                req.fields = netkit::utility::parse_fields(req.body);
-                for (const auto& it : headers_vec) {
+            	for (const auto& it : headers_vec) {
                     if (it.first == "Content-Type") {
                         req.content_type = it.second;
                     } else if (it.first == "User-Agent") {
@@ -296,6 +402,16 @@ namespace netkit::http::server {
                         req.cookies = get_cookies_from_request(it.second);
                     }
                 }
+
+            	if (req.content_type.starts_with("multipart/form-data")) {
+            		req.multipart = parse_multipart_form_data(
+						req.body.data(),
+						req.body.size(),
+						req.content_type
+					);
+            	} else {
+            		req.fields = netkit::utility::parse_fields(req.body);
+            	}
 
                 std::string session_id{};
                 bool session_id_found = false;

@@ -40,8 +40,10 @@ namespace netkit::http::client {
 
 #ifdef NETKIT_OPENSSL
         using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
+#elifdef NETKIT_WOLFSSL
+    	using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
 #else
-        using variant_sock = std::variant<network::sock::sync_sock>;
+        using variant_sock = std::variant<netkit::sock::sync_sock>;
 #endif
         [[nodiscard]] std::string make_request(const std::string& request) const;
     public:
