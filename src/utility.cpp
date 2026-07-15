@@ -327,7 +327,7 @@ namespace netkit::utility {
             base_path = std::filesystem::temp_directory_path();  // fallback
         }
 #else
-#error "Unsupported platform for DNS cache location; write your own derivitive class"
+		return "";
 #endif
         std::filesystem::create_directories(base_path);
         return (base_path / cache_filename).string();

@@ -11,10 +11,10 @@
  */
 #ifdef NETKIT_WOLFSSL
 #include <iostream>
+#include <netkit/crypto/windows/certs.hpp>
 #include <netkit/except.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
-#include <netkit/crypto/windows/certs.hpp>
 #include <thread>
 
 #ifdef NETKIT_WINDOWS
@@ -247,6 +247,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 
 	bool loaded_ca = false;
 
+#ifndef NETKIT_DKP
 	if (!ca_path_.empty()) {
 		loaded_ca = wolfSSL_CTX_load_verify_locations(
 			ctx_,
@@ -294,22 +295,25 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 		loaded_ca =
 			wolfSSL_CTX_load_system_CA_certs(ctx_) == SSL_SUCCESS;
 	}
+#endif
 
-	if (!loaded_ca && verification_ == verification::peer) {
+	if (!loaded_ca && verification_ == verification::peer && this->ssl_mode_ == mode::client) {
 		throw std::runtime_error(
 			"No trusted CA certificates available"
 		);
 	}
 
-	if (!cert_path_.empty()) {
+#ifndef NETKIT_DKP
+	if (!cert_path_.empty() && this->ssl_mode_ == mode::server) {
 		if (wolfSSL_CTX_use_certificate_file(ctx_, cert_path_.c_str(), SSL_FILETYPE_PEM) != SSL_SUCCESS)
 			throw_ssl_error("Failed to load cert");
 	}
 
-	if (!key_path_.empty()) {
+	if (!key_path_.empty() && this->ssl_mode_ == mode::server) {
 		if (wolfSSL_CTX_use_PrivateKey_file(ctx_, key_path_.c_str(), SSL_FILETYPE_PEM) != SSL_SUCCESS)
 			throw_ssl_error("Failed to load key");
 	}
+#endif
 }
 
 void netkit::sock::ssl_sync_sock::create_ssl_object() {

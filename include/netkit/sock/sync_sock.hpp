@@ -43,6 +43,11 @@ namespace netkit::sock {
         [[nodiscard]] socklen_t get_sa_len() const;
     	void prep_sa();
         void set_sock_opts(opt opts) const;
+
+#ifdef NETKIT_DKP
+    	sockaddr_storage peer_addr{};
+    	bool has_peer{false};
+#endif
     public:
         /**
          * @brief Constructs a sync_sock object.

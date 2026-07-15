@@ -7,6 +7,10 @@ option(NETKIT_ENABLE_TESTS "Enable building tests" ON)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
 option(NETKIT_ENABLE_C_TESTS "Enable C building tests" ON)
 
+if (DEVKITPRO)
+    set(NETKIT_ENABLE_OPENSSL OFF)
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -37,6 +41,7 @@ add_library(netkit SHARED
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
+        src/dkp/dkp_boilerplate.cpp
 )
 
 set_target_properties(netkit PROPERTIES
@@ -86,24 +91,45 @@ if (NETKIT_ENABLE_OPENSSL)
         message(FATAL_ERROR "OpenSSL requested but not found.")
     endif()
 elseif (NETKIT_ENABLE_WOLFSSL)
-    find_package(wolfSSL)
+    find_package(wolfSSL QUIET)
 
     if (NOT wolfSSL_FOUND)
-        message(STATUS "wolfSSL not found. You can install it via system package manager or vcpkg.")
+        message(STATUS "wolfSSL not found. Building from source...")
 
-        if (DEFINED ENV{VCPKG_ROOT})
-            set(CMAKE_TOOLCHAIN_FILE
-                    "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-                    CACHE STRING ""
+        include(FetchContent)
+
+        if (DEVKITPRO)
+            add_compile_definitions(NO_WRITEV)
+            add_compile_definitions(SIZEOF_LONG=4
+                  SIZEOF_LONG_LONG=8
             )
-            find_package(wolfSSL REQUIRED)
-        else()
-            message(STATUS "Not using VCPKG")
         endif()
+
+        FetchContent_Declare(
+                wolfssl
+                GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
+                GIT_TAG v5.9.2-stable
+        )
+
+        if (DEVKITPRO)
+            set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_CURL OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_SYSTEM_CA_CERTS OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_OCSP OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_FILESYSTEM OFF CACHE BOOL "" FORCE)
+            set(WOLFSSL_SNI ON CACHE BOOL "" FORCE)
+        endif()
+
+        FetchContent_MakeAvailable(wolfssl)
+
+        set(WOLFSSL_TARGET wolfssl)
+    else()
+        set(WOLFSSL_TARGET wolfssl)
     endif()
 
     target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
-    target_link_libraries(netkit PUBLIC wolfssl)
+    target_link_libraries(netkit PUBLIC ${WOLFSSL_TARGET})
 
     message(STATUS "WolfSSL enabled in netkit")
 endif()
@@ -118,6 +144,7 @@ elseif (APPLE)
             "-framework SystemConfiguration"
             "-framework CoreFoundation"
     )
+elseif (DEVKITPRO)
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/

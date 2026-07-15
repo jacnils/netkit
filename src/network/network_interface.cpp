@@ -25,7 +25,11 @@
 #include <unordered_set>
 #endif
 #ifdef NETKIT_UNIX
+#ifndef NETKIT_DKP
 #include <ifaddrs.h>
+#else
+#include <network.h>
+#endif
 #include <net/if.h>
 #include <arpa/inet.h>
 #endif
@@ -86,7 +90,7 @@ void netkit::network::network_interface::set_ipv6_addrs(const std::vector<local_
     this->ipv6 = ipv6_addrs;
 }
 
-#ifdef NETKIT_UNIX
+#if defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
 std::vector<netkit::network::network_interface> netkit::network::get_interfaces() {
     std::vector<netkit::network::network_interface> list;
 
@@ -181,6 +185,40 @@ std::vector<netkit::network::network_interface> netkit::network::get_interfaces(
     }
 
     return list;
+}
+#elif defined(NETKIT_DKP) // this function is a hack and i fucking despise it
+std::vector<netkit::network::network_interface>
+netkit::network::get_interfaces() {
+	std::vector<network_interface> list;
+
+	char ip[16]{};
+	char netmask[16]{};
+	char gateway[16]{};
+
+	if (if_config(ip, netmask, gateway, true, 10) < 0) {
+		throw ip_error{"if_config() failed"};
+	}
+
+	network_interface iface;
+	iface.name = "wii0";
+	iface.up = true;
+	iface.running = true;
+	iface.broadcast = true;
+	iface.point_to_point = false;
+
+	local_ip_address_v4 addr{
+		ip,
+		netmask,
+		"",
+		"",
+		false,
+		true
+	};
+
+	iface.ipv4.emplace_back(std::move(addr));
+
+	list.emplace_back(std::move(iface));
+	return list;
 }
 #endif
 #ifdef NETKIT_WINDOWS

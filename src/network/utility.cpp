@@ -18,6 +18,9 @@
 #include <ws2tcpip.h>
 #elif NETKIT_UNIX
 #include <arpa/inet.h>
+#ifdef NETKIT_DKP
+#include <sys/socket.h>
+#endif
 #endif
 
 bool netkit::network::is_ipv4(const std::string& ip) {
@@ -35,6 +38,9 @@ bool netkit::network::is_valid_port(int port) {
 }
 
 bool netkit::network::usable_ipv6_address_exists() {
+#ifdef NETKIT_DKP
+	return false;
+#else
     static auto interfaces = get_interfaces();
 
     for (const auto& iface : interfaces) {
@@ -53,4 +59,5 @@ bool netkit::network::usable_ipv6_address_exists() {
     }
 
     return false;
+#endif
 }

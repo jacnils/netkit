@@ -22,6 +22,9 @@
 #ifdef NETKIT_WINDOWS
 #include <ws2tcpip.h>
 #endif
+#ifdef NETKIT_DKP
+#include <sys/socket.h>
+#endif
 
 uint16_t netkit::dns::response_parser::read_uint16() {
     uint16_t val = (data[offset] << 8) | data[offset + 1];

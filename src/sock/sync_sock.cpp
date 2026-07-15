@@ -20,7 +20,11 @@
 #include <afunix.h>
 #elif NETKIT_UNIX
 #include <sys/socket.h>
+#ifndef NETKIT_DKP
 #include <sys/un.h>
+#else
+#include <network.h>
+#endif
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -28,6 +32,46 @@
 #endif
 
 #include <chrono>
+#include <unordered_map>
+
+#ifdef NETKIT_DKP
+#define NETKIT_SELECT ::net_select
+#else
+#define NETKIT_SELECT select
+#endif
+
+#ifndef NETKIT_DKP
+static netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
+	sockaddr_storage addr_storage{};
+	socklen_t addr_len = sizeof(addr_storage);
+
+	if (getpeername(sockfd, reinterpret_cast<sockaddr*>(&addr_storage), &addr_len) < 0) {
+		throw netkit::socket_error("getpeername() failed: " + std::string(strerror(errno)));
+	}
+
+	char ip_str[INET6_ADDRSTRLEN] = {0};
+	uint16_t port = 0;
+
+	if (addr_storage.ss_family == AF_INET) {
+		auto* addr_in = reinterpret_cast<sockaddr_in*>(&addr_storage);
+		inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
+		port = ntohs(addr_in->sin_port);
+	} else if (addr_storage.ss_family == AF_INET6) {
+		auto* addr_in6 = reinterpret_cast<sockaddr_in6*>(&addr_storage);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
+		port = ntohs(addr_in6->sin6_port);
+	} else {
+		throw netkit::ip_error("unsupported address family");
+	}
+
+	netkit::sock::addr addr{};
+	addr.ip = ip_str;
+	addr.port = port;
+	addr.type = (addr_storage.ss_family == AF_INET) ? netkit::sock::addr_type::ipv4 : netkit::sock::addr_type::ipv6;
+
+	return addr;
+}
+#endif
 
 const sockaddr* netkit::sock::sync_sock::get_sa() const {
     return reinterpret_cast<const sockaddr*>(&sa_storage);
@@ -36,10 +80,12 @@ const sockaddr* netkit::sock::sync_sock::get_sa() const {
 socklen_t netkit::sock::sync_sock::get_sa_len() const {
     if (addr_.is_ipv4()) return sizeof(sockaddr_in);
     if (addr_.is_ipv6()) return sizeof(sockaddr_in6);
+#ifndef NETKIT_DKP
     if (addr_.is_file_path()) {
         const auto& path = addr_.get_path();
         return static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + path.string().size() + 1);
     }
+#endif
 
     throw netkit::socket_error("invalid address type");
 }
@@ -75,6 +121,7 @@ void netkit::sock::sync_sock::prep_sa() {
 		if (scope != 0) {
 			sa6->sin6_scope_id = scope;
 		}
+#ifndef NETKIT_DKP
 	} else if (addr_.is_file_path()) {
 		auto* sa_un = reinterpret_cast<sockaddr_un*>(&sa_storage);
 		sa_un->sun_family = AF_UNIX;
@@ -83,6 +130,7 @@ void netkit::sock::sync_sock::prep_sa() {
 			throw socket_error("UNIX socket path too long");
 		}
 		std::memcpy(sa_un->sun_path, path.c_str(), path.size() + 1);
+#endif
 	} else {
 		throw ip_error("invalid address type");
 	}
@@ -283,6 +331,11 @@ void netkit::sock::sync_sock::connect() {
     if (::connect(this->sockfd, this->get_sa(), this->get_sa_len()) < 0) {
         throw netkit::socket_error("failed to connect to server");
     }
+
+#ifdef NETKIT_DKP
+	std::memcpy(&this->peer_addr, this->get_sa(), this->get_sa_len());
+	this->has_peer = true;
+#endif
 }
 #endif
 #ifdef NETKIT_WINDOWS
@@ -365,13 +418,40 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::sync_sock::accept()
         throw socket_error("failed to accept connection: " + std::string(strerror(errno)));
     }
 
+#ifndef NETKIT_DKP
 	if (this->type_ == type::uds) {
 		return std::make_unique<sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
 	}
 
-    auto peer = sock::get_peer(client_sockfd);
+	auto peer = sock::get_peer(client_sockfd);
+	return std::make_unique<sync_sock>(client_sockfd, peer, this->type_);
+#else // fuck this code
+	char ip_str[INET6_ADDRSTRLEN]{};
+	uint16_t port = 0;
 
-    return std::make_unique<sync_sock>(client_sockfd, peer, this->type_);
+	if (client_addr.ss_family == AF_INET) {
+		auto* addr_in = reinterpret_cast<sockaddr_in*>(&client_addr);
+		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
+		port = ntohs(addr_in->sin_port);
+	} else {
+		throw ip_error("unsupported address family");
+	}
+
+	sock::addr peer{
+		ip_str,
+		port,
+		addr_type::ipv4
+	};
+
+	auto sock_ptr = std::make_unique<sync_sock>(client_sockfd, peer, this->type_);
+
+	std::memcpy(&sock_ptr->peer_addr, &client_addr, addr_len);
+	sock_ptr->has_peer = true;
+
+	return sock_ptr;
+
+#endif
+
 }
 #endif
 #ifdef NETKIT_WINDOWS
@@ -478,8 +558,9 @@ netkit::sock::recv_result netkit::sock::sync_sock::recv(const int timeout_second
         FD_ZERO(&readfds);
         FD_SET(this->sockfd, &readfds);
 
+
         if (this->sockfd < 0) throw socket_error("invalid socket descriptor");
-        int ret = ::select(this->sockfd + 1, &readfds, nullptr, nullptr,
+        int ret = NETKIT_SELECT(this->sockfd + 1, &readfds, nullptr, nullptr,
                                                timeout_seconds == -1 ? nullptr : &tv);
         if (ret < 0) throw socket_error("select() failed");
         if (ret == 0) return {data, recv_status::timeout};
@@ -684,7 +765,29 @@ void netkit::sock::sync_sock::close() {
 }
 #endif
 [[nodiscard]] netkit::sock::addr netkit::sock::sync_sock::get_peer() const {
-    return netkit::sock::get_peer(this->sockfd);
+#ifdef NETKIT_DKP
+	if (!this->has_peer) {
+		throw netkit::socket_error("peer not known");
+	}
+
+	char ip_str[INET6_ADDRSTRLEN]{};
+	uint16_t port = 0;
+
+	if (this->peer_addr.ss_family == AF_INET) {
+		auto* addr_in = (sockaddr_in*)&this->peer_addr;
+		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
+		port = ntohs(addr_in->sin_port);
+	} else {
+		throw netkit::ip_error("unsupported address family (Wii = IPv4 only)");
+	}
+
+	return netkit::sock::addr{
+		ip_str,
+		port, netkit::sock::addr_type::ipv4
+	};
+#else
+    return get_peer(this->sockfd);
+#endif
 }
 netkit::sock::fd_t netkit::sock::sync_sock::native_handle() const {
 	return this->sockfd;

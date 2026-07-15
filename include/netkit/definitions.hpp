@@ -21,6 +21,11 @@
 #define NETKIT_WINDOWS 1
 #endif
 
+#ifdef __DEVKITPPC__
+#define NETKIT_UNIX 1
+#define NETKIT_DKP 1
+#endif
+
 #ifndef NETKIT_FALLBACK_IPV4_DNS_1
 #define NETKIT_FALLBACK_IPV4_DNS_1 "8.8.8.8"
 #endif
