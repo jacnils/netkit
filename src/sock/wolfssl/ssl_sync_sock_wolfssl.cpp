@@ -164,7 +164,7 @@ void netkit::sock::ssl_sync_sock::perform_handshake()
 		underlying_sock_->native_handle()
 	);
 
-	if (r != SSL_SUCCESS)
+	if (r != WOLFSSL_SUCCESS)
 		throw std::runtime_error("set_fd failed");
 
 	int ret;
@@ -174,7 +174,7 @@ void netkit::sock::ssl_sync_sock::perform_handshake()
 	else
 		ret = wolfSSL_accept(ssl_);
 
-	if (ret != SSL_SUCCESS)
+	if (ret != WOLFSSL_SUCCESS)
 	{
 		int err = wolfSSL_get_error(ssl_, ret);
 
@@ -194,7 +194,24 @@ void netkit::sock::ssl_sync_sock::init_wolfssl_once() {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
 		wolfSSL_Init();
-		wolfSSL_Debugging_ON();
+		//wolfSSL_Debugging_ON();
+
+		wolfSSL_SetAllocators(
+	[](size_t sz) -> void* {
+		void* p = malloc(sz);
+		//printf("malloc(%zu) = %p\n", sz, p);
+		return p;
+	},
+	[](void* p) {
+		//printf("free(%p)\n", p);
+		free(p);
+	},
+	[](void* p, size_t sz) -> void* {
+		void* np = realloc(p, sz);
+		//printf("realloc(%p, %zu) = %p\n", p, sz, np);
+		return np;
+	}
+);
 	});
 }
 
@@ -203,6 +220,10 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 		(ssl_mode_ == mode::client)
 		? wolfTLS_client_method()
 		: wolfTLS_server_method();
+
+	if (!method) {
+		throw_ssl_error("wolfTLS method initialization failed");
+	}
 
 	ctx_ = wolfSSL_CTX_new(method);
 	if (!ctx_) {
@@ -240,8 +261,8 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 
 	int verify_mode = (verification_ == verification::peer)
-		? SSL_VERIFY_PEER
-		: SSL_VERIFY_NONE;
+		? WOLFSSL_VERIFY_PEER
+		: WOLFSSL_VERIFY_NONE;
 
 	wolfSSL_CTX_set_verify(ctx_, verify_mode, nullptr);
 
@@ -385,7 +406,7 @@ netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(
 
 		int err = wolfSSL_get_error(ssl_, ret);
 
-		if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+		if (err == WOLFSSL_ERROR_WANT_READ || err == WOLFSSL_ERROR_WANT_WRITE) {
 
 			if (timeout > 0) {
 				auto now = std::chrono::steady_clock::now();
@@ -406,7 +427,11 @@ netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(
 
 void netkit::sock::ssl_sync_sock::throw_ssl_error(const std::string& msg) {
 	int err = wolfSSL_get_error(nullptr, 0);
-	throw std::runtime_error(msg + " (wolfSSL err=" + std::to_string(err) + ")");
+
+	char buffer[256];
+	wolfSSL_ERR_error_string(err, buffer);
+
+	throw std::runtime_error(msg + " (wolfSSL err=" + std::to_string(err) + ", " + buffer + ")");
 }
 
 #endif

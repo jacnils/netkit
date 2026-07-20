@@ -12,4 +12,7 @@ add_executable(
         netkit-example
         main.cpp
 )
+
 target_link_libraries(netkit-example PRIVATE netkit::netkit)
+
+ogc_create_dol(netkit-example)

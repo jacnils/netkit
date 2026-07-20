@@ -27,7 +27,7 @@ namespace netkit::network {
 
         friend class sync_sock;
         friend class dns::dns_resolver;
-
+    	friend ip_list get_a_aaaa_from_hostname(const std::string& hostname);
     public:
         explicit ip_list() = default;
         ip_list(const std::string& any, const std::string& second = "");
@@ -38,5 +38,9 @@ namespace netkit::network {
         [[nodiscard]] std::string get_ipv4() const;
         [[nodiscard]] std::string get_ipv6() const;
         [[nodiscard]] std::string get_ip() const;
+
+    	void set_ipv4(const std::string& ip);
+    	void set_ipv6(const std::string& ip);
+    	void set_ip(const std::string& ip);
     };
 }

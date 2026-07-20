@@ -9,7 +9,9 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the sock_addr class.
  */
+#include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <netkit/definitions.hpp>
 #include <netkit/dns/nameserver_list.hpp>
 #include <netkit/dns/record_type.hpp>
@@ -18,13 +20,22 @@
 #include <netkit/network/utility.hpp>
 #include <netkit/sock/addr.hpp>
 #include <utility>
+#include <mutex>
+
+#ifdef NETKIT_DKP
+#include <netdb.h>
+#include <network.h>
+#endif
 
 /* solely for use internally */
+#ifndef NETKIT_DKP
 [[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
     if (hostname == "localhost") {
         return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
     }
+
     auto nameservers = netkit::dns::get_nameservers();
+
     if (nameservers.contains_ipv4() == false && nameservers.contains_ipv6() == false) {
         nameservers = {
             {NETKIT_FALLBACK_IPV4_DNS_1, NETKIT_FALLBACK_IPV4_DNS_2},
@@ -59,10 +70,28 @@
 
     return {v4, v6};
 }
+#endif
 
 netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     hostname(hostname), port(port), type(t) {
 
+#ifdef NETKIT_DKP
+	static std::once_flag flag;
+	std::call_once(flag, [] {
+		s32 ret;
+
+		char localip[16] = {0};
+		char gateway[16] = {0};
+		char netmask[16] = {0};
+
+		ret = if_config ( localip, netmask, gateway, true, 20);
+		if (ret < 0) {
+			throw socket_error("failed to get local network interface address");
+		}
+	});
+#endif
+
+#ifndef NETKIT_DKP
     const auto resolve_host = [](const std::string& h, bool t) -> std::string {
         try {
             auto ip_list = get_a_aaaa_from_hostname(h);
@@ -88,9 +117,38 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     } else if (type == addr_type::hostname_ipv4) {
         ip = resolve_host(hostname, false);
         type = netkit::sock::addr_type::ipv4;
+#else
+	if (type == addr_type::hostname || type == addr_type::hostname_ipv4) {
+		netkit::network::ip_list result;
+		hostent* host = gethostbyname(hostname.c_str());
+
+		if (!host) {
+			throw netkit::dns_error("failed to resolve hostname");
+		}
+
+		if (host->h_addrtype != AF_INET) {
+			throw netkit::dns_error("not an IPv4 result");
+		}
+
+		for (int i = 0; host->h_addr_list[i] != nullptr; i++) {
+			in_addr addr{};
+			memcpy(&addr, host->h_addr_list[i], sizeof(addr));
+
+			const char* _ip = inet_ntoa(addr);
+			if (_ip)
+				result.set_ipv4(_ip);
+
+			break;
+		}
+
+		ip = result.get_ipv4();
+		type = netkit::sock::addr_type::ipv4;
+#endif
+#ifndef NETKIT_DKP
     } else if (type == addr_type::hostname_ipv6) {
         ip = resolve_host(hostname, true);
         type = netkit::sock::addr_type::ipv6;
+#endif
     } else if (type == addr_type::ipv4 || type == addr_type::ipv6) {
         ip = hostname;
     } else {
@@ -110,7 +168,9 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     }
 }
 
+#ifndef NETKIT_DKP
 netkit::sock::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {}
+#endif
 
 bool netkit::sock::addr::is_ipv4() const noexcept {
     return type == addr_type::ipv4;

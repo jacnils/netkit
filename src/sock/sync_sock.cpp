@@ -10,9 +10,10 @@
  *  @brief Implementation of the synchronous socket class.
  */
 #include <cstring>
+#include <iostream>
 #include <netkit/except.hpp>
-#include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/sock_peer.hpp>
+#include <netkit/sock/sync_sock.hpp>
 
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
@@ -24,6 +25,7 @@
 #include <sys/un.h>
 #else
 #include <network.h>
+#include <mutex>
 #endif
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -234,12 +236,16 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opt
 		}
 	}
 
+#ifdef NETKIT_DKP
+	this->sockfd = ::socket(AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, IPPROTO_IP);
+#else
     if (t != type::uds) {
         this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
                                                           t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
     } else {
         this->sockfd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     }
+#endif
 
     if (this->sockfd < 0) {
         throw socket_error("failed to create socket");

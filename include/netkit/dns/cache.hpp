@@ -14,7 +14,10 @@
 #include <vector>
 #include <string>
 
+#include <netkit/definitions.hpp>
 #include <netkit/dns/record_type.hpp>
+
+#ifndef NETKIT_DKP
 
 namespace netkit::dns {
     class NETKIT_API basic_cache {
@@ -30,3 +33,5 @@ namespace netkit::dns {
         void store(const std::string& hostname, const std::vector<dns::record>& new_records) override;
     };
 }
+
+#endif

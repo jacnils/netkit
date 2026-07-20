@@ -9,6 +9,8 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the IP address list class.
  */
+#include "netkit/except.hpp"
+
 #include <netkit/network/ip_list.hpp>
 #include <netkit/network/utility.hpp>
 
@@ -43,4 +45,24 @@ std::string netkit::network::ip_list::get_ipv6() const {
 
 std::string netkit::network::ip_list::get_ip() const {
     return this->v6.empty() ? this->v4 : this->v6;
+}
+
+void netkit::network::ip_list::set_ipv4(const std::string& ip) {
+	if (netkit::network::is_ipv4(ip) == false) {
+		throw ip_error{"invalid ipv4 address"};
+	}
+	this->v4 = ip;
+}
+void netkit::network::ip_list::set_ipv6(const std::string& ip) {
+	if (netkit::network::is_ipv6(ip) == false) {
+		throw ip_error{"invalid ipv6 address"};
+	}
+	this->v6 = ip;
+}
+void netkit::network::ip_list::set_ip(const std::string& ip) {
+	if (netkit::network::is_ipv4(ip) && !ip.empty()) {
+		this->v4 = ip;
+	} else if (netkit::network::is_ipv6(ip) && !ip.empty()) {
+		this->v6 = ip;
+	}
 }

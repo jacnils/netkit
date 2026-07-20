@@ -27,9 +27,12 @@
 #endif
 
 uint16_t netkit::dns::response_parser::read_uint16() {
-    uint16_t val = (data[offset] << 8) | data[offset + 1];
-    offset += 2;
-    return val;
+	uint16_t val =
+		(static_cast<uint16_t>(data[offset]) << 8) |
+		static_cast<uint16_t>(data[offset + 1]);
+
+	offset += 2;
+	return val;
 }
 
 uint32_t netkit::dns::response_parser::read_uint32() {

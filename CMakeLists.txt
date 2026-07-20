@@ -41,7 +41,6 @@ add_library(netkit SHARED
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
-        src/dkp/dkp_boilerplate.cpp
 )
 
 set_target_properties(netkit PROPERTIES
@@ -91,47 +90,28 @@ if (NETKIT_ENABLE_OPENSSL)
         message(FATAL_ERROR "OpenSSL requested but not found.")
     endif()
 elseif (NETKIT_ENABLE_WOLFSSL)
-    find_package(wolfSSL QUIET)
 
-    if (NOT wolfSSL_FOUND)
-        message(STATUS "wolfSSL not found. Building from source...")
+    include(FetchContent)
 
-        include(FetchContent)
+    set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
 
-        if (DEVKITPRO)
-            add_compile_definitions(NO_WRITEV)
-            add_compile_definitions(SIZEOF_LONG=4
-                  SIZEOF_LONG_LONG=8
-            )
-        endif()
+    add_compile_definitions(
+            WOLFSSL_USER_SETTINGS
+            WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
+    )
 
-        FetchContent_Declare(
-                wolfssl
-                GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
-                GIT_TAG v5.9.2-stable
-        )
+    include_directories(${CMAKE_SOURCE_DIR}/include/netkit/sock/wolfssl)
 
-        if (DEVKITPRO)
-            set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_CURL OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_SYSTEM_CA_CERTS OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_OCSP OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_FILESYSTEM OFF CACHE BOOL "" FORCE)
-            set(WOLFSSL_SNI ON CACHE BOOL "" FORCE)
-        endif()
+    FetchContent_Declare(
+            wolfssl
+            GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
+            GIT_TAG v5.9.2-stable
+    )
 
-        FetchContent_MakeAvailable(wolfssl)
+    FetchContent_MakeAvailable(wolfssl)
 
-        set(WOLFSSL_TARGET wolfssl)
-    else()
-        set(WOLFSSL_TARGET wolfssl)
-    endif()
-
-    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
-    target_link_libraries(netkit PUBLIC ${WOLFSSL_TARGET})
-
-    message(STATUS "WolfSSL enabled in netkit")
+    target_link_libraries(netkit PUBLIC wolfssl)
+    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL WOLFSSL_USER_SETTINGS)
 endif()
 
 if (WIN32)
@@ -262,13 +242,13 @@ if (NETKIT_ENABLE_C_BINDINGS)
         message(STATUS "C API tests enabled")
 
         add_executable(netkit-c-tests
-            tests/c/test_sock_addr.c
-            tests/c/test_network_utility.c
-            tests/c/test_main.c
+                tests/c/test_sock_addr.c
+                tests/c/test_network_utility.c
+                tests/c/test_main.c
         )
 
         add_dependencies(netkit-c-tests
-            netkit-c
+                netkit-c
         )
 
         target_link_libraries(netkit-c-tests

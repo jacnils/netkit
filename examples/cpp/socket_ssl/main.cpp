@@ -15,32 +15,82 @@
 #include <fstream>
 #include <string_view>
 #include <netkit/netkit.hpp>
+#include <ogc/system.h>
+#include <gccore.h>
 
 int main() {
-    netkit::sock::sock_addr addr("google.com", 443, netkit::sock::sock_addr_type::hostname);
+	VIDEO_Init();
+	WII_Initialize();
+
+	const auto rmode = VIDEO_GetPreferredMode(nullptr);
+	const auto xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+
+	VIDEO_Configure(rmode);
+	VIDEO_SetNextFramebuffer(xfb);
+	VIDEO_SetBlack(FALSE);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+
+	if (rmode->viTVMode&VI_NON_INTERLACE) {
+		VIDEO_WaitVSync();
+	}
+
+	std::cout << "Init...\n";
+
+	try {
+    netkit::sock::addr addr("jacobnilsson.com", 443, netkit::sock::addr_type::hostname);
+    std::cout << "made addr\n";
     std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
-        addr, netkit::sock::sock_type::tcp);
+        addr, netkit::sock::type::tcp);
+
+    std::cout << "Made sock\n";
 
     netkit::sock::ssl_sync_sock sock((std::move(_sock)),
         netkit::sock::mode::client,
         netkit::sock::version::TLS_1_2,
-        netkit::sock::verification::peer
+        netkit::sock::verification::none
         );
+
+    std::cout << "Making request...\n";
 
     sock.connect();
     sock.perform_handshake();
 
-    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
-    sock.send(request.data());
-    std::string response = sock.recv(-1).data;
-    sock.close();
+    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: forwarderfactory.com\r\nConnection: close\r\n\r\n";
+    std::string response;
 
-    std::ofstream file("response.txt");
-    if (file.is_open()) {
-        file << response;
-        file.close();
-    } else {
-        std::cerr << "Failed to open file" << std::endl;
+    std::cout << "recv():";
+
+    int sent = sock.send(request.data(), request.size());
+	std::cout << "sent " << sent << " bytes\n";
+
+    while (true) {
+        auto res = sock.recv(6);
+    
+        response += res.data;
+    
+        if (res.status == netkit::sock::recv_status::closed)
+	    break;
+
+	if (res.status == netkit::sock::recv_status::timeout)
+	    break;
+    
+        if (res.status == netkit::sock::recv_status::error) {
+	    std::cout << "recv failed\n";
+	    throw std::runtime_error("recv failed");
+	}
     }
-    std::cout << "Response written to response.txt" << std::endl;
+
+    std::cout << response << std::flush;
+
+    std::cout << "Response not at all written to response.txt" << std::endl;
+	} catch (std::exception& e) {
+		std::cout << e.what() << "\n";
+	}
+
+	while (true) {};
+
+	return EXIT_SUCCESS;
 }
