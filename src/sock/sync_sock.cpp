@@ -43,7 +43,8 @@
 #endif
 
 #ifndef NETKIT_DKP
-static netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
+namespace netkit::sock {
+netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
 	sockaddr_storage addr_storage{};
 	socklen_t addr_len = sizeof(addr_storage);
 
@@ -72,6 +73,7 @@ static netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
 	addr.type = (addr_storage.ss_family == AF_INET) ? netkit::sock::addr_type::ipv4 : netkit::sock::addr_type::ipv6;
 
 	return addr;
+}
 }
 #endif
 
@@ -297,7 +299,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt 
         throw socket_error("Failed to create socket");
     }
 
-    this->set_sock_opts(opts);
+    this->sync_sock::set_sock_opts(opts);
     this->prep_sa();
 }
 #endif
@@ -792,7 +794,7 @@ void netkit::sock::sync_sock::close() {
 		port, netkit::sock::addr_type::ipv4
 	};
 #else
-    return get_peer(this->sockfd);
+    return sock::get_peer(this->sockfd);
 #endif
 }
 netkit::sock::fd_t netkit::sock::sync_sock::native_handle() const {

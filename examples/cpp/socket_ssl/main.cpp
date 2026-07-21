@@ -40,7 +40,7 @@ int main() {
 	std::cout << "Init...\n";
 
 	try {
-    netkit::sock::addr addr("jacobnilsson.com", 443, netkit::sock::addr_type::hostname);
+    netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
     std::cout << "made addr\n";
     std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
         addr, netkit::sock::type::tcp);
@@ -50,7 +50,7 @@ int main() {
     netkit::sock::ssl_sync_sock sock((std::move(_sock)),
         netkit::sock::mode::client,
         netkit::sock::version::TLS_1_2,
-        netkit::sock::verification::none
+        netkit::sock::verification::peer
         );
 
     std::cout << "Making request...\n";
@@ -58,7 +58,7 @@ int main() {
     sock.connect();
     sock.perform_handshake();
 
-    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: forwarderfactory.com\r\nConnection: close\r\n\r\n";
+    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
     std::string response;
 
     std::cout << "recv():";

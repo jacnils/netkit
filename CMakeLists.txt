@@ -7,13 +7,17 @@ option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
 option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
 option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
+option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
+option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 
-if (WIN32 OR UNIX)
-    set(DEVKITPRO OFF)
+if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
+    set(NETKIT_DKP ON)
+else()
+    set(NETKIT_DKP OFF)
 endif()
 
-if (DEVKITPRO)
-    set(NETKIT_ENABLE_OPENSSL OFF)
+if (NETKIT_DKP)
+    set(NETKIT_ENABLE_OPENSSL OFF CACHE BOOL "" FORCE)
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
@@ -97,16 +101,17 @@ if (NETKIT_ENABLE_OPENSSL)
 elseif (NETKIT_ENABLE_WOLFSSL)
     find_package(wolfSSL QUIET)
 
-    if (NOT wolfSSL_FOUND OR DEVKITPRO)
+    if (NOT wolfSSL_FOUND OR NETKIT_DKP)
         message(STATUS "wolfSSL not found. Building from source...")
 
         include(FetchContent)
 
-        set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
         set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
         set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-        if (DEVKITPRO)
+        if (NETKIT_DKP)
+            set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
+
             add_compile_definitions(
                     WOLFSSL_USER_SETTINGS
                     WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
@@ -138,6 +143,14 @@ if (WIN32 AND NETKIT_ENABLE_WINDOWS_CERTSTORE)
     target_compile_definitions(netkit PUBLIC NETKIT_ENABLE_WINDOWS_CERTSTORE)
 endif()
 
+if (NETKIT_ENABLE_FALLBACK_CA)
+    target_compile_definitions(netkit PUBLIC NETKIT_ENABLE_FALLBACK_CA)
+endif()
+
+if (NETKIT_WOLFSSL_DEBUG)
+    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL_DEBUG)
+endif()
+
 if (WIN32)
     target_link_libraries(netkit PUBLIC ws2_32 iphlpapi dnsapi crypt32)
 elseif (UNIX AND NOT APPLE)
@@ -148,7 +161,7 @@ elseif (APPLE)
             "-framework SystemConfiguration"
             "-framework CoreFoundation"
     )
-elseif (DEVKITPRO)
+elseif (NETKIT_DKP)
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
@@ -180,7 +193,7 @@ install(TARGETS netkit
         ARCHIVE DESTINATION lib
 )
 
-if (DEVKITPRO AND NETKIT_ENABLE_WOLFSSL)
+if (NETKIT_DKP AND NETKIT_ENABLE_WOLFSSL)
     install(
         FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/sock/wolfssl/user_settings.h

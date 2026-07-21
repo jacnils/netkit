@@ -17,8 +17,13 @@
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
 #include <thread>
 
+#ifdef NETKIT_ENABLE_FALLBACK_CA
+#include <netkit/crypto/fallback_ca.hpp>
+#endif
+
 #ifdef NETKIT_WINDOWS
 #include <netkit/utility.hpp>
+#include <netkit/crypto/windows/certs.hpp>
 #endif
 
 #include <memory>
@@ -161,15 +166,6 @@ void netkit::sock::ssl_sync_sock::close() {
 
 void netkit::sock::ssl_sync_sock::perform_handshake()
 {
-	WC_RNG rng;
-	int rret = wc_InitRng(&rng);
-
-	printf("wc_InitRng: %d\n", rret);
-
-	if (rret != 0) {
-		throw std::runtime_error{"kek"};
-	}
-
 	int ret;
 
 	if (ssl_mode_ == mode::client) {
@@ -177,15 +173,16 @@ void netkit::sock::ssl_sync_sock::perform_handshake()
 	} else
 		ret = wolfSSL_accept(ssl_);
 
-	if (ret != WOLFSSL_SUCCESS)
-	{
+	if (ret != WOLFSSL_SUCCESS) {
 		int err = wolfSSL_get_error(ssl_, ret);
 
+#ifdef NETKIT_WOLFSSL_DEBUG
 		std::cerr << "wolfSSL_connect/accept ret="
 				  << ret
 				  << " err="
 				  << err
 				  << "\n";
+#endif
 
 		throw_ssl_error("TLS handshake failed");
 	}
@@ -285,6 +282,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 
 #ifdef NETKIT_WINDOWS
+#ifdef NETKIT_ENABLE_WINDOWS_CERTSTORE
 	const auto get_localappdata = []() -> std::filesystem::path {
 		const std::string folder_name = "netkit";
 
@@ -304,7 +302,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	};
 
 	std::filesystem::path path = (get_localappdata() / "ca-bundle.pem").string();
-	if (!has_usable_certs(ctx_) && crypto::windows::is_outdated(path.wstring())) {
+	if (!loaded_ca && crypto::windows::is_outdated(path.wstring())) {
 		std::filesystem::remove(path);
 		if (!crypto::windows::export_certs(path.wstring())) {
 			throw std::runtime_error("failed to export certificates");
@@ -312,16 +310,27 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 
 	const std::string path_ = path.string();
-	if (!wolfSSL_CTX_load_verify_locations(ctx_, path_.c_str(), nullptr)) {
-		throw std::runtime_error{"failed to load certificate location"};
+	if (wolfSSL_CTX_load_verify_locations(ctx_, path_.c_str(), nullptr)) {
+		loaded_ca = true;
 	}
 
-	loaded_ca = true;
+#endif
 #endif
 
-	if (!loaded_ca) {
+	if (!loaded_ca && this->ssl_mode_ == mode::client) {
 		loaded_ca =
 			wolfSSL_CTX_load_system_CA_certs(ctx_) == SSL_SUCCESS;
+	}
+#endif
+
+#ifdef NETKIT_ENABLE_FALLBACK_CA
+	if (!loaded_ca && this->ssl_mode_ == mode::client) {
+		loaded_ca = wolfSSL_CTX_load_verify_buffer(
+			ctx_,
+			reinterpret_cast<const unsigned char*>(crypto::fallback_ca.data()),
+			static_cast<long>(crypto::fallback_ca.size()),
+			WOLFSSL_FILETYPE_PEM
+		);
 	}
 #endif
 
@@ -343,6 +352,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 #endif
 
+#ifdef NETKIT_DKP
 	wolfSSL_CTX_SetIOSend(ctx_, [](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
 		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
 
@@ -382,6 +392,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 
 		return WOLFSSL_CBIO_ERR_GENERAL;
 	});
+#endif
 }
 
 void netkit::sock::ssl_sync_sock::create_ssl_object() {
@@ -395,8 +406,17 @@ void netkit::sock::ssl_sync_sock::create_ssl_object() {
 	}
 
 	wolfSSL_UseSNI(ssl_, WOLFSSL_SNI_HOST_NAME, hostname.data(), hostname.length());
+#ifdef NETKIT_DKP
 	wolfSSL_SetIOWriteCtx(ssl_, this);
 	wolfSSL_SetIOReadCtx(ssl_, this);
+#else
+	wolfSSL_set_fd(ssl_, underlying_sock_->native_handle());
+#endif
+
+	wolfSSL_check_domain_name(
+		ssl_,
+		hostname.c_str()
+	);
 }
 
 void netkit::sock::ssl_sync_sock::ensure_ready() const {

@@ -15,6 +15,9 @@
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/crypto/windows/certs.hpp>
+#ifdef NETKIT_ENABLE_FALLBACK_CA
+#include <netkit/crypto/fallback_ca.hpp>
+#endif
 
 #ifdef NETKIT_WINDOWS
 #include <netkit/utility.hpp>
@@ -276,6 +279,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
             return false;
 		};
 #ifdef NETKIT_WINDOWS
+#ifdef NETKIT_ENABLE_WINDOWS_CERTSTORE
         const auto get_localappdata = []() -> std::filesystem::path {
             const std::string folder_name = "netkit";
 
@@ -307,6 +311,9 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
             throw std::runtime_error{"failed to load certificate location"};
         }
 #endif
+#endif
+
+    	// TODO: implement support for CA cert fallback
 
         X509_VERIFY_PARAM_set1_host(SSL_CTX_get0_param(ctx_),
                                        underlying_sock_->get_addr().get_hostname().c_str(),

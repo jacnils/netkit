@@ -10,13 +10,20 @@
  *  @note Never include this file from external code; it is for internal use only.
  *  @brief Implementation of functions for exporting Windows system certificates for OpenSSL use.
  */
+#include <netkit/definitions.hpp>
+#ifdef NETKIT_WINDOWS
 #include <netkit/crypto/windows/certs.hpp>
+#include <windows.h>
+#include <fileapi.h>
+#include <sysinfoapi.h>
+#include <wincrypt.h>
+
 #pragma comment(lib, "crypt32.lib")
 
-#ifdef NETKIT_WINDOWS
 #if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
 
 bool netkit::crypto::windows::is_outdated(const std::wstring& path) {
+#ifdef NETKIT_ENABLE_WINDOWS_CERTSTORE
     WIN32_FILE_ATTRIBUTE_DATA data;
 
     if (!GetFileAttributesExW(path.c_str(),
@@ -39,9 +46,13 @@ bool netkit::crypto::windows::is_outdated(const std::wstring& path) {
     constexpr ULONGLONG max_age = 30ULL * 24 * 3600;
 
     return age > max_age;
+#else
+	return true;
+#endif
 }
 
 bool netkit::crypto::windows::export_certs(const std::wstring& path) {
+#ifdef NETKIT_ENABLE_WINDOWS_CERTSTORE
     FILE* f = _wfopen(path.c_str(), L"wb");
     if (!f) return false;
 
@@ -82,6 +93,9 @@ bool netkit::crypto::windows::export_certs(const std::wstring& path) {
 
     fclose(f);
     return true;
+#else
+	return false;
+#endif
 }
 
 #endif

@@ -43,11 +43,19 @@ static int gen_seed(unsigned char* output, unsigned int sz) {
 #define HAVE_HASHDRBG
 #define OPENSSL_COEXIST
 
+/* uncomment if wolfssl debugging is desired
+#define DEBUG_WOLFSSL
+*/
+#define WOLFSSL_ALT_CERT_CHAINS
+
 #define WOLFSSL_SNI
 #define HAVE_SNI
 #define HAVE_TLS_EXTENSIONS
 
+#define WOLFSSL_TLS10
+#define WOLFSSL_TLS11
 #define WOLFSSL_TLS12
+#define WOLFSSL_TLS13
 
 #define HAVE_SUPPORTED_CURVES
 #define HAVE_ECC
@@ -57,6 +65,7 @@ static int gen_seed(unsigned char* output, unsigned int sz) {
 #define HAVE_AEAD
 #define WC_RSA_PSS
 #define HAVE_RSA
+#define HAVE_FFDHE_4096
 
 #define TFM_TIMING_RESISTANT
 #define ECC_TIMING_RESISTANT
