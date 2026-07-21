@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.c
+ *  @file main.cpp
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @note If netkit was built with OpenSSL support, HTTPS requests will be made.
@@ -13,28 +13,8 @@
 #include <iostream>
 #include <fstream>
 #include <netkit/http/sync_client.hpp>
-#include <ogc/system.h>
-#include <gccore.h>
 
 void thin_http_abstraction() {
-	VIDEO_Init();
-	WII_Initialize();
-
-	const auto rmode = VIDEO_GetPreferredMode(nullptr);
-	const auto xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-
-	VIDEO_Configure(rmode);
-	VIDEO_SetNextFramebuffer(xfb);
-	VIDEO_SetBlack(FALSE);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-
-	if (rmode->viTVMode&VI_NON_INTERLACE) {
-		VIDEO_WaitVSync();
-	}
-
     auto http_abstr = netkit::http::client::sync_client("www.google.com", "/", 443,
                                          netkit::http::method::GET, netkit::http::version::HTTP_1_1);
 
