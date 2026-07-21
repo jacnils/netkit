@@ -151,6 +151,10 @@ if (NETKIT_WOLFSSL_DEBUG)
     target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL_DEBUG)
 endif()
 
+if (NETKIT_ENABLE_WOLFSSL OR NETKIT_ENABLE_OPENSSL)
+    target_compile_definitions(netkit PUBLIC NETKIT_SSL)
+endif()
+
 if (WIN32)
     target_link_libraries(netkit PUBLIC ws2_32 iphlpapi dnsapi crypt32)
 elseif (UNIX AND NOT APPLE)
@@ -244,7 +248,7 @@ if (NETKIT_ENABLE_C_BINDINGS)
     add_library(netkit-c SHARED
             src/c/sock/addr.cpp
             src/c/sock/sync_sock.cpp
-            src/c/sock/openssl/ssl_sync_sock.cpp
+            src/c/sock/ssl_sync_sock.cpp
             src/c/network/utility.cpp
     )
 

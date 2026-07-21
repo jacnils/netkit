@@ -10,14 +10,21 @@
  *  @brief Implementation of the synchronous HTTP client class.
  */
 #include <netkit/http/sync_client.hpp>
-#include <netkit/sock/openssl/ssl_sync_sock.hpp>
-#include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
+#include <netkit/sock/ssl_sync_sock.hpp>
 #include <netkit/utility.hpp>
 #include <netkit/except.hpp>
 #include <netkit/network/utility.hpp>
 
+#include <variant>
+
 std::string netkit::http::client::sync_client::make_request(const std::string& request) const {
     sock::addr addr(hostname, port, sock::addr_type::hostname);
+
+#if defined(NETKIT_SSL)
+	using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
+#else
+	using variant_sock = std::variant<netkit::sock::sync_sock>;
+#endif
 
     std::optional<variant_sock> sock{std::nullopt};
 #if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)

@@ -39,6 +39,7 @@
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
+#include <netkit/sock/ssl_sync_sock.hpp>
 
 // HTTP headers
 #include <netkit/http/predefined.hpp>

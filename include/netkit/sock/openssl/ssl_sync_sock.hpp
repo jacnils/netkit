@@ -33,8 +33,7 @@ namespace netkit::sock {
 	};
 
 	enum class version {
-		SSL_2 = SSL2_VERSION,
-		SSL_3 = SSL3_VERSION,
+		TLS_1_0 = TLS1_0_VERSION,
 		TLS_1_1 = TLS1_1_VERSION,
 		TLS_1_2 = TLS1_2_VERSION,
 		TLS_1_3 = TLS1_3_VERSION,

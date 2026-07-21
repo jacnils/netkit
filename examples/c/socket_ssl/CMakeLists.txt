@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(netkit-example LANGUAGES C)
+project(netkit-example LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -12,4 +12,11 @@ add_executable(
         netkit-example
         main.c
 )
-target_link_libraries(netkit-example PRIVATE netkit::netkit-c)
+
+set_target_properties(netkit-example PROPERTIES
+	LINKER_LANGUAGE CXX
+)
+
+target_link_libraries(netkit-example PRIVATE netkit::netkit-c netkit::netkit)
+
+ogc_create_dol(netkit-example)

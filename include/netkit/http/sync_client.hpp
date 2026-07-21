@@ -15,12 +15,6 @@
 #include <netkit/http/predefined.hpp>
 #include <netkit/http/body_parser.hpp>
 
-#include <variant>
-
-namespace netkit::sock {
-    class ssl_sync_sock;
-}
-
 namespace netkit::http::client {
     /**
      * @brief A class that represents an HTTP client.
@@ -38,13 +32,6 @@ namespace netkit::http::client {
         std::string body{};
         int timeout{5};
 
-#ifdef NETKIT_OPENSSL
-        using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
-#elifdef NETKIT_WOLFSSL
-    	using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
-#else
-        using variant_sock = std::variant<netkit::sock::sync_sock>;
-#endif
         [[nodiscard]] std::string make_request(const std::string& request) const;
     public:
         /**
