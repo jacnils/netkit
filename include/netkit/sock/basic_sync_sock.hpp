@@ -44,5 +44,6 @@ namespace netkit::sock {
         virtual void close() = 0;
         [[nodiscard]] virtual addr get_peer() const = 0;
     	[[nodiscard]] virtual fd_t native_handle() const = 0;
+    	virtual void set_sock_opts(opt opts) const = 0;
     };
 }

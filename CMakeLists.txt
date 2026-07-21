@@ -3,9 +3,14 @@ project(netkit LANGUAGES C CXX)
 
 option(NETKIT_ENABLE_OPENSSL "Enable OpenSSL support in netkit" OFF)
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
-option(NETKIT_ENABLE_TESTS "Enable building tests" ON)
+option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
-option(NETKIT_ENABLE_C_TESTS "Enable C building tests" ON)
+option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
+option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
+
+if (WIN32 OR UNIX)
+    set(DEVKITPRO OFF)
+endif()
 
 if (DEVKITPRO)
     set(NETKIT_ENABLE_OPENSSL OFF)
@@ -90,28 +95,47 @@ if (NETKIT_ENABLE_OPENSSL)
         message(FATAL_ERROR "OpenSSL requested but not found.")
     endif()
 elseif (NETKIT_ENABLE_WOLFSSL)
+    find_package(wolfSSL QUIET)
 
-    include(FetchContent)
+    if (NOT wolfSSL_FOUND OR DEVKITPRO)
+        message(STATUS "wolfSSL not found. Building from source...")
 
-    set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
+        include(FetchContent)
 
-    add_compile_definitions(
-            WOLFSSL_USER_SETTINGS
-            WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
-    )
+        set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
+        set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
+        set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-    include_directories(${CMAKE_SOURCE_DIR}/include/netkit/sock/wolfssl)
+        if (DEVKITPRO)
+            add_compile_definitions(
+                    WOLFSSL_USER_SETTINGS
+                    WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
+            )
 
-    FetchContent_Declare(
-            wolfssl
-            GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
-            GIT_TAG v5.9.2-stable
-    )
+            include_directories(${CMAKE_SOURCE_DIR}/include/netkit/sock/wolfssl)
+        endif()
 
-    FetchContent_MakeAvailable(wolfssl)
+        FetchContent_Declare(
+                wolfssl
+                GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
+                GIT_TAG v5.9.2-stable
+        )
 
-    target_link_libraries(netkit PUBLIC wolfssl)
-    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL WOLFSSL_USER_SETTINGS)
+        FetchContent_MakeAvailable(wolfssl)
+
+        set(WOLFSSL_TARGET wolfssl)
+    else()
+        set(WOLFSSL_TARGET wolfssl)
+    endif()
+
+    target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
+    target_link_libraries(netkit PUBLIC ${WOLFSSL_TARGET})
+
+    message(STATUS "WolfSSL enabled in netkit")
+endif()
+
+if (WIN32 AND NETKIT_ENABLE_WINDOWS_CERTSTORE)
+    target_compile_definitions(netkit PUBLIC NETKIT_ENABLE_WINDOWS_CERTSTORE)
 endif()
 
 if (WIN32)
@@ -155,6 +179,15 @@ install(TARGETS netkit
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
 )
+
+if (DEVKITPRO AND NETKIT_ENABLE_WOLFSSL)
+    install(
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/sock/wolfssl/user_settings.h
+        DESTINATION
+        include/wolfssl/wolfcrypt/
+    )
+endif()
 
 install(EXPORT netkitTargets
         FILE netkitTargets.cmake
@@ -242,13 +275,13 @@ if (NETKIT_ENABLE_C_BINDINGS)
         message(STATUS "C API tests enabled")
 
         add_executable(netkit-c-tests
-                tests/c/test_sock_addr.c
-                tests/c/test_network_utility.c
-                tests/c/test_main.c
+            tests/c/test_sock_addr.c
+            tests/c/test_network_utility.c
+            tests/c/test_main.c
         )
 
         add_dependencies(netkit-c-tests
-                netkit-c
+            netkit-c
         )
 
         target_link_libraries(netkit-c-tests

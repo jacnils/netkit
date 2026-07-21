@@ -35,6 +35,8 @@ netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> unde
       verification_(ssl_verification),
       cert_path_(std::move(cert_path)), key_path_(std::move(key_path))
 {
+	underlying_sock_->set_sock_opts(opt::no_blocking);
+
 	init_wolfssl_once();
 	create_ssl_context();
 	create_ssl_object();
@@ -159,19 +161,20 @@ void netkit::sock::ssl_sync_sock::close() {
 
 void netkit::sock::ssl_sync_sock::perform_handshake()
 {
-	int r = wolfSSL_set_fd(
-		ssl_,
-		underlying_sock_->native_handle()
-	);
+	WC_RNG rng;
+	int rret = wc_InitRng(&rng);
 
-	if (r != WOLFSSL_SUCCESS)
-		throw std::runtime_error("set_fd failed");
+	printf("wc_InitRng: %d\n", rret);
+
+	if (rret != 0) {
+		throw std::runtime_error{"kek"};
+	}
 
 	int ret;
 
-	if (ssl_mode_ == mode::client)
+	if (ssl_mode_ == mode::client) {
 		ret = wolfSSL_connect(ssl_);
-	else
+	} else
 		ret = wolfSSL_accept(ssl_);
 
 	if (ret != WOLFSSL_SUCCESS)
@@ -194,24 +197,28 @@ void netkit::sock::ssl_sync_sock::init_wolfssl_once() {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
 		wolfSSL_Init();
-		//wolfSSL_Debugging_ON();
-
+#if defined(NETKIT_WOLFSSL_DEBUG) && defined(NETKIT_DKP)
+		wolfSSL_Debugging_ON();
+		wolfSSL_SetLoggingCb([](const int level, const char* msg) {
+			SYS_Report("[wolfSSL:%d] %s\n", level, msg);
+		});
 		wolfSSL_SetAllocators(
-	[](size_t sz) -> void* {
-		void* p = malloc(sz);
-		//printf("malloc(%zu) = %p\n", sz, p);
-		return p;
-	},
-	[](void* p) {
-		//printf("free(%p)\n", p);
-		free(p);
-	},
-	[](void* p, size_t sz) -> void* {
-		void* np = realloc(p, sz);
-		//printf("realloc(%p, %zu) = %p\n", p, sz, np);
-		return np;
-	}
-);
+			[](size_t sz) -> void* {
+				void* p = malloc(sz);
+				printf("malloc(%zu) = %p\n", sz, p);
+				return p;
+			},
+			[](void* p) {
+				printf("free(%p)\n", p);
+				free(p);
+			},
+			[](void* p, size_t sz) -> void* {
+				void* np = realloc(p, sz);
+				printf("realloc(%p, %zu) = %p\n", p, sz, np);
+				return np;
+			}
+		);
+#endif
 	});
 }
 
@@ -335,6 +342,46 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 			throw_ssl_error("Failed to load key");
 	}
 #endif
+
+	wolfSSL_CTX_SetIOSend(ctx_, [](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
+		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
+
+		int ret = self->underlying_sock_->send(
+			buf,
+			static_cast<size_t>(sz)
+		);
+
+		if (ret < 0)
+			return WOLFSSL_CBIO_ERR_GENERAL;
+
+		return ret;
+	});
+
+	wolfSSL_CTX_SetIORecv(ctx_,
+	[](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
+		auto* self = static_cast<ssl_sync_sock*>(ctx);
+
+		ssize_t n = ::recv(
+			self->underlying_sock_->native_handle(),
+			buf,
+			sz,
+			MSG_DONTWAIT
+		);
+
+		if (n > 0)
+			return static_cast<int>(n);
+
+		if (n == 0)
+			return WOLFSSL_CBIO_ERR_CONN_CLOSE;
+
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return WOLFSSL_CBIO_ERR_WANT_READ;
+
+		if (errno == EINTR)
+			return WOLFSSL_CBIO_ERR_WANT_READ;
+
+		return WOLFSSL_CBIO_ERR_GENERAL;
+	});
 }
 
 void netkit::sock::ssl_sync_sock::create_ssl_object() {
@@ -342,9 +389,14 @@ void netkit::sock::ssl_sync_sock::create_ssl_object() {
 	if (!ssl_) {
 		throw_ssl_error("Failed to create WOLFSSL object");
 	}
-
 	auto hostname = this->underlying_sock_->get_addr().get_hostname();
-	wolfSSL_UseSNI(ssl_, WOLFSSL_SNI_HOST_NAME, hostname.c_str(), hostname.length());
+	if (hostname.empty()) {
+		throw std::runtime_error{"get_hostname() empty"};
+	}
+
+	wolfSSL_UseSNI(ssl_, WOLFSSL_SNI_HOST_NAME, hostname.data(), hostname.length());
+	wolfSSL_SetIOWriteCtx(ssl_, this);
+	wolfSSL_SetIOReadCtx(ssl_, this);
 }
 
 void netkit::sock::ssl_sync_sock::ensure_ready() const {
@@ -357,72 +409,79 @@ void netkit::sock::ssl_sync_sock::ensure_ready() const {
 	}
 }
 
-netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(
-	int timeout,
-	const std::string* match,
-	size_t eof) const
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(int timeout_seconds, const std::string* match, size_t eof) const
 {
-	std::lock_guard lock(state_mtx_);
-	ensure_ready();
+    std::lock_guard lock(state_mtx_);
+    ensure_ready();
 
-	auto start = std::chrono::steady_clock::now();
+    std::string data = overflow_;
+    overflow_.clear();
 
-	char buffer[4096];
+    auto start = std::chrono::steady_clock::now();
 
-	while (true) {
-		int ret = wolfSSL_read(ssl_, buffer, sizeof(buffer));
+    char buf[8192];
 
-		if (ret > 0) {
-			overflow_.append(buffer, ret);
+    while (true) {
+        if (timeout_seconds != -1) {
+            auto elapsed = std::chrono::steady_clock::now() - start;
+            if (elapsed >= std::chrono::seconds(timeout_seconds)) {
+                return {data, recv_status::timeout};
+            }
+        }
 
-			if (match) {
-				auto pos = overflow_.find(*match);
-				if (pos != std::string::npos) {
-					std::string out = overflow_.substr(0, pos + match->size());
-					overflow_.erase(0, pos + match->size());
-					return {out, recv_status::success};
-				}
-			}
+        int ret = wolfSSL_read(
+            ssl_,
+            buf,
+            sizeof(buf)
+        );
 
-			if (eof && overflow_.size() >= eof) {
-				std::string out = overflow_.substr(0, eof);
-				overflow_.erase(0, eof);
-				return {out, recv_status::success};
-			}
+        if (ret > 0) {
+            data.append(buf, static_cast<size_t>(ret));
 
-			if (!match && eof == 0) {
-				std::string out = overflow_;
-				overflow_.clear();
-				return {out, recv_status::success};
-			}
+            if (eof != 0 && data.size() >= eof) {
+                if (data.size() > eof) {
+                    overflow_ = data.substr(eof);
+                    data.resize(eof);
+                }
 
-			continue;
-		}
+                return {data, recv_status::success};
+            }
 
-		if (ret == 0) {
-			read_eof_ = true;
-			return {"", recv_status::closed};
-		}
+            if (match && !match->empty()) {
+                auto pos = data.find(*match);
 
-		int err = wolfSSL_get_error(ssl_, ret);
+                if (pos != std::string::npos) {
+                    overflow_ = data.substr(pos + match->size());
+                    data.resize(pos + match->size());
 
-		if (err == WOLFSSL_ERROR_WANT_READ || err == WOLFSSL_ERROR_WANT_WRITE) {
+                    return {data, recv_status::success};
+                }
+            }
 
-			if (timeout > 0) {
-				auto now = std::chrono::steady_clock::now();
-				auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start);
+            continue;
+        }
 
-				if (elapsed.count() >= timeout) {
-					return {"", recv_status::timeout};
-				}
-			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			continue;
-		}
+    	int err = wolfSSL_get_error(ssl_, ret);
+    	if (err == WOLFSSL_ERROR_WANT_READ ||
+			err == WOLFSSL_ERROR_WANT_WRITE)
+    	{
+    		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    		continue;
+    	}
 
-		return {"", recv_status::error};
-	}
+    	if (err == WOLFSSL_ERROR_ZERO_RETURN ||
+			err == WOLFSSL_ERROR_SYSCALL ||
+			err == -397)
+    	{
+    		if (!data.empty())
+    			return {data, recv_status::success};
+
+    		return {"", recv_status::closed};
+    	}
+
+    	return {data, recv_status::error};
+    }
 }
 
 void netkit::sock::ssl_sync_sock::throw_ssl_error(const std::string& msg) {
