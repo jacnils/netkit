@@ -8,9 +8,11 @@ struct netkit_sock_addr {
 	netkit_sock_addr_type_t impl_type = SOCK_ADDR_NONE;
 
 	explicit netkit_sock_addr() = default;
+#ifndef NETKIT_DKP
 	explicit netkit_sock_addr(const char* file_path) : impl_type(SOCK_ADDR_FILENAME) {
 		impl = std::make_unique<netkit::sock::addr>(file_path);
 	}
+#endif
 
 	netkit_sock_addr(const char* hostname, int port, netkit_sock_addr_type_t type) : impl_type(type) {
 		netkit::sock::addr_type t;
@@ -43,6 +45,7 @@ struct netkit_sock_addr {
 	}
 };
 
+#ifndef NETKIT_DKP
 extern "C" NETKIT_C_API netkit_sock_addr_t* netkit_sock_addr_create_unix(const char* file_path) {
 	netkit_sock_addr_t* ret;
 
@@ -56,6 +59,7 @@ extern "C" NETKIT_C_API netkit_sock_addr_t* netkit_sock_addr_create_unix(const c
 
 	return ret;
 }
+#endif
 
 extern "C" NETKIT_C_API netkit_sock_addr_t* netkit_sock_addr_create(const char* hostname, int port, netkit_sock_addr_type_t type) {
 	netkit_sock_addr_t* ret;

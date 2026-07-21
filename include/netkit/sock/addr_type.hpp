@@ -44,7 +44,9 @@ namespace netkit::sock {
     enum class type {
         tcp, /* TCP socket */
         udp, /* UDP socket */
+#ifndef NETKIT_DKP
         uds, /* UNIX domain socket */
+#endif
     };
     /**
      * @brief Socket options.

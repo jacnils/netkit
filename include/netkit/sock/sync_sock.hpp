@@ -42,7 +42,6 @@ namespace netkit::sock {
         [[nodiscard]] const sockaddr* get_sa() const;
         [[nodiscard]] socklen_t get_sa_len() const;
     	void prep_sa();
-        void set_sock_opts(opt opts) const;
 
 #ifdef NETKIT_DKP
     	sockaddr_storage peer_addr{};
@@ -161,5 +160,6 @@ namespace netkit::sock {
         void close() override;
         [[nodiscard]] sock::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
+    	void set_sock_opts(opt opts) const override;
     };
 }

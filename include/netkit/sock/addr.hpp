@@ -35,12 +35,14 @@ namespace netkit::sock {
          * @param t The address type (ipv4, ipv6, hostname_ipv4, hostname_ipv6).
          */
         addr(const std::string& hostname, int port, addr_type t);
+#ifndef NETKIT_DKP
         /**
          * @brief Constructs a sock_addr object for a file path.
          * @param path The file path to use.
          * @throws parsing_error if the path does not exist.
          */
         explicit addr(std::filesystem::path  path);
+#endif
         /**
          * @brief Check whether the address is IPv4 or IPv6.
          * @return True if the address is IPv4, false if it is IPv6 or invalid.

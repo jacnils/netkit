@@ -26,6 +26,8 @@
 #include <netinet/in.h>
 #endif
 
+#ifndef NETKIT_DKP
+
 namespace netkit::dns {
     template <typename T = standard_cache>
     class basic_sync_resolver {
@@ -35,7 +37,7 @@ namespace netkit::dns {
     };
 
 	template <typename T = standard_cache>
-    class sync_resolver : public basic_sync_resolver<T> {
+	class sync_resolver : public basic_sync_resolver<T> {
         nameserver_list list{};
 
         void throw_if_invalid() const {
@@ -74,7 +76,6 @@ namespace netkit::dns {
 			if (!valid_cached.empty())
 				return valid_cached;
 
-
 			query_builder builder;
 			builder.add_question(hostname, type);
 
@@ -101,7 +102,9 @@ namespace netkit::dns {
 				if (resp.size() < 12)
 					return std::nullopt;
 
-				if ((resp[2] & 0x02) != 0)
+				uint16_t flags = (resp[2] << 8) | resp[3];
+
+				if (flags & 0x0200)
 					return std::nullopt;
 
 				return std::vector<uint8_t>(resp.begin(), resp.end());
@@ -118,8 +121,12 @@ namespace netkit::dns {
 				);
 				sock.connect();
 
-				uint16_t len = htons(static_cast<uint16_t>(query.size()));
-				sock.send(reinterpret_cast<char *>(&len), 2);
+				uint8_t _lenbuf[2] = {
+					static_cast<uint8_t>(query.size() >> 8),
+					static_cast<uint8_t>(query.size())
+				};
+
+				sock.send(reinterpret_cast<char*>(_lenbuf), 2);
 				sock.send(reinterpret_cast<char *>(query.data()), query.size());
 
 				std::string lenbuf;
@@ -130,7 +137,9 @@ namespace netkit::dns {
 					lenbuf += chunk;
 				}
 
-				uint16_t resp_len = ntohs(*reinterpret_cast<const uint16_t*>(lenbuf.data()));
+				uint16_t resp_len =
+					(static_cast<uint8_t>(lenbuf[0]) << 8) |
+					static_cast<uint8_t>(lenbuf[1]);
 				if (resp_len == 0)
 					return std::nullopt;
 
@@ -202,3 +211,5 @@ namespace netkit::dns {
 		}
     };
 }
+
+#endif

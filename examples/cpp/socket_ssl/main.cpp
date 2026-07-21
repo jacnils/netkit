@@ -4,11 +4,11 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.c
+ *  @file main.cpp
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @note Only functional if Netkit was built with OpenSSL support.
- *  @note See examples/socket/main.c for a non-SSL/TLS version.
+ *  @note See examples/socket/main.cpp for a non-SSL/TLS version.
  *  @brief A lower-level example demonstrating the usage of sync_sock to make a simple HTTP request, with SSL/TLS.
  */
 #include <iostream>
@@ -17,9 +17,9 @@
 #include <netkit/netkit.hpp>
 
 int main() {
-    netkit::sock::sock_addr addr("google.com", 443, netkit::sock::sock_addr_type::hostname);
+    netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
     std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
-        addr, netkit::sock::sock_type::tcp);
+        addr, netkit::sock::type::tcp);
 
     netkit::sock::ssl_sync_sock sock((std::move(_sock)),
         netkit::sock::mode::client,
@@ -31,16 +31,26 @@ int main() {
     sock.perform_handshake();
 
     constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
-    sock.send(request.data());
-    std::string response = sock.recv(-1).data;
-    sock.close();
+    std::string response;
 
-    std::ofstream file("response.txt");
-    if (file.is_open()) {
-        file << response;
-        file.close();
-    } else {
-        std::cerr << "Failed to open file" << std::endl;
+    int sent = sock.send(request.data(), request.size());
+
+    while (true) {
+        auto res = sock.recv(6);
+
+        response += res.data;
+
+        if (res.status == netkit::sock::recv_status::closed)
+			break;
+
+		if (res.status == netkit::sock::recv_status::timeout)
+			break;
+
+        if (res.status == netkit::sock::recv_status::error)
+			throw std::runtime_error("recv failed");
     }
-    std::cout << "Response written to response.txt" << std::endl;
+
+    std::cout << response << std::flush;
+
+	return EXIT_SUCCESS;
 }

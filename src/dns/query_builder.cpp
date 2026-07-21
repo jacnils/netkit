@@ -36,8 +36,10 @@ void netkit::dns::query_builder::write_uint16_t(uint16_t value) {
     packet.push_back(static_cast<uint8_t>(value & 0xFF));
 }
 void netkit::dns::query_builder::write_uint32_t(uint32_t value) {
-    packet.push_back(static_cast<uint8_t>((value >> 24) & 0xFF));
-    packet.push_back(static_cast<uint8_t>((value >> 16) & 0xFF));
+	packet.push_back(static_cast<uint8_t>((value >> 24) & 0xFF));
+	packet.push_back(static_cast<uint8_t>((value >> 16) & 0xFF));
+	packet.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
+	packet.push_back(static_cast<uint8_t>(value & 0xFF));
 }
 
 netkit::dns::query_builder::query_builder(uint16_t _id): id(_id) {

@@ -12,10 +12,12 @@
 #include <fstream>
 #include <algorithm>
 
+#include <netkit/definitions.hpp>
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/record_type.hpp>
 #include <netkit/utility.hpp>
 
+#ifndef NETKIT_DKP
 [[nodiscard]] std::vector<netkit::dns::record> netkit::dns::standard_cache::lookup(const std::string& hostname) const {
     std::ifstream is(utility::get_standard_cache_location(), std::ios::binary);
     if (!is) {
@@ -41,6 +43,7 @@
 
     return {};
 }
+
 void netkit::dns::standard_cache::store(const std::string& hostname, const std::vector<dns::record>& new_records) {
     std::ifstream is(utility::get_standard_cache_location(), std::ios::binary);
     std::vector<std::pair<std::string, std::vector<netkit::dns::record>>> cache;
@@ -109,3 +112,5 @@ void netkit::dns::standard_cache::store(const std::string& hostname, const std::
         }
     }
 }
+
+#endif
