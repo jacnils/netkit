@@ -46,6 +46,7 @@ netkit's CMakeLists.txt offers multiple options:
 - NETKIT_ENABLE_WINDOWS_CERTSTORE: Enable getting CA certificates from the Windows store
 - NETKIT_ENABLE_FALLBACK_CA: Enable fallback hardcoded CA certificate (required for DevkitPro with TLS enabled)
 - NETKIT_WOLFSSL_DEBUG: Enable debugging for WolfSSL and netkit WolfSSL functions
+- NETKIT_BUILD_SHARED: Build a shared library version of netkit (If disabled, netkit will be static)
 
 ## Building
 

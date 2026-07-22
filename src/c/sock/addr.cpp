@@ -51,9 +51,15 @@ extern "C" NETKIT_C_API netkit_sock_addr_t* netkit_sock_addr_create_unix(const c
 
 	try {
 		ret = new netkit_sock_addr{file_path};
-	} catch (std::exception&) {
+	} catch (std::exception& e) {
+#ifdef NETKIT_C_DEBUG
+		fprintf(stderr, "Exception: %s\n", e.what());
+#endif
 		return nullptr;
 	} catch (...) {
+#ifdef NETKIT_C_DEBUG
+		fprintf(stderr, "Unknown exception\n");
+#endif
 		return nullptr;
 	}
 
@@ -66,9 +72,15 @@ extern "C" NETKIT_C_API netkit_sock_addr_t* netkit_sock_addr_create(const char* 
 
 	try {
 		ret = new netkit_sock_addr{hostname, port, type};
-	} catch (std::exception&) {
+	} catch (std::exception& e) {
+#ifdef NETKIT_C_DEBUG
+		fprintf(stderr, "Exception: %s\n", e.what());
+#endif
 		return nullptr;
 	} catch (...) {
+#ifdef NETKIT_C_DEBUG
+		fprintf(stderr, "Unknown exception\n");
+#endif
 		return nullptr;
 	}
 

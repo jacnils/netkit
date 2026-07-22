@@ -29,6 +29,7 @@
 
 /* solely for use internally */
 #ifndef NETKIT_DKP
+#ifdef NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER
 [[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
     if (hostname == "localhost") {
         return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
@@ -70,6 +71,54 @@
 
     return {v4, v6};
 }
+#else
+[[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
+	if (hostname == "localhost") {
+		return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
+	}
+
+	addrinfo hints{};
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	addrinfo* result = nullptr;
+
+	int res = getaddrinfo(hostname.c_str(), nullptr, &hints, &result);
+	if (res != 0) {
+#ifdef _WIN32
+		throw netkit::dns_error("getaddrinfo failed: " + std::to_string(res));
+#else
+		throw netkit::dns_error(gai_strerror(res));
+#endif
+	}
+
+	std::string v4{};
+	std::string v6{};
+
+	for (addrinfo* ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
+		char buffer[INET6_ADDRSTRLEN] = {0};
+
+		if (ptr->ai_family == AF_INET) {
+			auto* ipv4 = reinterpret_cast<sockaddr_in*>(ptr->ai_addr);
+			inet_ntop(AF_INET, &ipv4->sin_addr, buffer, sizeof(buffer));
+			v4 = buffer;
+		}
+		else if (ptr->ai_family == AF_INET6) {
+			auto* ipv6 = reinterpret_cast<sockaddr_in6*>(ptr->ai_addr);
+			inet_ntop(AF_INET6, &ipv6->sin6_addr, buffer, sizeof(buffer));
+			v6 = buffer;
+		}
+	}
+
+	freeaddrinfo(result);
+
+	if (v4.empty() && v6.empty()) {
+		throw netkit::dns_error("no valid A or AAAA records found for hostname: " + hostname);
+	}
+
+	return {v4, v6};
+}
+#endif
 #endif
 
 netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
@@ -89,31 +138,39 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
 			throw socket_error("failed to get local network interface address");
 		}
 	});
+#elif NETKIT_WINDOWS
+	static std::once_flag wsa_flag;
+
+	std::call_once(wsa_flag, [] {
+		WSADATA wsa;
+		int res = WSAStartup(MAKEWORD(2, 2), &wsa);
+		if (res != 0) {
+			throw netkit::socket_error("WSAStartup failed");
+		}
+	});
 #endif
 
 #ifndef NETKIT_DKP
     const auto resolve_host = [](const std::string& h, bool t) -> std::string {
-        try {
-            auto ip_list = get_a_aaaa_from_hostname(h);
-            auto ip = t ? ip_list.get_ipv6() : ip_list.get_ipv4();
-            return ip;
-        } catch (const std::exception&) {
-            return {};
-        }
+    	auto ip_list = get_a_aaaa_from_hostname(h);
+    	auto ip = t ? ip_list.get_ipv6() : ip_list.get_ipv4();
+
+    	return ip;
     };
 
     if (type == addr_type::hostname) {
-        ip = resolve_host(hostname, true);
-        type = netkit::sock::addr_type::ipv6;
+    	auto ip6 = resolve_host(hostname, true);
+    	auto ip4 = resolve_host(hostname, false);
 
-        if (!netkit::network::usable_ipv6_address_exists()) {
-            ip.clear();
-        }
-
-        if (ip.empty()) {
-            ip = resolve_host(hostname, false);
-            type = netkit::sock::addr_type::ipv4;
-        }
+    	if (!ip6.empty() && netkit::network::usable_ipv6_address_exists()) {
+    		ip = ip6;
+    		type = addr_type::ipv6;
+    	} else if (!ip4.empty()) {
+    		ip = ip4;
+    		type = addr_type::ipv4;
+    	} else {
+    		throw ip_error("sock_addr(): could not resolve hostname");
+    	}
     } else if (type == addr_type::hostname_ipv4) {
         ip = resolve_host(hostname, false);
         type = netkit::sock::addr_type::ipv4;

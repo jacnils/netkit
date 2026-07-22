@@ -164,8 +164,8 @@ void netkit::sock::ssl_sync_sock::close() {
 	}
 }
 
-void netkit::sock::ssl_sync_sock::perform_handshake()
-{
+#ifdef NETKIT_DKP
+void netkit::sock::ssl_sync_sock::perform_handshake() {
 	int ret;
 
 	if (ssl_mode_ == mode::client) {
@@ -189,15 +189,43 @@ void netkit::sock::ssl_sync_sock::perform_handshake()
 
 	handshake_complete_ = true;
 }
+#else
+void netkit::sock::ssl_sync_sock::perform_handshake() {
+	while (true) {
+		int ret = ssl_mode_ == mode::client
+			? wolfSSL_connect(ssl_)
+			: wolfSSL_accept(ssl_);
+
+		if (ret == WOLFSSL_SUCCESS) {
+			handshake_complete_ = true;
+			return;
+		}
+
+		int err = wolfSSL_get_error(ssl_, ret);
+
+		if (err == WOLFSSL_ERROR_WANT_READ ||
+			err == WOLFSSL_ERROR_WANT_WRITE) {
+			std::this_thread::yield();
+			continue;
+			}
+
+		throw_ssl_error("TLS handshake failed");
+	}
+}
+#endif
 
 void netkit::sock::ssl_sync_sock::init_wolfssl_once() {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
 		wolfSSL_Init();
-#if defined(NETKIT_WOLFSSL_DEBUG) && defined(NETKIT_DKP)
+#if defined(NETKIT_WOLFSSL_DEBUG)
 		wolfSSL_Debugging_ON();
 		wolfSSL_SetLoggingCb([](const int level, const char* msg) {
+#ifdef NETKIT_DKP
 			SYS_Report("[wolfSSL:%d] %s\n", level, msg);
+#else
+			std::cerr << msg << "\n";
+#endif
 		});
 		wolfSSL_SetAllocators(
 			[](size_t sz) -> void* {

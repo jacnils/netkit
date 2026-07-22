@@ -22,6 +22,7 @@
 int main(void) {
 	netkit_sock_addr_t* addr = netkit_sock_addr_create("www.google.com", 443, SOCK_ADDR_HOSTNAME);
 	if (!addr) {
+		fprintf(stderr, "%s\n", "Failed to create addr");
 		return 1;
 	}
 
@@ -39,7 +40,7 @@ int main(void) {
 	netkit_ssl_sync_sock_t* ssl_sock = netkit_ssl_sync_sock_create(
 		sock,
 		NETKIT_SSL_SYNC_SOCK_MODE_CLIENT,
-		NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_2,
+		NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_3,
 		NETKIT_SSL_SYNC_SOCK_VERIFICATION_PEER,
 		NULL,
 		NULL
@@ -67,16 +68,25 @@ int main(void) {
 		return 1;
 	}
 
-	int tries = 0;
-
-	while (tries++ < MAX_TRIES) {
+	for (;;) {
 		netkit_recv_status_t status = netkit_ssl_sync_sock_recv(ssl_sock, result, -1, NULL, 0);
+
+		if (status == RECV_SUCCESS) {
+			continue;
+		}
+
+		if (status == RECV_CLOSED) {
+			break;
+		}
+
 		if (status == RECV_TIMEOUT) {
-			fprintf(stderr, "%s\n", "Failed to receive: timeout.");
-			return 1;
-		} else if (status == RECV_ERROR) {
-			fprintf(stderr, "%s\n", "Failed to receive: error.");
-			return 1;
+			fprintf(stderr, "timeout\n");
+			break;
+		}
+
+		if (status == RECV_ERROR) {
+			fprintf(stderr, "error\n");
+			break;
 		}
 	}
 

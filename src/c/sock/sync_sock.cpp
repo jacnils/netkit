@@ -280,14 +280,15 @@ extern "C" NETKIT_C_API netkit_recv_status_t netkit_sync_sock_recv(netkit_sync_s
 	try {
 		auto ret = sock->impl->recv(timeout_seconds, match ? match : "", eof);
 
-		delete[] out->data;
+		if (!ret.data.empty()) {
+			delete[] out->data;
 
-		out->size = ret.data.size();
-		out->data = new char[out->size + 1];
+			out->size = ret.data.size();
+			out->data = new char[out->size + 1];
 
-		std::memcpy(out->data, ret.data.data(), out->size);
-
-		out->data[out->size] = '\0';
+			std::memcpy(out->data, ret.data.data(), out->size);
+			out->data[out->size] = '\0';
+		}
 
 		switch (ret.status) {
 			case netkit::sock::recv_status::success:

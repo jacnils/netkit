@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(NETKIT_SHARED)
   #if defined(NETKIT_BUILD_DLL)
     #define NETKIT_API __declspec(dllexport)
   #else

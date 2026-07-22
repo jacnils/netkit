@@ -8,7 +8,9 @@ option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" ON)
 option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
 option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
 option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
+option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
+option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
     set(NETKIT_DKP ON)
@@ -18,6 +20,24 @@ endif()
 
 if (NETKIT_DKP)
     set(NETKIT_ENABLE_OPENSSL OFF CACHE BOOL "" FORCE)
+endif()
+
+if (NETKIT_BUILD_SHARED)
+    set(NETKIT_LIB_TYPE SHARED)
+else()
+    set(NETKIT_LIB_TYPE STATIC)
+endif()
+
+# we can only have static builds with devkitpro
+if (NETKIT_DKP)
+    set(NETKIT_LIB_TYPE STATIC)
+endif()
+
+# for gcc
+if (NOT NETKIT_BUILD_SHARED AND WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++"
+    )
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
@@ -30,8 +50,7 @@ if (NETKIT_ENABLE_TESTS)
     enable_testing()
 endif()
 
-add_library(netkit SHARED
-        src/windows/windows_boilerplate.cpp
+add_library(netkit ${NETKIT_LIB_TYPE}
         src/utility.cpp
         src/network/utility.cpp
         src/network/local_address.cpp
@@ -59,9 +78,11 @@ set_target_properties(netkit PROPERTIES
         SOVERSION 1
 )
 
-target_compile_definitions(netkit
-        PRIVATE NETKIT_BUILD_DLL
-)
+if (WIN32 AND NETKIT_BUILD_SHARED)
+    target_compile_definitions(netkit
+            PRIVATE NETKIT_BUILD_DLL
+    )
+endif()
 
 target_include_directories(netkit
         PUBLIC
@@ -76,6 +97,10 @@ endif()
 
 if (NETKIT_ENABLE_OPENSSL)
     find_package(OpenSSL)
+
+    if (NOT NETKIT_BUILD_SHARED)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    endif()
 
     if (NOT OpenSSL_FOUND)
         message(STATUS "OpenSSL not found. You can install it via system package manager or vcpkg.")
@@ -101,13 +126,23 @@ if (NETKIT_ENABLE_OPENSSL)
 elseif (NETKIT_ENABLE_WOLFSSL)
     find_package(wolfSSL QUIET)
 
-    if (NOT wolfSSL_FOUND OR NETKIT_DKP)
+    if (NOT NETKIT_BUILD_SHARED)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    endif()
+
+    if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG)
         message(STATUS "wolfSSL not found. Building from source...")
 
         include(FetchContent)
 
         set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
         set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+        if (NETKIT_WOLFSSL_DEBUG)
+            message(STATUS "Compiling WolfSSL with DEBUG_WOLFSSL")
+            add_compile_definitions(DEBUG_WOLFSSL)
+            set(DEBUG_WOLFSSL ON CACHE BOOL "" FORCE)
+        endif()
 
         if (NETKIT_DKP)
             set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
@@ -153,6 +188,14 @@ endif()
 
 if (NETKIT_ENABLE_WOLFSSL OR NETKIT_ENABLE_OPENSSL)
     target_compile_definitions(netkit PUBLIC NETKIT_SSL)
+endif()
+
+if (NETKIT_BUILD_SHARED)
+    target_compile_definitions(netkit PUBLIC NETKIT_SHARED)
+endif()
+
+if (NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER)
+    target_compile_definitions(netkit PUBLIC NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER)
 endif()
 
 if (WIN32)
@@ -245,7 +288,7 @@ endif()
 
 if (NETKIT_ENABLE_C_BINDINGS)
     message(STATUS "C bindings enabled")
-    add_library(netkit-c SHARED
+    add_library(netkit-c ${NETKIT_LIB_TYPE}
             src/c/sock/addr.cpp
             src/c/sock/sync_sock.cpp
             src/c/sock/ssl_sync_sock.cpp
@@ -261,9 +304,15 @@ if (NETKIT_ENABLE_C_BINDINGS)
             SOVERSION 1
     )
 
-    target_compile_definitions(netkit-c
-            PRIVATE NETKIT_C_BUILD_DLL
-    )
+    if (NETKIT_BUILD_SHARED)
+        target_compile_definitions(netkit-c PUBLIC NETKIT_C_SHARED)
+    endif()
+
+    if (WIN32 AND NETKIT_BUILD_SHARED)
+        target_compile_definitions(netkit-c
+                PRIVATE NETKIT_C_BUILD_DLL
+        )
+    endif()
 
     target_link_libraries(netkit-c
             PUBLIC netkit
@@ -298,11 +347,12 @@ if (NETKIT_ENABLE_C_BINDINGS)
         )
 
         add_dependencies(netkit-c-tests
+            netkit
             netkit-c
         )
 
         target_link_libraries(netkit-c-tests
-                PRIVATE netkit-c
+                PRIVATE netkit netkit-c
         )
 
         add_test(NAME netkit-c-tests COMMAND netkit-c-tests)
