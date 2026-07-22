@@ -12,7 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <string_view>
-#include <netkit/body/buffer_body.hpp>
+#include <netkit/netkit.hpp>
 
 int main() {
 	std::string test_string = "this_is_a_test_string";
