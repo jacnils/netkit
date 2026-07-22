@@ -12,21 +12,24 @@ namespace netkit::body {
 
 class NETKIT_API stream_body : public basic_body {
 public:
-	stream_body(sock::basic_sync_sock& socket, std::size_t length)
+	stream_body(sock::basic_sync_sock& socket,
+				std::optional<std::size_t> length,
+				std::string initial = {})
 		: socket_(socket),
-		  remaining_(length)
+		  remaining_(length),
+		  buffer_(std::move(initial))
 	{}
 
 	read_result read(char* buffer, std::size_t max_bytes) noexcept override;
 
-	std::optional<std::size_t> size() const override {
+	[[nodiscard]] std::optional<std::size_t> size() const override {
 		return remaining_;
 	}
 
 private:
 	sock::basic_sync_sock& socket_;
-	std::size_t remaining_;
-
+	std::optional<std::size_t> remaining_;
+	std::string buffer_;
 	std::string overflow_;
 };
 

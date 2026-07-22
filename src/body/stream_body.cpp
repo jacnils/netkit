@@ -1,62 +1,69 @@
 #include <netkit/body/stream_body.hpp>
 
-netkit::body::read_result netkit::body::stream_body::read(char* buffer, std::size_t max_bytes) noexcept {
-	if (remaining_ == 0) {
-		return {read_status::eof, 0};
-	}
+netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
+	if (max_bytes == 0)
+		return {read_status::ok, 0};
 
-	std::size_t copied = 0;
+	if (remaining_ && *remaining_ == 0)
+		return {read_status::eof, 0};
+
+	std::size_t total = 0;
 
 	if (!overflow_.empty()) {
-		copied = std::min({
+		std::size_t n = std::min({
 			max_bytes,
-			remaining_,
-			overflow_.size()
+			overflow_.size(),
+			remaining_.value_or(overflow_.size())
 		});
 
-		std::memcpy(buffer, overflow_.data(), copied);
+		std::memcpy(out, overflow_.data(), n);
 
-		overflow_.erase(0, copied);
-		remaining_ -= copied;
+		overflow_.erase(0, n); // could optimize later
+		total += n;
 
-		return {read_status::ok, copied};
+		if (remaining_)
+			*remaining_ -= n;
+
+		return {read_status::ok, n};
 	}
 
 
-	auto result = socket_.recv();
+	std::size_t want = max_bytes;
 
-	if (result.status == sock::recv_status::closed) {
+	if (remaining_)
+		want = std::min(want, *remaining_);
+
+
+	auto result = socket_.recv(3, "", want);
+
+	if (result.status == sock::recv_status::closed)
 		return {read_status::eof, 0};
-	}
 
+	if (result.status == sock::recv_status::timeout)
+		return {read_status::timeout, 0};
 
-	if (result.status != sock::recv_status::success) {
+	if (result.status != sock::recv_status::success)
 		return {read_status::error, 0};
-	}
+
+	if (result.data.empty())
+		return {read_status::ok, 0};
 
 
-	copied = std::min({
-		max_bytes,
-		remaining_,
-		result.data.size()
-	});
+	std::size_t n = std::min(max_bytes, result.data.size());
+
+	std::memcpy(out, result.data.data(), n);
+
+	if (remaining_)
+		*remaining_ -= n;
 
 
-	std::memcpy(
-		buffer,
-		result.data.data(),
-		copied
-	);
-
-
-	remaining_ -= copied;
-
-	if (result.data.size() > copied) {
+	if (n < result.data.size()) {
 		overflow_.assign(
-			result.data.data() + copied,
-			result.data.size() - copied
+			result.data.data() + n,
+			result.data.size() - n
 		);
 	}
 
-	return {read_status::ok, copied};
+
+	return {read_status::ok, n};
 }

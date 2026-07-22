@@ -37,7 +37,7 @@ int main() {
 		VIDEO_WaitVSync();
 	}
 
-    netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
+    netkit::sock::addr addr("www.google.com", 443, netkit::sock::addr_type::hostname);
     std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
         addr, netkit::sock::type::tcp);
 
@@ -50,7 +50,7 @@ int main() {
     sock.connect();
     sock.perform_handshake();
 
-    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
+    constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: www.google.com\r\nConnection: close\r\n\r\n";
     std::string response;
 
     int sent = sock.send(request.data(), request.size());
