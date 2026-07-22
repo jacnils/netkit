@@ -4,6 +4,7 @@
 
 #include <string_view>
 #include <cstring>
+#include <ranges>
 
 namespace netkit::body {
 	class NETKIT_API buffer_body_view : public basic_body {
