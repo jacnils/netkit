@@ -27,6 +27,12 @@
 #include <network.h>
 #endif
 
+#if defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#endif
+
 /* solely for use internally */
 #ifndef NETKIT_DKP
 #ifdef NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER
