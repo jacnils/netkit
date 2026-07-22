@@ -102,4 +102,3 @@ namespace netkit::sock {
         static void throw_ssl_error(const std::string& msg);
     };
 #endif
-}

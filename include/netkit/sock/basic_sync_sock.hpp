@@ -29,7 +29,7 @@ namespace netkit::sock {
         virtual void unbind() = 0;
         virtual void listen(int backlog) = 0;
         virtual void listen() = 0;
-        virtual std::unique_ptr<basic_sync_sock> accept() = 0;
+        [[nodiscard]] virtual std::unique_ptr<basic_sync_sock> accept() = 0;
         virtual int send(const void* buf, size_t len) = 0;
         virtual void send(const std::string& buf) = 0;
         [[nodiscard]] virtual recv_result recv(int timeout_seconds) = 0;
@@ -37,13 +37,23 @@ namespace netkit::sock {
         [[nodiscard]] virtual recv_result recv(int timeout_seconds, const std::string& match, size_t eof) = 0;
         [[nodiscard]] virtual recv_result recv(int timeout_seconds, size_t eof) = 0;
         [[nodiscard]] virtual recv_result recv() = 0;
-        [[nodiscard]] virtual std::string overflow_bytes() const = 0;
-        virtual addr& get_addr() = 0;
-        [[nodiscard]] virtual const addr& get_addr() const = 0;
-        virtual void clear_overflow_bytes() const = 0;
+        [[nodiscard]] virtual std::string overflow_bytes() const { return {}; };
+        virtual addr& get_addr() {
+	        throw std::logic_error{"socket does not have an addr object"};
+        }
+        [[nodiscard]] virtual const addr& get_addr() const {
+	        throw std::logic_error{"socket does not have an addr object"};
+        }
+        virtual void clear_overflow_bytes() const {}
         virtual void close() = 0;
-        [[nodiscard]] virtual addr get_peer() const = 0;
-    	[[nodiscard]] virtual fd_t native_handle() const = 0;
-    	virtual void set_sock_opts(opt opts) const = 0;
+        [[nodiscard]] virtual addr get_peer() const {
+	        throw std::logic_error{"socket does not have a peer"};
+        };
+    	[[nodiscard]] virtual fd_t native_handle() const {
+    		throw std::logic_error{"socket does not have a native handle"};
+    	}
+    	virtual void set_sock_opts(opt opts) {
+    		throw std::logic_error{"socket does not have opts to set"};
+    	}
     };
 }

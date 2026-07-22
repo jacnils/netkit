@@ -160,6 +160,6 @@ namespace netkit::sock {
         void close() override;
         [[nodiscard]] sock::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
-    	void set_sock_opts(opt opts) const override;
+    	void set_sock_opts(opt opts) override;
     };
 }

@@ -54,4 +54,11 @@
 #include <netkit/http/sync_client.hpp>
 #include <netkit/http/multipart_part.hpp>
 
+// bodies
+#include <netkit/body/basic_body.hpp>
+#include <netkit/body/file_body.hpp>
+#include <netkit/body/buffer_body.hpp>
+#include <netkit/body/buffer_body_view.hpp>
+#include <netkit/body/stream_body.hpp>
+
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

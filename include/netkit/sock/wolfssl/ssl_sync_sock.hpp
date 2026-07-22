@@ -27,24 +27,24 @@
 
 namespace netkit::sock {
 #ifdef NETKIT_WOLFSSL
-    enum class mode {
+    enum class NETKIT_API mode {
         client,
         server
     };
 
-    enum class version {
+    enum class NETKIT_API version {
     	TLS_1_0,
         TLS_1_1,
         TLS_1_2,
         TLS_1_3,
     };
 
-    enum class verification {
+    enum class NETKIT_API verification {
         peer,
         none,
     };
 
-    class NETKIT_API ssl_sync_sock {
+    class NETKIT_API ssl_sync_sock : public basic_sync_sock {
     public:
         explicit ssl_sync_sock(std::unique_ptr<sock::basic_sync_sock> underlying,
                                mode ssl_mode,
@@ -53,34 +53,37 @@ namespace netkit::sock {
                                std::string cert_path = "",
                                std::string key_path = "");
 
-        ~ssl_sync_sock();
+        ~ssl_sync_sock() override;
 
-        void connect() const;
-        void bind() const;
-        void unbind() const;
-        void listen(int backlog) const;
-        void listen() const;
+        void connect() override;
+        void bind() override;
+        void unbind() override;
+        void listen(int backlog) override;
+        void listen() override;
 
         bool is_secure() const;
 
-        std::unique_ptr<ssl_sync_sock> accept();
+        [[nodiscard]] std::unique_ptr<basic_sync_sock> accept() override;
+    	[[nodiscard]] std::unique_ptr<ssl_sync_sock> accept_explicit_ssl();
 
-        int send(const void* buf, size_t len) const;
-        void send(const std::string& buf) const;
+        int send(const void* buf, size_t len) override;
+        void send(const std::string& buf) override;
 
-        recv_result recv(int timeout_seconds) const;
-        recv_result recv(int timeout_seconds, const std::string& match) const;
-        recv_result recv(int timeout_seconds, const std::string& match, size_t eof) const;
-        recv_result recv(int timeout_seconds, size_t eof) const;
+        [[nodiscard]] recv_result recv(int timeout_seconds) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, const std::string& match) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, const std::string& match, size_t eof) override;
+        [[nodiscard]] recv_result recv(int timeout_seconds, size_t eof) override;
+    	[[nodiscard]] recv_result recv() override;
 
-        std::string overflow_bytes() const;
-        void clear_overflow_bytes() const;
+        std::string overflow_bytes() const override;
+        void clear_overflow_bytes() const override;
 
-        void close();
+        void close() override;
         void perform_handshake();
 
-        [[nodiscard]] netkit::sock::addr get_peer() const;
-
+        [[nodiscard]] netkit::sock::addr get_peer() const override;
+    	addr& get_addr() override;
+    	const addr& get_addr() const override;
     private:
         mutable std::string overflow_;
         mutable std::mutex state_mtx_;

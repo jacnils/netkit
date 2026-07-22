@@ -140,7 +140,7 @@ void netkit::sock::sync_sock::prep_sa() {
 	}
 }
 #ifdef NETKIT_UNIX
-void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
+void netkit::sock::sync_sock::set_sock_opts(opt opts) {
     if (opts & opt::reuse_addr) {
         ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
     } else if (opts & opt::no_reuse_addr) {
@@ -178,7 +178,7 @@ void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
 }
 #endif
 #ifdef NETKIT_WINDOWS
-void netkit::sock::sync_sock::set_sock_opts(opt opts) const {
+void netkit::sock::sync_sock::set_sock_opts(opt opts) {
     if (opts & opt::reuse_addr) {
         BOOL optval = TRUE;
         if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {

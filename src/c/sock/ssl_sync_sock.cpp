@@ -8,7 +8,7 @@
 #include <netkit/sock/ssl_sync_sock.hpp>
 
 struct netkit_sync_sock {
-	std::unique_ptr<netkit::sock::basic_sync_sock> impl;
+	std::unique_ptr<netkit::sock::ssl_sync_sock> impl;
 };
 
 struct netkit_ssl_sync_sock {
@@ -211,7 +211,7 @@ extern "C" NETKIT_C_API netkit_ssl_sync_sock_t* netkit_ssl_sync_sock_accept(netk
 	}
 
 	try {
-		return from_cstyle(sock->impl->accept());
+		return from_cstyle(sock->impl->accept_explicit_ssl());
 	} catch (...) {
 		return nullptr;
 	}

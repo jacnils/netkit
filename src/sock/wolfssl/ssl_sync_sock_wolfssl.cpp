@@ -11,7 +11,6 @@
  */
 #ifdef NETKIT_WOLFSSL
 #include <iostream>
-#include <netkit/crypto/windows/certs.hpp>
 #include <netkit/except.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
@@ -28,6 +27,16 @@
 
 #include <memory>
 #include <mutex>
+
+template<typename T>
+std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<netkit::sock::basic_sync_sock> base)
+{
+	if (auto ptr = dynamic_cast<T*>(base.get())) {
+		base.release();
+		return std::unique_ptr<T>(ptr);
+	}
+	return nullptr;
+}
 
 netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> underlying,
                        mode ssl_mode, version ssl_version,
@@ -48,29 +57,29 @@ netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> unde
 }
 
 netkit::sock::ssl_sync_sock::~ssl_sync_sock() {
-	close();
+	ssl_sync_sock::close();
 }
 
-void netkit::sock::ssl_sync_sock::connect() const {
+void netkit::sock::ssl_sync_sock::connect() {
     if (ssl_mode_ != mode::client)
         throw std::runtime_error("connect() only valid for client mode");
 
     underlying_sock_->connect();
 }
 
-void netkit::sock::ssl_sync_sock::bind() const {
+void netkit::sock::ssl_sync_sock::bind() {
     underlying_sock_->bind();
 }
 
-void netkit::sock::ssl_sync_sock::unbind() const {
+void netkit::sock::ssl_sync_sock::unbind() {
     underlying_sock_->unbind();
 }
 
-void netkit::sock::ssl_sync_sock::listen(int backlog) const {
+void netkit::sock::ssl_sync_sock::listen(int backlog) {
     underlying_sock_->listen(backlog);
 }
 
-void netkit::sock::ssl_sync_sock::listen() const {
+void netkit::sock::ssl_sync_sock::listen() {
     underlying_sock_->listen();
 }
 
@@ -78,7 +87,7 @@ bool netkit::sock::ssl_sync_sock::is_secure() const {
 	return ssl_ && handshake_complete_;
 }
 
-std::unique_ptr<netkit::sock::ssl_sync_sock> netkit::sock::ssl_sync_sock::accept() {
+std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::ssl_sync_sock::accept() {
 	auto client = underlying_sock_->accept();
 
 	auto ssl_client = std::make_unique<ssl_sync_sock>(
@@ -93,8 +102,12 @@ std::unique_ptr<netkit::sock::ssl_sync_sock> netkit::sock::ssl_sync_sock::accept
 
 	return ssl_client;
 }
+std::unique_ptr<netkit::sock::ssl_sync_sock> netkit::sock::ssl_sync_sock::accept_explicit_ssl() {
+	auto accepted = accept();
+	return unique_dynamic_cast<ssl_sync_sock>(std::move(accepted));
+}
 
-int netkit::sock::ssl_sync_sock::send(const void* buf, size_t len) const {
+int netkit::sock::ssl_sync_sock::send(const void* buf, size_t len) {
 	ensure_ready();
 
 	int ret = wolfSSL_write(
@@ -113,24 +126,50 @@ int netkit::sock::ssl_sync_sock::send(const void* buf, size_t len) const {
 	return ret;
 }
 
-void netkit::sock::ssl_sync_sock::send(const std::string& buf) const {
+void netkit::sock::ssl_sync_sock::send(const std::string& buf) {
 	static_cast<void>(send(buf.data(), buf.size()));
 }
 
-netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds) {
     return recv_internal(timeout_seconds, nullptr, 0);
 }
 
-netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match) {
     return recv_internal(timeout_seconds, &match, 0);
 }
 
-netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match, size_t eof) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, const std::string& match, size_t eof) {
     return recv_internal(timeout_seconds, &match, eof);
 }
 
-netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, size_t eof) const {
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv(int timeout_seconds, size_t eof) {
     return recv_internal(timeout_seconds, nullptr, eof);
+}
+
+netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv() {
+	for (;;) {
+		char buf[8192];
+
+		int n = wolfSSL_read(ssl_, buf, sizeof(buf));
+
+		if (n > 0) {
+			return {{buf, buf + n}, recv_status::success};
+		}
+
+		switch (int err = wolfSSL_get_error(ssl_, n)) {
+		case WOLFSSL_ERROR_ZERO_RETURN:
+			return {{}, recv_status::closed};
+
+		case WOLFSSL_ERROR_WANT_READ:
+		case WOLFSSL_ERROR_WANT_WRITE:
+			continue; // or wait for socket readiness
+
+		default:
+			throw netkit::socket_error(
+				"wolfSSL_read failed: " + std::to_string(err)
+			);
+		}
+	}
 }
 
 std::string netkit::sock::ssl_sync_sock::overflow_bytes() const {
@@ -143,6 +182,12 @@ void netkit::sock::ssl_sync_sock::clear_overflow_bytes() const {
 
 netkit::sock::addr netkit::sock::ssl_sync_sock::get_peer() const {
 	return underlying_sock_->get_peer();
+}
+netkit::sock::addr& netkit::sock::ssl_sync_sock::get_addr() {
+	return underlying_sock_->get_addr();
+}
+const netkit::sock::addr& netkit::sock::ssl_sync_sock::get_addr() const {
+	return underlying_sock_->get_addr();
 }
 
 void netkit::sock::ssl_sync_sock::close() {
@@ -174,9 +219,9 @@ void netkit::sock::ssl_sync_sock::perform_handshake() {
 		ret = wolfSSL_accept(ssl_);
 
 	if (ret != WOLFSSL_SUCCESS) {
+#ifdef NETKIT_WOLFSSL_DEBUG
 		int err = wolfSSL_get_error(ssl_, ret);
 
-#ifdef NETKIT_WOLFSSL_DEBUG
 		std::cerr << "wolfSSL_connect/accept ret="
 				  << ret
 				  << " err="
