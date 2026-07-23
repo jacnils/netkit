@@ -31,11 +31,13 @@
 template<typename T>
 std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<netkit::sock::basic_sync_sock> base)
 {
-	if (auto ptr = dynamic_cast<T*>(base.get())) {
-		base.release();
-		return std::unique_ptr<T>(ptr);
-	}
-	return nullptr;
+	T* ptr = dynamic_cast<T*>(base.get());
+
+	if (!ptr)
+		return {};
+
+	base.release();
+	return std::unique_ptr<T>(ptr);
 }
 
 netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> underlying,
@@ -49,8 +51,6 @@ netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> unde
       verification_(ssl_verification),
       cert_path_(std::move(cert_path)), key_path_(std::move(key_path))
 {
-	underlying_sock_->set_sock_opts(opt::no_blocking);
-
 	init_wolfssl_once();
 	create_ssl_context();
 	create_ssl_object();
@@ -65,6 +65,9 @@ void netkit::sock::ssl_sync_sock::connect() {
         throw std::runtime_error("connect() only valid for client mode");
 
     underlying_sock_->connect();
+
+	// hack, until we have async_sock
+	underlying_sock_->set_sock_opts(opt::no_blocking);
 }
 
 void netkit::sock::ssl_sync_sock::bind() {
@@ -421,7 +424,6 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 #endif
 
-#ifdef NETKIT_DKP
 	wolfSSL_CTX_SetIOSend(ctx_, [](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
 		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
 
@@ -461,7 +463,6 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 
 		return WOLFSSL_CBIO_ERR_GENERAL;
 	});
-#endif
 }
 
 void netkit::sock::ssl_sync_sock::create_ssl_object() {
@@ -475,12 +476,9 @@ void netkit::sock::ssl_sync_sock::create_ssl_object() {
 	}
 
 	wolfSSL_UseSNI(ssl_, WOLFSSL_SNI_HOST_NAME, hostname.data(), hostname.length());
-#ifdef NETKIT_DKP
+
 	wolfSSL_SetIOWriteCtx(ssl_, this);
 	wolfSSL_SetIOReadCtx(ssl_, this);
-#else
-	wolfSSL_set_fd(ssl_, underlying_sock_->native_handle());
-#endif
 
 	wolfSSL_check_domain_name(
 		ssl_,

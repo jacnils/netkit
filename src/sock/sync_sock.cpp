@@ -254,7 +254,7 @@ netkit::sock::sync_sock::sync_sock(const sock::addr& addr, sock::type t, opt opt
     }
 
     if (this->sockfd >= 0) {
-        this->set_sock_opts(opts);
+        this->sync_sock::set_sock_opts(opts);
     } else {
         throw socket_error("cannot set options on invalid socket");
     }
@@ -266,7 +266,7 @@ netkit::sock::sync_sock::sync_sock(int existing_fd, const sock::addr& peer, sock
     : addr_(peer), type_(t), sockfd(existing_fd) {
     if (sockfd < 0) throw socket_error("invalid fd");
     if (this->sockfd >= 0) {
-        this->set_sock_opts(opts);
+        this->sync_sock::set_sock_opts(opts);
     } else {
         throw socket_error("cannot set options on invalid socket");
     }

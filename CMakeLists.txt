@@ -11,6 +11,7 @@ option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for De
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
+option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
     set(NETKIT_DKP ON)
@@ -134,13 +135,14 @@ elseif (NETKIT_ENABLE_WOLFSSL)
         set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     endif()
 
-    if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG)
+    if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG OR NOT NETKIT_USE_SYSTEM_WOLFSSL)
         message(STATUS "wolfSSL not found. Building from source...")
 
         include(FetchContent)
 
         set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
         set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(WOLFSSL_ALT_CERT_CHAINS ON CACHE BOOL "" FORCE) # im not sure why wolfssl is not built with this by default but it fixes handshake with fallback certs
 
         if (NETKIT_WOLFSSL_DEBUG)
             message(STATUS "Compiling WolfSSL with DEBUG_WOLFSSL")

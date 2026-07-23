@@ -31,12 +31,15 @@
 #include <mutex>
 
 template<typename T>
-std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<netkit::sock::basic_sync_sock> base) {
-	if (auto ptr = dynamic_cast<T*>(base.get())) {
-		base.release();
-		return std::unique_ptr<T>(ptr);
-	}
-	return nullptr;
+std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<netkit::sock::basic_sync_sock> base)
+{
+	T* ptr = dynamic_cast<T*>(base.get());
+
+	if (!ptr)
+		return {};
+
+	base.release();
+	return std::unique_ptr<T>(ptr);
 }
 
 netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> underlying,
