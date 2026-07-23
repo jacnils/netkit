@@ -380,6 +380,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 #endif
 #endif
 
+#ifdef NETKIT_ENABLE_FALLBACK_CA
     	auto load_ca_bundle = [](SSL_CTX* ctx, std::string_view pem) -> bool {
     		BIO* bio = BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size()));
     		if (!bio) return false;
@@ -412,6 +413,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
     			throw std::runtime_error("failed to load certificates");
     		}
     	}
+#endif
 
         X509_VERIFY_PARAM_set1_host(SSL_CTX_get0_param(ctx_),
                                        underlying_sock_->get_addr().get_hostname().c_str(),
