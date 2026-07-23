@@ -135,7 +135,6 @@ namespace netkit::utility {
      * @return base64-encoded string
      */
     NETKIT_API std::string encode_base64(const std::vector<uint8_t>& data);
-
     /**
      * @brief base64-decodes an input string_view
      * @param data Constant string_view reference containing the base64-encoded data to decode

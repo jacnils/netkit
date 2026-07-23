@@ -11,9 +11,10 @@
  */
 #pragma once
 
-#include <netkit/http/multipart_part.hpp>
+#include "netkit/body/stream_body.hpp"
 
 #include <functional>
+#include <netkit/http/multipart.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -56,7 +57,6 @@ namespace netkit::http::server {
         std::string session_directory{"./"};
         std::string session_cookie_name{"session_id"};
         std::vector<std::string> associated_session_cookies{};
-        int64_t max_request_size{1024 * 1024 * 1024};
         std::vector<std::string> blacklisted_ips{};
         bool trust_x_forwarded_for{false};
         int max_connections{-1};
@@ -72,8 +72,8 @@ namespace netkit::http::server {
         std::string endpoint{};
         std::unordered_map<std::string, std::string> query{};
         std::string content_type{};
-        std::string body{};
-        std::string raw_body{};
+        std::unique_ptr<netkit::body::stream_body> body;
+        std::string headers{};
         std::string method{};
         std::string ip_address{};
         std::string user_agent{};
@@ -81,8 +81,7 @@ namespace netkit::http::server {
         std::vector<cookie> cookies{};
         std::unordered_map<std::string, std::string> session{};
         std::string session_id{};
-        std::unordered_map<std::string, std::string> fields{};
-    	std::vector<multipart_part> multipart{};
+    	std::vector<utility::multipart_part> multipart{};
     };
 
     /**
