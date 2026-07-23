@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include <netkit/http/multipart_reader.hpp>
 #include <netkit/body/multipart_part_body.hpp>
 #include <cstring>
