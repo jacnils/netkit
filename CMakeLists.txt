@@ -64,8 +64,8 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/sock/sock_peer.cpp
         src/sock/sync_sock.cpp
         src/dns/cache.cpp
-        src/sock/openssl/ssl_sync_sock_openssl.cpp
-        src/sock/wolfssl/ssl_sync_sock_wolfssl.cpp
+        src/sock/openssl/ssl_sync_sock.cpp
+        src/sock/wolfssl/ssl_sync_sock.cpp
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp

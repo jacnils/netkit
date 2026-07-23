@@ -28,32 +28,37 @@
 
 namespace netkit::sock {
 
-class NETKIT_API ssl_sync_sock {
+class NETKIT_API ssl_sync_sock : public basic_sync_sock {
 public:
 	explicit ssl_sync_sock(std::unique_ptr<sock::basic_sync_sock> underlying,
 						   mode ssl_mode, version ssl_version = version::TLS_1_2,
 						   verification ssl_verification = verification::peer,
 						   std::string cert_path = "",
 						   std::string key_path = "");
-	~ssl_sync_sock();
-	void connect() const;
-	void bind() const;
-	void unbind() const;
-	void listen(int backlog) const;
-	void listen() const;
+	~ssl_sync_sock() override;
+	void connect() override;
+	void bind() override;
+	void unbind() override;
+	void listen(int backlog) override;
+	void listen() override;
+
 	bool is_secure() const;
-	std::unique_ptr<ssl_sync_sock> accept();
-	int send(const void* buf, size_t len) const;
-	void send(const std::string& buf) const;
-	recv_result recv(int timeout_seconds) const;
-	recv_result recv(int timeout_seconds, const std::string& match) const;
-	recv_result recv(int timeout_seconds, const std::string& match, size_t eof) const;
-	recv_result recv(int timeout_seconds, size_t eof) const;
-	std::string overflow_bytes() const;
-	void clear_overflow_bytes() const;
-	void close();
+
+	std::unique_ptr<basic_sync_sock> accept() override;
+	int send(const void* buf, size_t len) override;
+	void send(const std::string& buf) override;
+	recv_result recv(int timeout_seconds) override;
+	recv_result recv(int timeout_seconds, const std::string& match) override;
+	recv_result recv(int timeout_seconds, const std::string& match, size_t eof) override;
+	recv_result recv(int timeout_seconds, size_t eof) override;
+	recv_result recv() override;
+	std::string overflow_bytes() const override;
+	void clear_overflow_bytes() const override;
+	void close() override;
 	void perform_handshake();
-	[[nodiscard]] netkit::sock::addr get_peer() const;
+	[[nodiscard]] netkit::sock::addr get_peer() const override;
+	addr& get_addr() override;
+	const addr& get_addr() const override;
 private:
 	mutable std::string overflow_;
 	mutable std::mutex state_mtx_;
