@@ -26,7 +26,6 @@ struct netkit_ssl_sync_sock {
 
 	static netkit::sock::version to_version(const netkit_ssl_sync_sock_version_t version) {
 		switch (version) {
-			case NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_0: return netkit::sock::version::TLS_1_0;
 			case NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_1: return netkit::sock::version::TLS_1_1;
 			case NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_2: return netkit::sock::version::TLS_1_2;
 			case NETKIT_SSL_SYNC_SOCK_VERSION_TLS_1_3: return netkit::sock::version::TLS_1_3;

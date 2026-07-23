@@ -45,6 +45,7 @@ public:
 	bool is_secure() const;
 
 	std::unique_ptr<basic_sync_sock> accept() override;
+	std::unique_ptr<netkit::sock::ssl_sync_sock> accept_explicit_ssl();
 	int send(const void* buf, size_t len) override;
 	void send(const std::string& buf) override;
 	recv_result recv(int timeout_seconds) override;

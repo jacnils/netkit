@@ -30,6 +30,15 @@
 #include <memory>
 #include <mutex>
 
+template<typename T>
+std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<netkit::sock::basic_sync_sock> base) {
+	if (auto ptr = dynamic_cast<T*>(base.get())) {
+		base.release();
+		return std::unique_ptr<T>(ptr);
+	}
+	return nullptr;
+}
+
 netkit::sock::ssl_sync_sock::ssl_sync_sock(std::unique_ptr<basic_sync_sock> underlying,
                        mode ssl_mode, version ssl_version,
                        verification ssl_verification,
@@ -100,6 +109,11 @@ std::unique_ptr<netkit::sock::basic_sync_sock> netkit::sock::ssl_sync_sock::acce
 	ssl_client->perform_handshake();
 
 	return ssl_client;
+}
+
+std::unique_ptr<netkit::sock::ssl_sync_sock> netkit::sock::ssl_sync_sock::accept_explicit_ssl() {
+	auto accepted = accept();
+	return unique_dynamic_cast<ssl_sync_sock>(std::move(accepted));
 }
 
 int netkit::sock::ssl_sync_sock::send(const void* buf, size_t len) {
