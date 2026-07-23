@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstddef>
-#include <iostream>
+#include <optional>
+#include <stdexcept>
+
 #include <netkit/export.hpp>
 #include <optional>
 #include <stdexcept>
@@ -40,12 +42,6 @@ namespace netkit::body {
 				continue;
 
 			auto bytes = res.get_bytes_read();
-
-			std::cerr << "status="
-					  << static_cast<int>(res.get_status())
-					  << " bytes="
-					  << bytes
-					  << "\n";
 
 			if (bytes > sizeof(buffer))
 				throw std::runtime_error("invalid read size");

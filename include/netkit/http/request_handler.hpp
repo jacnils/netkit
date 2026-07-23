@@ -11,17 +11,17 @@
  */
 #pragma once
 
-#include "netkit/body/buffer_body.hpp"
-
 #include <algorithm>
 #include <fstream>
+#include <ranges>
+
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/multipart.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/network/utility.hpp>
 #include <netkit/sock/sync_sock.hpp>
 #include <netkit/utility.hpp>
-#include <ranges>
+#include <netkit/body/buffer_body.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
@@ -198,7 +198,7 @@ namespace netkit::http::server {
                     }
                 }
 
-            	// TODO: implement streaming for chunked
+            	  // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
                     std::string chunked = client_sock->overflow_bytes();
                     client_sock->clear_overflow_bytes();
@@ -213,17 +213,13 @@ namespace netkit::http::server {
 
                     std::string decoded = netkit::utility::decode_chunked(chunked);
                     req.headers = headers;
-                	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
+                	  req.body = std::make_unique<netkit::body::buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
                     std::string initial = client_sock->overflow_bytes();
                     client_sock->clear_overflow_bytes();
-                	req.headers = headers;
+                	  req.headers = headers;
 
-                	req.body = std::make_unique<netkit::body::stream_body>(
-						*client_sock,
-						content_length,
-						std::move(initial)
-					);
+                	  req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(initial));
                 } else {
                     req.headers = headers;
                 }
@@ -278,7 +274,7 @@ namespace netkit::http::server {
                     req.endpoint = full_path;
                 }
 
-            	for (const auto& it : headers_vec) {
+            	  for (const auto& it : headers_vec) {
                     if (it.first == "Content-Type") {
                         req.content_type = it.second;
                     } else if (it.first == "User-Agent") {
