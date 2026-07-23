@@ -424,6 +424,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	}
 #endif
 
+#ifndef NETKIT_WINDOWS
 	wolfSSL_CTX_SetIOSend(ctx_, [](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
 		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
 
@@ -463,6 +464,58 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 
 		return WOLFSSL_CBIO_ERR_GENERAL;
 	});
+#else
+	wolfSSL_CTX_SetIOSend(ctx_, [](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
+		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
+
+		int ret = self->underlying_sock_->send(
+			buf,
+			static_cast<size_t>(sz)
+		);
+
+		if (ret < 0) {
+			int err = WSAGetLastError();
+
+			if (err == WSAEWOULDBLOCK)
+				return WOLFSSL_CBIO_ERR_WANT_WRITE;
+
+			if (err == WSAEINTR)
+				return WOLFSSL_CBIO_ERR_WANT_WRITE;
+
+			return WOLFSSL_CBIO_ERR_GENERAL;
+		}
+
+		return ret;
+	});
+
+	wolfSSL_CTX_SetIORecv(ctx_,
+	[](WOLFSSL*, char* buf, int sz, void* ctx) -> int {
+		auto* self = static_cast<netkit::sock::ssl_sync_sock*>(ctx);
+
+		int ret = ::recv(
+			self->underlying_sock_->native_handle(),
+			buf,
+			sz,
+			0
+		);
+
+		if (ret > 0)
+			return ret;
+
+		if (ret == 0)
+			return WOLFSSL_CBIO_ERR_CONN_CLOSE;
+
+		int err = WSAGetLastError();
+
+		if (err == WSAEWOULDBLOCK)
+			return WOLFSSL_CBIO_ERR_WANT_READ;
+
+		if (err == WSAEINTR)
+			return WOLFSSL_CBIO_ERR_WANT_READ;
+
+		return WOLFSSL_CBIO_ERR_GENERAL;
+	});
+#endif
 }
 
 void netkit::sock::ssl_sync_sock::create_ssl_object() {
