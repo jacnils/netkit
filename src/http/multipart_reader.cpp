@@ -3,6 +3,8 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <istream>
+#include <sstream>
 
 bool netkit::http::utility::multipart_reader::fill_buffer() {
 	char temp[8192];
