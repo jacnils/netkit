@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <stdexcept>
 
 #include <netkit/export.hpp>
 
@@ -12,6 +13,37 @@ namespace netkit::body {
 		error,
 		timeout
 	};
+
+	template<typename T>
+	concept Readable = requires(T& obj, char* buffer, std::size_t size) {
+		{ obj.read(buffer, size) };
+	};
+
+	template<Readable T> std::string read_all(T& reader, std::optional<std::size_t> size = {}) {
+		std::string result;
+
+		if (size)
+			result.reserve(*size);
+
+		char buffer[8192];
+
+		while (true) {
+			auto res = reader.read(buffer, sizeof(buffer));
+
+			if (res.get_status() == netkit::body::read_status::eof)
+				break;
+
+			if (res.get_status() == netkit::body::read_status::error)
+				throw std::runtime_error("read failed");
+
+			if (res.get_status() == netkit::body::read_status::timeout)
+				continue;
+
+			result.append(buffer, res.get_bytes_read());
+		}
+
+		return result;
+	}
 
 	class NETKIT_API read_result {
 	public:
@@ -36,6 +68,10 @@ namespace netkit::body {
 		}
 		virtual bool rewind() {
 			return false;
+		}
+
+		std::string read_all(std::optional<std::size_t> size = std::nullopt) {
+			return netkit::body::read_all<basic_body>(*this, size);
 		}
 	};
 }

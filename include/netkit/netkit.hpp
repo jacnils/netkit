@@ -43,17 +43,16 @@
 #include <netkit/sock/ssl_sync_sock.hpp>
 
 // HTTP headers
-#include <netkit/http/predefined.hpp>
-#include <netkit/http/response.hpp>
-#include <netkit/http/body_parser.hpp>
-#include <netkit/http/sync_client.hpp>
 #include <netkit/http/basic_request_handler.hpp>
-#include <netkit/http/request_handler.hpp>
-#include <netkit/http/server_predefined.hpp>
 #include <netkit/http/basic_sync_server.hpp>
-#include <netkit/http/sync_server.hpp>
+#include <netkit/http/body_parser.hpp>
+#include <netkit/http/multipart.hpp>
+#include <netkit/http/predefined.hpp>
+#include <netkit/http/request_handler.hpp>
+#include <netkit/http/response.hpp>
+#include <netkit/http/server_predefined.hpp>
 #include <netkit/http/sync_client.hpp>
-#include <netkit/http/multipart_part.hpp>
+#include <netkit/http/sync_server.hpp>
 
 // bodies
 #include <netkit/body/basic_body.hpp>

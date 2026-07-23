@@ -70,6 +70,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
         src/body/stream_body.cpp
+        src/http/multipart.cpp
 )
 
 set_target_properties(netkit PROPERTIES

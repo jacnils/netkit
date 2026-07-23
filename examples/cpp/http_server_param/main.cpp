@@ -53,7 +53,9 @@ int main(int argc, char** argv) {
 				parent_path = ".";
 			}
 
-        	if (req.endpoint.find("..") != std::string::npos) {
+			std::string body_ = req.body->read_all();
+
+			if (req.endpoint.find("..") != std::string::npos) {
 				res.http_status = 403;
 				res.body = "<html><body><h1>403 Forbidden</h1></body></html>";
 				res.content_type = "text/html";
@@ -84,7 +86,7 @@ int main(int argc, char** argv) {
 					  << "Endpoint: " << req.endpoint << "\n"
 					  << "Method: " << req.method << "\n"
 					  << "User-Agent: " << req.user_agent << "\n"
-					  << "Body: " << req.body << "\n";
+					  << "Body: " << body_ << "\n";
 
 			return res;
         });

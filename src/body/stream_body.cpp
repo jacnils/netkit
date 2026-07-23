@@ -9,6 +9,23 @@ netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t
 
 	std::size_t total = 0;
 
+	if (!buffer_.empty()) {
+		std::size_t n = std::min({
+			max_bytes,
+			buffer_.size(),
+			remaining_.value_or(buffer_.size())
+		});
+
+		std::memcpy(out, buffer_.data(), n);
+
+		buffer_.erase(0, n);
+
+		if (remaining_)
+			*remaining_ -= n;
+
+		return {read_status::ok, n};
+	}
+
 	if (!overflow_.empty()) {
 		std::size_t n = std::min({
 			max_bytes,
@@ -46,7 +63,7 @@ netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t
 		return {read_status::error, 0};
 
 	if (result.data.empty())
-		return {read_status::ok, 0};
+		return {read_status::timeout, 0};
 
 
 	std::size_t n = std::min(max_bytes, result.data.size());
