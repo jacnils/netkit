@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include "netkit/body/buffer_body.hpp"
+
 #include <algorithm>
 #include <fstream>
 #include <netkit/http/basic_request_handler.hpp>
@@ -196,8 +198,8 @@ namespace netkit::http::server {
                     }
                 }
 
+            	// TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                	/*
                     std::string chunked = client_sock->overflow_bytes();
                     client_sock->clear_overflow_bytes();
 
@@ -209,11 +211,9 @@ namespace netkit::http::server {
                         chunked += res.data;
                     }
 
-                    std::string decoded = utility::decode_chunked(chunked);
+                    std::string decoded = netkit::utility::decode_chunked(chunked);
                     req.headers = headers;
-                    req.body = decoded;
-                    */
-                	throw std::runtime_error{"not implemented"};
+                	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
                     std::string initial = client_sock->overflow_bytes();
                     client_sock->clear_overflow_bytes();
@@ -288,13 +288,6 @@ namespace netkit::http::server {
                     }
                 }
 
-            	if (req.content_type.starts_with("multipart/form-data") && req.body) {
-            		req.multipart = netkit::http::utility::parse_multipart_form_data(
-						*req.body,
-						req.content_type
-					);
-            	}
-
                 std::string session_id{};
                 bool session_id_found = false;
                 for (const auto& it : req.cookies) {
@@ -340,22 +333,27 @@ namespace netkit::http::server {
                 }
 
                 auto response = callback(req);
-                std::stringstream net_response;
-                net_response << "HTTP/1.1 " << response.http_status << " " << netkit::http::get_message(response.http_status).value_or("Unknown") << "\r\n";
-                if (!response.content_type.empty()) net_response << "Content-Type: " << response.content_type << "\r\n";
-                if (!response.allow_origin.empty()) net_response << "Access-Control-Allow-Origin: " << response.allow_origin << "\r\n";
+
+                std::stringstream header_section;
+
+                header_section << "HTTP/1.1 " << response.http_status << " " << netkit::http::get_message(response.http_status).value_or("Unknown") << "\r\n";
+
+                if (!response.content_type.empty()) header_section << "Content-Type: " << response.content_type << "\r\n";
+                if (!response.allow_origin.empty()) header_section << "Access-Control-Allow-Origin: " << response.allow_origin << "\r\n";
                 if (!response.location.empty()) {
-                    net_response << "Location: " << response.location << "\r\n";
+                    header_section << "Location: " << response.location << "\r\n";
                 }
+
                 if (!response.headers.empty()) {
                     for (const auto& it : response.headers) {
-                        net_response << it.name << ": " << it.data << "\r\n";
+                        header_section << it.name << ": " << it.data << "\r\n";
                     }
                 }
+
                 if (response.redirection == redirect_type::temporary) {
-                    net_response << "Cache-Control: no-cache\r\n";
+                    header_section << "Cache-Control: no-cache\r\n";
                 } else if (response.redirection == redirect_type::permanent) {
-                    net_response << "Cache-Control: no-store\r\n";
+                    header_section << "Cache-Control: no-store\r\n";
                 }
 
                 if (!session_id_found && settings.enable_session) {
@@ -401,7 +399,7 @@ namespace netkit::http::server {
                         cookie_str += attribute.first + "=" + attribute.second + "; ";
                     }
 
-                    net_response << "Set-Cookie: " << cookie_str << "\r\n";
+                    header_section << "Set-Cookie: " << cookie_str << "\r\n";
                 }
 
                 if (erase_associated) {
@@ -412,7 +410,7 @@ namespace netkit::http::server {
 
                 for (const auto& it : response.delete_cookies) {
                     std::string cookie_str = it + "=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; ";
-                    net_response << "Set-Cookie: " << cookie_str << "\r\n";
+                    header_section << "Set-Cookie: " << cookie_str << "\r\n";
                 }
 
                 if (response.stop) {
@@ -423,23 +421,41 @@ namespace netkit::http::server {
                     if (it.name == "Content-Length") {
                         continue;
                     }
-                    net_response << it.name << ": " << it.data << "\r\n";
+                    header_section << it.name << ": " << it.data << "\r\n";
                 }
 
                 if (close) {
-                    net_response << "Connection: close\r\n";
+                    header_section << "Connection: close\r\n";
                 }
 
-                if (!response.body.empty()) {
-                    net_response << "Content-Length: " << response.body.size() << "\r\n";
-                } else {
-                    net_response << "Content-Length: 0\r\n";
-                }
+            	header_section << "Content-Length: " << response.body->size().value_or(0) << "\r\n";
+                header_section << "\r\n";
 
-                net_response << "\r\n";
-                net_response << response.body;
+            	client_sock->send(header_section.str());
 
-                client_sock->send(net_response.str());
+            	char buf[4096];
+
+            	while (true) {
+            		auto result = response.body->read(buf, sizeof(buf));
+
+            		if (result.get_status() == netkit::body::read_status::error)
+            			break;
+
+            		if (result.get_status() == netkit::body::read_status::timeout)
+            			continue;
+
+            		auto bytes = result.get_bytes_read();
+
+            		if (bytes > 0) {
+            			int sbytes = client_sock->send(buf, bytes);
+            			if (sbytes != bytes) {
+            				throw std::runtime_error{"Only sent" + std::to_string(sbytes) + " bytes out of " + std::to_string(bytes) + " to send"};
+            			}
+            		}
+
+            		if (result.get_status() == netkit::body::read_status::eof)
+            			break;
+            	}
             }
 
             client_sock->close();

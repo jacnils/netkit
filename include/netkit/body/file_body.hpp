@@ -32,7 +32,7 @@ namespace netkit::body {
 			std::size_t n = static_cast<std::size_t>(file_.gcount());
 
 			if (n > 0) {
-				return { read_status::eof, n };
+				return { read_status::ok, n };
 			}
 
 			if (file_.eof()) {

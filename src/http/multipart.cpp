@@ -1,19 +1,27 @@
+#include <algorithm>
 #include <netkit/http/multipart.hpp>
-
+#include <netkit/body/buffer_body.hpp>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <sstream>
 
-static std::string extract_boundary(const std::string& content_type) { // takes in Content-Disposition
+std::string netkit::http::utility::extract_boundary(const std::string& content_type) {
 	const std::string key = "boundary=";
+
 	auto pos = content_type.find(key);
-	if (pos == std::string::npos) return "";
+	if (pos == std::string::npos)
+		return {};
 
 	std::string boundary = content_type.substr(pos + key.size());
 
-	if (!boundary.empty() && boundary.front() == '"')
+	while (!boundary.empty() && std::isspace(static_cast<unsigned char>(boundary.back())))
+		boundary.pop_back();
+
+	if (boundary.size() >= 2 &&
+		boundary.front() == '"' &&
+		boundary.back() == '"') {
 		boundary = boundary.substr(1, boundary.size() - 2);
+		}
 
 	return boundary;
 }
@@ -96,7 +104,14 @@ std::vector<netkit::http::utility::multipart_part> netkit::http::utility::parse_
 			data_end -= 2;
 		}
 
-		part.data.assign(cur, data_end);
+		auto buf_body = std::make_unique<netkit::body::buffer_body>();
+
+		std::string tmp{};
+		tmp.assign(cur, data_end);
+
+		buf_body->set(std::move(tmp));
+
+		part.data = std::move(buf_body);
 
 		parts.push_back(std::move(part));
 

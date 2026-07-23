@@ -72,7 +72,7 @@ namespace netkit::http::server {
         std::string endpoint{};
         std::unordered_map<std::string, std::string> query{};
         std::string content_type{};
-        std::unique_ptr<netkit::body::stream_body> body;
+        std::unique_ptr<netkit::body::basic_body> body;
         std::string headers{};
         std::string method{};
         std::string ip_address{};
@@ -81,7 +81,6 @@ namespace netkit::http::server {
         std::vector<cookie> cookies{};
         std::unordered_map<std::string, std::string> session{};
         std::string session_id{};
-    	std::vector<utility::multipart_part> multipart{};
     };
 
     /**
@@ -89,7 +88,7 @@ namespace netkit::http::server {
      */
     struct response {
         int http_status{200};
-        std::string body{};
+        std::unique_ptr<body::basic_body> body;
         std::string content_type{"application/json"};
         std::string allow_origin{"*"};
         bool stop{false};

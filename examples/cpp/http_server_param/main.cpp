@@ -53,11 +53,14 @@ int main(int argc, char** argv) {
 				parent_path = ".";
 			}
 
-			std::string body_ = req.body->read_all();
+			std::string body_{};
+			if (req.body) {
+				body_ = req.body->read_all();
+			}
 
 			if (req.endpoint.find("..") != std::string::npos) {
 				res.http_status = 403;
-				res.body = "<html><body><h1>403 Forbidden</h1></body></html>";
+				res.body = std::make_unique<netkit::body::buffer_body>("<html><body><h1>403 Forbidden</h1></body></html>");
 				res.content_type = "text/html";
 				res.headers.push_back({"X-Server", "netkit-http-server/1.0"});
 				return res;
@@ -65,19 +68,21 @@ int main(int argc, char** argv) {
 
 			if ((req.endpoint == "/" || req.endpoint.empty()) && std::filesystem::is_regular_file(settings.index_file)) {
 				res.http_status = 200;
-				res.body = netkit::utility::read_file(settings.index_file);
+				//res.body = netkit::utility::read_file(settings.index_file);
+				res.body = std::make_unique<netkit::body::file_body>(settings.index_file);
 				res.content_type = netkit::utility::get_appropriate_content_type(settings.index_file);
 				res.headers.push_back({"X-Server", "netkit-http-server/1.0"});
 			} else if (std::filesystem::is_regular_file(std::filesystem::path(parent_path) / req.endpoint.substr(1))) {
 				std::string file_path = std::filesystem::path(parent_path) / req.endpoint.substr(1);
 				res.http_status = 200;
-				res.body = netkit::utility::read_file(file_path);
+				//res.body = netkit::utility::read_file(file_path);
+				res.body = std::make_unique<netkit::body::file_body>(file_path);
 				res.content_type = netkit::utility::get_appropriate_content_type(file_path);
 				res.headers.push_back({"X-Server", "netkit-http-server/1.0"});
 				res.headers.push_back({"Content-Disposition", "inline"});
 			} else {
 				res.http_status = 404;
-				res.body = "<html><body><h1>404 Not Found</h1></body></html>";
+				res.body = std::make_unique<netkit::body::buffer_body>("<html><body><h1>404 Not Found</h1></body></html>");
 				res.content_type = "text/html";
 				res.headers.push_back({"X-Server", "netkit-http-server/1.0"});
 			}

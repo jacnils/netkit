@@ -71,6 +71,8 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/crypto/windows/certs.cpp
         src/body/stream_body.cpp
         src/http/multipart.cpp
+        src/http/multipart_reader.cpp
+        src/body/multipart_part_body.cpp
 )
 
 set_target_properties(netkit PROPERTIES
