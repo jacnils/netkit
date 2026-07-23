@@ -21,29 +21,13 @@
 #include <netkit/export.hpp>
 #include <netkit/sock/basic_sync_sock.hpp>
 #include <netkit/sock/addr.hpp>
+#include <netkit/sock/ssl_sync_sock_enum.hpp>
 
 #include <memory>
 #include <mutex>
 
 namespace netkit::sock {
 #ifdef NETKIT_WOLFSSL
-    enum class NETKIT_API mode {
-        client,
-        server
-    };
-
-    enum class NETKIT_API version {
-    	TLS_1_0,
-        TLS_1_1,
-        TLS_1_2,
-        TLS_1_3,
-    };
-
-    enum class NETKIT_API verification {
-        peer,
-        none,
-    };
-
     class NETKIT_API ssl_sync_sock : public basic_sync_sock {
     public:
         explicit ssl_sync_sock(std::unique_ptr<sock::basic_sync_sock> underlying,

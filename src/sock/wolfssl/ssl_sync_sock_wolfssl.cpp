@@ -319,10 +319,6 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 	case version::TLS_1_1:
 		wolfSSL_CTX_SetMinVersion(ctx_, WOLFSSL_TLSV1_1);
 		break;
-
-	case version::TLS_1_0:
-		wolfSSL_CTX_SetMinVersion(ctx_, WOLFSSL_TLSV1);
-		break;
 	}
 
 	if (const char* env = std::getenv("NETKIT_SSL_VERIFY")) {

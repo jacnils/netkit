@@ -18,6 +18,7 @@
 #include <netkit/export.hpp>
 #include <netkit/sock/basic_sync_sock.hpp>
 #include <netkit/sock/addr.hpp>
+#include <netkit/sock/ssl_sync_sock_enum.hpp>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -26,22 +27,6 @@
 #include <mutex>
 
 namespace netkit::sock {
-enum class mode {
-	client,
-	server
-};
-
-enum class version {
-	TLS_1_0 = TLS1_0_VERSION,
-	TLS_1_1 = TLS1_1_VERSION,
-	TLS_1_2 = TLS1_2_VERSION,
-	TLS_1_3 = TLS1_3_VERSION,
-};
-
-enum class verification {
-	peer = SSL_VERIFY_PEER,
-	none = SSL_VERIFY_NONE,
-};
 
 class NETKIT_API ssl_sync_sock {
 public:

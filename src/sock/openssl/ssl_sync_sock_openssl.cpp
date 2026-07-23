@@ -14,12 +14,12 @@
 #include <netkit/except.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
 #include <netkit/sock/sync_sock.hpp>
-#include <netkit/crypto/windows/certs.hpp>
 #ifdef NETKIT_ENABLE_FALLBACK_CA
 #include <netkit/crypto/fallback_ca.hpp>
 #endif
 
 #ifdef NETKIT_WINDOWS
+#include <netkit/crypto/windows/certs.hpp>
 #include <netkit/utility.hpp>
 #endif
 
@@ -221,7 +221,32 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
     ctx_ = SSL_CTX_new(method);
     if (!ctx_) throw_ssl_error("SSL_CTX_new failed");
 
-    SSL_CTX_set_min_proto_version(ctx_, static_cast<long>(version_));
+	long version{};
+
+	switch (version_) {
+		case version::TLS_1_1:
+			version = TLS1_1_VERSION;
+			break;
+		case version::TLS_1_2:
+			version = TLS1_2_VERSION;
+			break;
+		case version::TLS_1_3:
+			version = TLS1_3_VERSION;
+			break;
+	}
+
+    SSL_CTX_set_min_proto_version(ctx_, version);
+
+	int verification{};
+
+	switch (verification_) {
+		case verification::none:
+			verification = SSL_VERIFY_NONE;
+			break;
+		case verification::peer:
+			verification = SSL_VERIFY_PEER;
+			break;
+	}
 
     if (ssl_mode_ == mode::server) {
         if (SSL_CTX_use_certificate_file(ctx_, cert_path_.c_str(), SSL_FILETYPE_PEM) <= 0)
@@ -229,7 +254,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
         if (SSL_CTX_use_PrivateKey_file(ctx_, key_path_.c_str(), SSL_FILETYPE_PEM) <= 0)
             throw_ssl_error("Failed to load private key");
     } else {
-        SSL_CTX_set_verify(ctx_, static_cast<int>(verification_), nullptr);
+        SSL_CTX_set_verify(ctx_, verification, nullptr);
         SSL_CTX_set_verify_depth(ctx_, 10);
     	SSL_CTX_set_default_verify_paths(ctx_);
 
@@ -313,7 +338,38 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
 #endif
 #endif
 
-    	// TODO: implement support for CA cert fallback
+    	auto load_ca_bundle = [](SSL_CTX* ctx, std::string_view pem) -> bool {
+    		BIO* bio = BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size()));
+    		if (!bio) return false;
+
+    		X509_STORE* store = SSL_CTX_get_cert_store(ctx);
+    		if (!store) {
+    			BIO_free(bio);
+    			return false;
+    		}
+
+    		bool any_loaded = false;
+
+    		while (true) {
+    			X509* cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    			if (!cert) break;
+
+    			if (X509_STORE_add_cert(store, cert) == 1) {
+    				any_loaded = true;
+    			}
+
+    			X509_free(cert);
+    		}
+
+    		BIO_free(bio);
+    		return any_loaded;
+        };
+
+    	if (!has_usable_certs(ctx_)) {
+    		if (!load_ca_bundle(ctx_, crypto::fallback_ca)) {
+    			throw std::runtime_error("failed to load certificates");
+    		}
+    	}
 
         X509_VERIFY_PARAM_set1_host(SSL_CTX_get0_param(ctx_),
                                        underlying_sock_->get_addr().get_hostname().c_str(),

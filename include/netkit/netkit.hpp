@@ -37,6 +37,7 @@
 #include <netkit/sock/addr.hpp>
 #include <netkit/sock/sock_peer.hpp>
 #include <netkit/sock/sync_sock.hpp>
+#include <netkit/sock/ssl_sync_sock_enum.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
 #include <netkit/sock/ssl_sync_sock.hpp>
