@@ -1,3 +1,5 @@
+#include <algorithm>
+#define NOMINMAX // some windows shit
 #include <netkit/body/stream_body.hpp>
 
 netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
