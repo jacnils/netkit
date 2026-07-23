@@ -5,8 +5,7 @@
 #include <stdexcept>
 
 #include <netkit/export.hpp>
-#include <optional>
-#include <stdexcept>
+#include <span>
 
 namespace netkit::body {
 	enum class NETKIT_API read_status {
@@ -27,9 +26,8 @@ namespace netkit::body {
 		if (size)
 			result.reserve(*size);
 
-		char buffer[8192];
-
 		while (true) {
+			char buffer[8192];
 			auto res = reader.read(buffer, sizeof(buffer));
 
 			if (res.get_status() == netkit::body::read_status::eof)
