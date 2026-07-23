@@ -46,8 +46,9 @@ int main() {
 		if (res.status == netkit::sock::recv_status::timeout)
 			break;
 
-        if (res.status == netkit::sock::recv_status::error)
-			throw std::runtime_error("recv failed");
+		if (res.status == netkit::sock::recv_status::error)
+			std::cout << "error" << "\n";
+			continue;
     }
 
     std::cout << response << std::flush;

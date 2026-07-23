@@ -79,7 +79,7 @@ private:
 
 	bool handshake_complete_ = false;
 	bool read_eof_ = false;
-	bool transport_eof_ = false;
+	mutable bool transport_eof_ = false;
 
 	static void init_openssl_once();
 	void create_ssl_context();

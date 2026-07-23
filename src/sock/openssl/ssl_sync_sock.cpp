@@ -407,7 +407,7 @@ void netkit::sock::ssl_sync_sock::create_ssl_context() {
     		return any_loaded;
         };
 
-    	if (!has_usable_certs(ctx_)) {
+    	if (!has_usable_certs(ctx_) && verification == SSL_VERIFY_PEER) {
     		if (!load_ca_bundle(ctx_, crypto::fallback_ca)) {
     			throw std::runtime_error("failed to load certificates");
     		}
@@ -452,14 +452,11 @@ void netkit::sock::ssl_sync_sock::drain_write_bio() const {
 void netkit::sock::ssl_sync_sock::feed_read_bio_blocking() const {
     auto res = underlying_sock_->recv();
 
-    if (res.status == sock::recv_status::closed) {
-        if (!handshake_complete_) {
-            throw std::runtime_error("Socket closed during TLS handshake");
-        }
-
-        BIO_set_mem_eof_return(read_bio_, 0);
-        return;
-    }
+	if (res.status == sock::recv_status::closed) {
+		BIO_set_mem_eof_return(read_bio_, -1);
+		transport_eof_ = true;
+		return;
+	}
 
     if (res.status != sock::recv_status::success)
         throw std::runtime_error("Socket read failed");
@@ -496,9 +493,22 @@ netkit::sock::recv_result netkit::sock::ssl_sync_sock::recv_internal(int, const 
             result.data.append(buf, ret);
         } else {
             int err = SSL_get_error(ssl_, ret);
-            if (err == SSL_ERROR_WANT_READ) {
-                const_cast<ssl_sync_sock*>(this)->feed_read_bio_blocking();
-                continue;
+
+        	if (err == SSL_ERROR_WANT_READ) {
+        		if (transport_eof_) {
+        			result.status = sock::recv_status::closed;
+        			break;
+        		}
+
+        		const_cast<ssl_sync_sock*>(this)->feed_read_bio_blocking();
+        		continue;
+            } else if (err == SSL_ERROR_SYSCALL) {
+            	if (ret == 0) {
+            		result.status = sock::recv_status::closed;
+            	} else {
+            		result.status = sock::recv_status::error;
+            	}
+            	break;
             } else if (err == SSL_ERROR_WANT_WRITE) {
                 continue;
             } else if (err == SSL_ERROR_ZERO_RETURN) {
