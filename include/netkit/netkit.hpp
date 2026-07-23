@@ -47,6 +47,7 @@
 #include <netkit/http/basic_sync_server.hpp>
 #include <netkit/http/body_parser.hpp>
 #include <netkit/http/multipart.hpp>
+#include <netkit/http/multipart_reader.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/http/request_handler.hpp>
 #include <netkit/http/response.hpp>
@@ -60,5 +61,6 @@
 #include <netkit/body/buffer_body.hpp>
 #include <netkit/body/buffer_body_view.hpp>
 #include <netkit/body/stream_body.hpp>
+#include <netkit/body/multipart_part_body.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

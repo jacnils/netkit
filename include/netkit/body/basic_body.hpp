@@ -5,6 +5,8 @@
 #include <stdexcept>
 
 #include <netkit/export.hpp>
+#include <optional>
+#include <stdexcept>
 
 namespace netkit::body {
 	enum class NETKIT_API read_status {
@@ -39,7 +41,12 @@ namespace netkit::body {
 			if (res.get_status() == netkit::body::read_status::timeout)
 				continue;
 
-			result.append(buffer, res.get_bytes_read());
+			auto bytes = res.get_bytes_read();
+
+			if (bytes > sizeof(buffer))
+				throw std::runtime_error("invalid read size");
+
+			result.append(buffer, bytes);
 		}
 
 		return result;
@@ -47,6 +54,7 @@ namespace netkit::body {
 
 	class NETKIT_API read_result {
 	public:
+		virtual ~read_result() = default;
 		read_result() = default;
 		read_result(read_status status, std::size_t bytes_read)
 			: _status(status), _bytes_read(bytes_read) {}
@@ -63,6 +71,12 @@ namespace netkit::body {
 		virtual ~basic_body() = default;
 
 		virtual read_result read(char* buffer, std::size_t max_bytes) noexcept = 0;
+
+		read_result read(std::span<char> buffer) noexcept {
+			auto res = read(buffer.data(), buffer.size());
+			return res;
+		}
+		
 		[[nodiscard]] virtual std::optional<std::size_t> size() const {
 			return std::nullopt;
 		}
