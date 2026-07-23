@@ -5,6 +5,7 @@
 #include <string_view>
 #include <istream>
 #include <sstream>
+#include <algorithm>
 
 bool netkit::http::utility::multipart_reader::fill_buffer() {
 	char temp[8192];
