@@ -5,9 +5,11 @@
 #include <stdexcept>
 #include <memory>
 #include <ostream>
+#include <string>
+#include <array>
+#include <span>
 
 #include <netkit/export.hpp>
-#include <span>
 
 namespace netkit::body {
 	enum class NETKIT_API read_status {
