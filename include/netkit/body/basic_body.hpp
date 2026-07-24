@@ -4,6 +4,7 @@
 #include <optional>
 #include <stdexcept>
 #include <memory>
+#include <ostream>
 
 #include <netkit/export.hpp>
 #include <span>
