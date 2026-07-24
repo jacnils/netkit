@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
+#include <memory>
 
 #include <netkit/export.hpp>
 #include <span>
@@ -15,7 +16,7 @@ namespace netkit::body {
 		timeout
 	};
 
-	template<typename T>
+	template <typename T>
 	concept Readable = requires(T& obj, char* buffer, std::size_t size) {
 		{ obj.read(buffer, size) };
 	};
@@ -54,8 +55,7 @@ namespace netkit::body {
 	public:
 		virtual ~read_result() = default;
 		read_result() = default;
-		read_result(read_status status, std::size_t bytes_read)
-			: _status(status), _bytes_read(bytes_read) {}
+		read_result(read_status status, std::size_t bytes_read) : _status(status), _bytes_read(bytes_read) {}
 
 		[[nodiscard]] read_status get_status() const { return _status; }
 		[[nodiscard]] std::size_t get_bytes_read() const { return _bytes_read; }
@@ -78,6 +78,7 @@ namespace netkit::body {
 		[[nodiscard]] virtual std::optional<std::size_t> size() const {
 			return std::nullopt;
 		}
+
 		virtual bool rewind() {
 			return false;
 		}
@@ -86,4 +87,37 @@ namespace netkit::body {
 			return netkit::body::read_all<basic_body>(*this, size);
 		}
 	};
+
+	inline std::ostream& write(std::ostream& os, basic_body& body) {
+		std::array<char, 8192> buffer{};
+
+		while (true) {
+			auto res = body.read(buffer.data(), buffer.size());
+
+			if (res.get_status() == read_status::error) {
+				os.setstate(std::ios::badbit);
+				break;
+			}
+
+			if (res.get_bytes_read() > 0) {
+				os.write(buffer.data(), static_cast<std::streamsize>(res.get_bytes_read()));
+			}
+
+			if (res.get_status() == read_status::eof) {
+				break;
+			}
+		}
+
+		return os;
+	}
+
+	inline std::ostream& operator<<(std::ostream& os, basic_body& body) {
+		return body::write(os, body);
+	}
+
+	template <typename T, typename... Args>
+	requires std::derived_from<T, basic_body> && std::constructible_from<T, Args...>
+	std::unique_ptr<basic_body> make_body(Args&&... args) {
+		return std::make_unique<T>(std::forward<Args>(args)...);
+	}
 }

@@ -73,7 +73,7 @@ namespace netkit::http::server {
         std::unordered_map<std::string, std::string> query{};
         std::string content_type{};
         std::unique_ptr<netkit::body::basic_body> body;
-        std::string headers{};
+        std::unordered_map<std::string, std::string> headers{};
         std::string method{};
         std::string ip_address{};
         std::string user_agent{};

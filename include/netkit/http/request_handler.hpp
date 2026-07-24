@@ -95,8 +95,8 @@ namespace netkit::http::server {
             file.close();
         }
 
-        [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_headers(const std::string& header_part) {
-            std::vector<std::pair<std::string,std::string>> headers_vec;
+        [[nodiscard]] static std::unordered_map<std::string, std::string> get_headers(const std::string& header_part) {
+            std::unordered_map<std::string, std::string> headers_map;
             std::istringstream hs(header_part);
             std::string l{};
             while (std::getline(hs, l) && l != "\r") {
@@ -111,11 +111,11 @@ namespace netkit::http::server {
                     };
                     trim(key);
                     trim(value);
-                    headers_vec.emplace_back(key, value);
+                	headers_map[key] = value;
                 }
             }
 
-            return headers_vec;
+            return headers_map;
         }
 
         struct status_line {
@@ -212,16 +212,16 @@ namespace netkit::http::server {
                     }
 
                     std::string decoded = netkit::utility::decode_chunked(chunked);
-                    req.headers = headers;
-                	  req.body = std::make_unique<netkit::body::buffer_body>(decoded);
+                    req.headers = get_headers(headers);
+                	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
                     std::string initial = client_sock->overflow_bytes();
                     client_sock->clear_overflow_bytes();
-                	  req.headers = headers;
+                	  req.headers = get_headers(headers);
 
                 	  req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(initial));
                 } else {
-                    req.headers = headers;
+                    req.headers = get_headers(headers);
                 }
 
                 req.ip_address = [&]() -> std::string {
