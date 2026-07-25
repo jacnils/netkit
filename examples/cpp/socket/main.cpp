@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file main.c
+ *  @file main.cpp
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @note See examples/socket_ssl for a TLS/SSL version of this example.

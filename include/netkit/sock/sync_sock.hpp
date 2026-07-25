@@ -54,8 +54,8 @@ namespace netkit::sock {
          * @param t The socket type (tcp, udp, unix).
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
-#ifdef NETKIT_UNIX
         sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
+#ifdef NETKIT_UNIX
         /**
          * @brief Constructs a sync_sock object from an existing file descriptor.
          * @param existing_fd The existing file descriptor.
@@ -64,9 +64,6 @@ namespace netkit::sock {
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
         sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
-#endif
-#ifdef NETKIT_WINDOWS
-        sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay|opt::blocking);
 #endif
         ~sync_sock() override;
         sock::addr& get_addr() override;

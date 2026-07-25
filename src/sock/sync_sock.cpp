@@ -44,7 +44,7 @@
 
 #ifndef NETKIT_DKP
 namespace netkit::sock {
-netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
+netkit::sock::addr get_peer_async(netkit::sock::fd_t sockfd) {
 	sockaddr_storage addr_storage{};
 	socklen_t addr_len = sizeof(addr_storage);
 
@@ -794,7 +794,7 @@ void netkit::sock::sync_sock::close() {
 		port, netkit::sock::addr_type::ipv4
 	};
 #else
-    return sock::get_peer(this->sockfd);
+    return sock::get_peer_async(this->sockfd);
 #endif
 }
 netkit::sock::fd_t netkit::sock::sync_sock::native_handle() const {

@@ -37,6 +37,8 @@
 #include <netkit/sock/addr.hpp>
 #include <netkit/sock/sock_peer.hpp>
 #include <netkit/sock/sync_sock.hpp>
+#include <netkit/sock/basic_async_sock.hpp>
+#include <netkit/sock/async_sock.hpp>
 #include <netkit/sock/ssl_sync_sock_enum.hpp>
 #include <netkit/sock/openssl/ssl_sync_sock.hpp>
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
@@ -62,5 +64,11 @@
 #include <netkit/body/buffer_body_view.hpp>
 #include <netkit/body/stream_body.hpp>
 #include <netkit/body/multipart_part_body.hpp>
+
+// io
+#include <netkit/io/basic_io_context.hpp>
+#include <netkit/io/io_awaitable.hpp>
+#include <netkit/io/io_context.hpp>
+#include <netkit/io/task.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

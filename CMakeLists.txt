@@ -74,6 +74,9 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/http/multipart.cpp
         src/http/multipart_reader.cpp
         src/body/multipart_part_body.cpp
+        src/io/io_awaitable.cpp
+        src/io/basic_io_context.cpp
+        src/sock/async_sock.cpp
 )
 
 set_target_properties(netkit PROPERTIES

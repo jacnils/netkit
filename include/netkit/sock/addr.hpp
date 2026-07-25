@@ -25,6 +25,7 @@ namespace netkit::sock {
         int port{};
         addr_type type{addr_type::hostname};
         friend addr get_peer(fd_t);
+    	friend addr get_peer_async(fd_t); // jank
 
         addr() = default;
     public:

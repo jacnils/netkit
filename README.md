@@ -4,11 +4,18 @@
 
 C++23 cross-platform networking toolkit library providing safe Unix-style sockets and protocol abstractions.
 
+## Warning
+
 Please note, this library is still work in progress. Usage is not recommended yet, aside from tests. Contributions and bug reports are much appreciated!
+
+If you still intend to use the library, there are two ways to go. You can either use the unstable master branch directly which may change its API entirely.
+
+The other alternative is to use the latest release, which doesn't have a changing API but will make migration later potentially time consuming.
 
 ## Features
 
-- Binding, connecting, sending, receiving and closing synchronous TCP/UDP sockets
+- OS-independent socket abstractions, both synchronous and asynchronous
+- Higher-level socket abstractions
 - HTTP/1.0 and HTTP/1.1 body parser, including headers and body.
 - IPv4 and IPv6 support
 - TCP and UDP support
@@ -24,7 +31,7 @@ Please note, this library is still work in progress. Usage is not recommended ye
 
 Still missing:
 
-- Asynchronous I/O
+- Asynchronous I/O for non-Linux platforms
 - Schannel support for Windows
 - WebSocket abstraction
 
