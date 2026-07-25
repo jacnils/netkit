@@ -35,14 +35,16 @@
 // Socket headers
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
-#include <netkit/socket/native_sync_sock.hpp>
+#include <netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/socket/openssl/ssl_sync_sock.hpp>
 #include <netkit/socket/sock_peer.hpp>
 #include <netkit/socket/ssl_sync_sock.hpp>
 #include <netkit/socket/ssl_sync_sock_enum.hpp>
 #include <netkit/socket/wolfssl/ssl_sync_sock.hpp>
-#include <socket/native/basic_native_async_sock.hpp>
-#include <socket/native/native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/native_async_sock.hpp>
+#include <netkit/socket/sync_sock.hpp>
+#include <netkit/socket/async_sock.hpp>
 
 // HTTP headers
 #include <netkit/http/basic_request_handler.hpp>
@@ -70,5 +72,10 @@
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/io_context.hpp>
 #include <netkit/io/task.hpp>
+
+// streams
+#include <netkit/stream/stream_enum.hpp>
+#include <netkit/stream/basic_stream.hpp>
+#include <netkit/stream/memory_stream.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")
