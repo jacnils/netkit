@@ -33,16 +33,16 @@
 #include <netkit/dns/query_builder.hpp>
 
 // Socket headers
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/sock_peer.hpp>
-#include <netkit/sock/sync_sock.hpp>
-#include <netkit/sock/basic_async_sock.hpp>
-#include <netkit/sock/async_sock.hpp>
-#include <netkit/sock/ssl_sync_sock_enum.hpp>
-#include <netkit/sock/openssl/ssl_sync_sock.hpp>
-#include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
-#include <netkit/sock/ssl_sync_sock.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/addr_type.hpp>
+#include <netkit/socket/native_sync_sock.hpp>
+#include <netkit/socket/openssl/ssl_sync_sock.hpp>
+#include <netkit/socket/sock_peer.hpp>
+#include <netkit/socket/ssl_sync_sock.hpp>
+#include <netkit/socket/ssl_sync_sock_enum.hpp>
+#include <netkit/socket/wolfssl/ssl_sync_sock.hpp>
+#include <socket/native/basic_native_async_sock.hpp>
+#include <socket/native/native_async_sock.hpp>
 
 // HTTP headers
 #include <netkit/http/basic_request_handler.hpp>

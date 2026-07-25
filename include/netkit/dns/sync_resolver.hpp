@@ -11,15 +11,17 @@
  */
 #pragma once
 
+#ifdef NETKIT_DNS
+
+#include <netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/nameserver_list.hpp>
 #include <netkit/dns/query_builder.hpp>
 #include <netkit/dns/record_type.hpp>
 #include <netkit/dns/response_parser.hpp>
 #include <netkit/network/utility.hpp>
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/sock/sync_sock.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/addr_type.hpp>
 
 #ifdef NETKIT_UNIX
 #include <arpa/inet.h>
@@ -211,5 +213,7 @@ namespace netkit::dns {
 		}
     };
 }
+
+#endif
 
 #endif

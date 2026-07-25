@@ -2,6 +2,8 @@
 #define NOMINMAX // some windows shit
 #include <netkit/body/stream_body.hpp>
 
+#ifdef NETKIT_HTTP
+
 netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 	if (max_bytes == 0)
 		return {read_status::ok, 0};
@@ -86,3 +88,5 @@ netkit::body::read_result netkit::body::stream_body::read(char* out, std::size_t
 
 	return {read_status::ok, n};
 }
+
+#endif

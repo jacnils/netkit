@@ -1,7 +1,7 @@
 #include <cstddef>
 #include <netkit-c/sock/sock_addr.h>
 #include <netkit-c/sock/sock_addr_types.h>
-#include <netkit/sock/addr.hpp>
+#include <netkit/socket/addr.hpp>
 
 struct netkit_sock_addr {
 	std::unique_ptr<netkit::sock::addr> impl;

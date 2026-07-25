@@ -9,6 +9,8 @@ option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
 option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
 option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
+option(NETKIT_ENABLE_HTTP "Enable netkit's HTTP abstractions" ON)
+option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
@@ -59,14 +61,14 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/network/ip_list.cpp
         src/dns/record_type.cpp
         src/dns/nameserver_list.cpp
-        src/sock/addr.cpp
+        src/socket/addr.cpp
         src/dns/response_parser.cpp
         src/dns/query_builder.cpp
-        src/sock/sock_peer.cpp
-        src/sock/sync_sock.cpp
+        src/socket/sock_peer.cpp
+        src/socket/native/native_sync_socket.cpp
         src/dns/cache.cpp
-        src/sock/openssl/ssl_sync_sock.cpp
-        src/sock/wolfssl/ssl_sync_sock.cpp
+        src/socket/openssl/ssl_sync_sock.cpp
+        src/socket/wolfssl/ssl_sync_sock.cpp
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
@@ -76,7 +78,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/body/multipart_part_body.cpp
         src/io/io_awaitable.cpp
         src/io/basic_io_context.cpp
-        src/sock/async_sock.cpp
+        src/socket/native/native_async_socket.cpp
 )
 
 set_target_properties(netkit PROPERTIES
@@ -207,6 +209,14 @@ if (NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER)
     target_compile_definitions(netkit PUBLIC NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER)
 endif()
 
+if (NETKIT_ENABLE_HTTP)
+    target_compile_definitions(netkit PUBLIC NETKIT_HTTP)
+endif()
+
+if (NETKIT_ENABLE_DNS)
+    target_compile_definitions(netkit PUBLIC NETKIT_DNS)
+endif()
+
 if (WIN32)
     target_link_libraries(netkit PUBLIC ws2_32 iphlpapi dnsapi crypt32)
 elseif (UNIX AND NOT APPLE)
@@ -252,7 +262,7 @@ install(TARGETS netkit
 if (NETKIT_DKP AND NETKIT_ENABLE_WOLFSSL)
     install(
         FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/sock/wolfssl/user_settings.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/socket/wolfssl/user_settings.h
         DESTINATION
         include/wolfssl/wolfcrypt/
     )

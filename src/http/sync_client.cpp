@@ -9,12 +9,13 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the synchronous HTTP client class.
  */
-#include <netkit/http/sync_client.hpp>
-#include <netkit/sock/ssl_sync_sock.hpp>
-#include <netkit/utility.hpp>
-#include <netkit/except.hpp>
-#include <netkit/network/utility.hpp>
+#ifdef NETKIT_HTTP
 
+#include <netkit/except.hpp>
+#include <netkit/http/sync_client.hpp>
+#include <netkit/network/utility.hpp>
+#include <netkit/socket/ssl_sync_sock.hpp>
+#include <netkit/utility.hpp>
 #include <variant>
 
 std::string netkit::http::client::sync_client::make_request(const std::string& request) const {
@@ -207,3 +208,5 @@ netkit::http::method netkit::http::client::sync_client::get_method() const {
 netkit::http::version netkit::http::client::sync_client::get_version() const {
     return this->v;
 }
+
+#endif

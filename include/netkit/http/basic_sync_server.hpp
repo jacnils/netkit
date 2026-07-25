@@ -11,9 +11,9 @@
  */
 #pragma once
 
+#include <../socket/native/native_sync_sock.hpp>
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/request_handler.hpp>
-#include <netkit/sock/sync_sock.hpp>
 #include <netkit/network/utility.hpp>
 
 namespace netkit::http::server {

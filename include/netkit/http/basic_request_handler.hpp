@@ -11,8 +11,8 @@
  */
 #pragma once
 
+#include <../socket/native/basic_native_sync_sock.hpp>
 #include <netkit/http/server_predefined.hpp>
-#include <netkit/sock/basic_sync_sock.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>

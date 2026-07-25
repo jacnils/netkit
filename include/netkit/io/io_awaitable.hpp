@@ -1,10 +1,9 @@
 #pragma once
 
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/io/basic_io_context.hpp>
-
 #include <coroutine>
 #include <cstdint>
+#include <netkit/io/basic_io_context.hpp>
+#include <netkit/socket/addr_type.hpp>
 
 #ifdef NETKIT_LINUX
 

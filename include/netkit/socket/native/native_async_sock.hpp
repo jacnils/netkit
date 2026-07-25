@@ -4,10 +4,10 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file async_sock.hpp
+ *  @file native_async_sock.hpp
  *  @license MIT
  *  @note Part of the Netkit library.
- *  @brief Provides an asynchronous socket class implementing the basic_async_sock interface.
+ *  @brief Provides an asynchronous socket class implementing the basic_native_async_sock interface.
  */
 #pragma once
 
@@ -15,18 +15,16 @@
 
 #ifdef NETKIT_LINUX
 
+#include <memory>
+#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/addr_type.hpp>
 #include <sys/socket.h>
 
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/sock/basic_async_sock.hpp>
-
-#include <memory>
-
-namespace netkit::sock {
+namespace netkit::sock::native {
 	constexpr fd_t INVALID_SOCKET = -1;
 
-    class NETKIT_API async_sock : public basic_async_sock {
+    class NETKIT_API native_async_sock : public basic_native_async_sock {
         addr addr_;
         type type_{};
         fd_t sockfd{INVALID_SOCKET};
@@ -40,9 +38,9 @@ namespace netkit::sock {
 
 		io::io_context& context_;
     public:
-        async_sock(io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
-        async_sock(io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
-    	~async_sock() override;
+        native_async_sock(io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
+        native_async_sock(io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
+    	~native_async_sock() override;
         sock::addr& get_addr() override;
         [[nodiscard]] const sock::addr& get_addr() const override;
         netkit::io::task<void> connect() override;
@@ -51,7 +49,7 @@ namespace netkit::sock {
         void unbind() override;
         void listen(int backlog) override;
         void listen() override;
-        [[nodiscard]] netkit::io::task<std::unique_ptr<basic_async_sock>> accept() override;
+        [[nodiscard]] netkit::io::task<std::unique_ptr<basic_native_async_sock>> accept() override;
         netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
     	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;
         void close() override;

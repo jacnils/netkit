@@ -5,7 +5,7 @@
 #endif
 
 #if defined(NETKIT_OPENSSL)
-#include <netkit/sock/openssl/ssl_sync_sock.hpp>
+#include <netkit/socket/openssl/ssl_sync_sock.hpp>
 #elif defined(NETKIT_WOLFSSL)
 #include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
 #endif

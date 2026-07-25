@@ -1,9 +1,9 @@
+#include <../../../include/netkit/socket/native/native_sync_sock.hpp>
 #include <cstddef>
 #include <cstring>
 #include <netkit-c/sock/sock_addr.h>
 #include <netkit-c/sock/sock_addr_types.h>
 #include <netkit-c/sock/sync_sock.h>
-#include <netkit/sock/sync_sock.hpp>
 
 struct netkit_sync_sock {
 	std::unique_ptr<netkit::sock::basic_sync_sock> impl;

@@ -15,16 +15,14 @@
 
 #ifdef NETKIT_OPENSSL
 
-#include <netkit/export.hpp>
-#include <netkit/sock/basic_sync_sock.hpp>
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/ssl_sync_sock_enum.hpp>
-
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
+#include <../native/basic_native_sync_sock.hpp>
 #include <memory>
 #include <mutex>
+#include <netkit/export.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/ssl_sync_sock_enum.hpp>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 namespace netkit::sock {
 

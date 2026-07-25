@@ -11,17 +11,16 @@
  */
 #pragma once
 
+#include <../socket/native/native_sync_sock.hpp>
 #include <algorithm>
 #include <fstream>
-#include <ranges>
-
+#include <netkit/body/buffer_body.hpp>
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/multipart.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/network/utility.hpp>
-#include <netkit/sock/sync_sock.hpp>
 #include <netkit/utility.hpp>
-#include <netkit/body/buffer_body.hpp>
+#include <ranges>
 
 namespace netkit::http::server {
     template <typename S = server_settings>

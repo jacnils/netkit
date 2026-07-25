@@ -1,18 +1,17 @@
 #pragma once
 
+#include <netkit/socket/native/basic_native_sync_sock.hpp>
 #include <algorithm>
 #include <cstring>
+#include <netkit/body/basic_body.hpp>
 #include <optional>
 #include <string>
-
-#include <netkit/body/basic_body.hpp>
-#include <netkit/sock/basic_sync_sock.hpp>
 
 namespace netkit::body {
 
 class NETKIT_API stream_body : public basic_body {
 public:
-	stream_body(sock::basic_sync_sock& socket,
+	stream_body(sock::native::basic_native_sync_sock& socket,
 				std::optional<std::size_t> length,
 				std::string initial = {})
 		: socket_(socket),
@@ -27,7 +26,7 @@ public:
 	}
 
 private:
-	sock::basic_sync_sock& socket_;
+	sock::native::basic_native_sync_sock& socket_;
 	std::optional<std::size_t> remaining_;
 	std::string buffer_;
 	std::string overflow_;

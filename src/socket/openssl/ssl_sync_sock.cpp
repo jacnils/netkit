@@ -11,9 +11,9 @@
  */
 #ifdef NETKIT_OPENSSL
 
+#include <../../../include/netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/except.hpp>
-#include <netkit/sock/openssl/ssl_sync_sock.hpp>
-#include <netkit/sock/sync_sock.hpp>
+#include <netkit/socket/openssl/ssl_sync_sock.hpp>
 #ifdef NETKIT_ENABLE_FALLBACK_CA
 #include <netkit/crypto/fallback_ca.hpp>
 #endif
