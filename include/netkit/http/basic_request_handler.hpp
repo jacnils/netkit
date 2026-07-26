@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#ifdef NETKIT_HTTP
+
 #include <../socket/native/basic_native_sync_sock.hpp>
 #include <netkit/http/server_predefined.hpp>
 
@@ -22,3 +24,5 @@ namespace netkit::http::server {
         virtual ~basic_request_handler() = default;
     };
 }
+
+#endif

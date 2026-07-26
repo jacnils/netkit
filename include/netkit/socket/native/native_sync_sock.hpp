@@ -42,7 +42,6 @@ namespace netkit::sock::native {
         [[nodiscard]] const sockaddr* get_sa() const;
         [[nodiscard]] socklen_t get_sa_len() const;
     	void prep_sa();
-
 #ifdef NETKIT_DKP
     	sockaddr_storage peer_addr{};
     	bool has_peer{false};
@@ -68,31 +67,7 @@ namespace netkit::sock::native {
         ~native_sync_sock() override;
         sock::addr& get_addr() override;
         [[nodiscard]] const sock::addr& get_addr() const override;
-        void connect() override;
-        /**
-         * @brief Bind the socket to the address.
-         */
-        void bind() override;
-        /**
-         * @brief Unbind the socket from the address.
-         */
-        void unbind() override;
-        /**
-         * @brief Listen for incoming connections.
-         * @param backlog The maximum number of pending connections.
-         * @note Very barebones, use with care.
-         */
-        void listen(int backlog) override;
-        /**
-         * @brief Listen for incoming connections with default backlog.
-         * @note Uses SOMAXCONN as the default backlog value.
-         */
-        void listen() override;
-        /**
-         * @brief Accept a connection from a client.
-         * @return sock_handle The socket handle for the accepted connection.
-         */
-        [[nodiscard]] std::unique_ptr<basic_native_sync_sock> accept() override;
+    	void connect() override;
         /**
          * @brief Send data to the server.
          * @param buf The data to send.
@@ -104,9 +79,9 @@ namespace netkit::sock::native {
         /**
          * @brief Close the socket.
          */
-        void close() override;
-        [[nodiscard]] sock::addr get_peer() const override;
+        void close() noexcept override;
     	[[nodiscard]] fd_t native_handle() const override;
     	void set_sock_opts(opt opts) override;
+    	[[nodiscard]] addr get_peer() const override;
     };
 }

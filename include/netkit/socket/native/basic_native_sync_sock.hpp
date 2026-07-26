@@ -24,12 +24,7 @@ namespace netkit::sock::native {
     class NETKIT_API basic_native_sync_sock {
     public:
         virtual ~basic_native_sync_sock() = default;
-        virtual void connect() = 0;
-        virtual void bind() = 0;
-        virtual void unbind() = 0;
-        virtual void listen(int backlog) = 0;
-        virtual void listen() = 0;
-        [[nodiscard]] virtual std::unique_ptr<basic_native_sync_sock> accept() = 0;
+    	virtual void connect() = 0;
         virtual std::size_t send(const void* buf, std::size_t len) = 0;
         [[nodiscard]] virtual std::size_t recv(void* buf, std::size_t len) = 0;
         virtual addr& get_addr() {
@@ -38,16 +33,14 @@ namespace netkit::sock::native {
         [[nodiscard]] virtual const addr& get_addr() const {
 	        throw std::logic_error{"socket does not have an addr object"};
         }
-        virtual void clear_overflow_bytes() const {}
-        virtual void close() = 0;
-        [[nodiscard]] virtual addr get_peer() const {
-	        throw std::logic_error{"socket does not have a peer"};
-        };
+        virtual void close() noexcept = 0;
     	[[nodiscard]] virtual fd_t native_handle() const {
     		throw std::logic_error{"socket does not have a native handle"};
     	}
     	virtual void set_sock_opts(opt opts) {
     		throw std::logic_error{"socket does not have opts to set"};
     	}
+    	[[nodiscard]] virtual addr get_peer() const = 0;
+
     };
 }

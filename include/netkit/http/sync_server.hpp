@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#ifdef NETKIT_HTTP
+
 #include <functional>
 #include <netkit/except.hpp>
 #include <netkit/http/basic_sync_server.hpp>
@@ -84,3 +86,5 @@ namespace netkit::http::server {
         }
     };
 }
+
+#endif

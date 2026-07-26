@@ -17,7 +17,7 @@ public:
 		if (read_pos_ >= buffer_.size()) {
 			return {
 				0,
-				stream_status::closed
+				stream_status::eof
 			};
 		}
 

@@ -22,12 +22,10 @@
 #include <sys/socket.h>
 
 namespace netkit::sock::native {
-	constexpr fd_t INVALID_SOCKET = -1;
-
     class NETKIT_API native_async_sock : public basic_native_async_sock {
         addr addr_;
         type type_{};
-        fd_t sockfd{INVALID_SOCKET};
+        fd_t sockfd{-1};
 
         sockaddr_storage sa_storage{};
         bool bound{false};
@@ -45,14 +43,9 @@ namespace netkit::sock::native {
         [[nodiscard]] const sock::addr& get_addr() const override;
         netkit::io::task<void> connect() override;
 
-        void bind() override;
-        void unbind() override;
-        void listen(int backlog) override;
-        void listen() override;
-        [[nodiscard]] netkit::io::task<std::unique_ptr<basic_native_async_sock>> accept() override;
         netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
     	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;
-        void close() override;
+        void close() noexcept override;
         [[nodiscard]] sock::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
     	void set_sock_opts(opt opts) override;

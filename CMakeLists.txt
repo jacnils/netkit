@@ -64,7 +64,6 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/socket/addr.cpp
         src/dns/response_parser.cpp
         src/dns/query_builder.cpp
-        src/socket/sock_peer.cpp
         src/socket/native/native_sync_socket.cpp
         src/dns/cache.cpp
         src/socket/openssl/ssl_sync_sock.cpp
@@ -79,6 +78,9 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/io/io_awaitable.cpp
         src/io/basic_io_context.cpp
         src/socket/native/native_async_socket.cpp
+        src/socket/native/native_sync_listener.cpp
+        src/socket/native/native_async_listener.cpp
+        src/socket/native/peer_helper.cpp
 )
 
 set_target_properties(netkit PROPERTIES

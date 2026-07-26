@@ -8,33 +8,38 @@
  *  @license MIT
  *  @note Example code using the Netkit library.
  *  @note See examples/socket_ssl for a TLS/SSL version of this example.
- *  @brief A lower-level example demonstrating the usage of sync_sock to make a simple HTTP request.
  */
 #include <iostream>
 #include <fstream>
 #include <string_view>
-#include <netkit/netkit.hpp>
+#include <netkit/tcp/tcp_connection.hpp>
 
 int main() {
-    netkit::sock::sock_addr addr("google.com", 80, netkit::sock::sock_addr_type::hostname);
-    netkit::sock::sync_sock sock(addr, netkit::sock::sock_type::tcp);
+	netkit::sock::addr addr{"google.com", 80, netkit::sock::addr_type::hostname};
+	netkit::tcp::tcp_connection connector{addr};
 
-    sock.connect();
+	connector.connect();
 
     constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
 
-    sock.send(request.data());
+    auto write_result = connector.write_all(request);
 
-    std::string response = sock.recv(-1).data;
+	if (write_result.status != netkit::stream::stream_status::success) {
+		throw std::runtime_error{"write failed"};
+	}
 
-    sock.close();
+	auto response = connector.read_all_string();
+
+	connector.close();
 
     std::ofstream file("response.txt");
+
     if (file.is_open()) {
-        file << response;
+    	file.write(response.data(), response.size());
         file.close();
     } else {
         std::cerr << "Failed to open file" << std::endl;
     }
+
     std::cout << "Response written to response.txt" << std::endl;
 }

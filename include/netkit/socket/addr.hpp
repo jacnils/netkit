@@ -18,21 +18,12 @@
 #include <string>
 
 namespace netkit::sock {
-	class addr;
-
-	namespace native {
-		addr get_peer_async(fd_t fd);
-		addr get_peer(fd_t fd);
-	}
-
     class NETKIT_API addr final {
         std::filesystem::path path{};
         std::string hostname{};
         std::string ip{};
         int port{};
         addr_type type{addr_type::hostname};
-        friend addr native::get_peer(fd_t);
-    	friend addr native::get_peer_async(fd_t); // jank
 
         addr() = default;
     public:

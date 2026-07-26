@@ -5,7 +5,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file async_sock.cpp
+ *  @file native_async_socket.cpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Implementation of the asynchronous socket class.
@@ -18,45 +18,14 @@
 
 #ifdef NETKIT_LINUX
 
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/tcp.h>
+#include <netkit/socket/native/peer_helper.hpp>
+
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
-
-namespace netkit::sock::native {
-netkit::sock::addr get_peer_async(netkit::sock::fd_t sockfd) {
-	sockaddr_storage addr_storage{};
-	socklen_t addr_len = sizeof(addr_storage);
-
-	if (getpeername(sockfd, reinterpret_cast<sockaddr*>(&addr_storage), &addr_len) < 0) {
-		throw netkit::socket_error("getpeername() failed: " + std::string(strerror(errno)));
-	}
-
-	char ip_str[INET6_ADDRSTRLEN] = {0};
-	uint16_t port = 0;
-
-	if (addr_storage.ss_family == AF_INET) {
-		auto* addr_in = reinterpret_cast<sockaddr_in*>(&addr_storage);
-		inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
-		port = ntohs(addr_in->sin_port);
-	} else if (addr_storage.ss_family == AF_INET6) {
-		auto* addr_in6 = reinterpret_cast<sockaddr_in6*>(&addr_storage);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
-		port = ntohs(addr_in6->sin6_port);
-	} else {
-		throw netkit::ip_error("unsupported address family");
-	}
-
-	netkit::sock::addr addr{};
-	addr.ip = ip_str;
-	addr.port = port;
-	addr.type = (addr_storage.ss_family == AF_INET) ? netkit::sock::addr_type::ipv4 : netkit::sock::addr_type::ipv6;
-
-	return addr;
-}
-}
 
 const sockaddr* netkit::sock::native::native_async_sock::get_sa() const {
     return reinterpret_cast<const sockaddr*>(&sa_storage);
@@ -226,11 +195,8 @@ netkit::io::task<void> netkit::sock::native::native_async_sock::connect() {
 		co_return;
 	}
 
-
 	if (errno != EINPROGRESS) {
-		throw netkit::socket_error(
-			"failed to connect to server"
-		);
+		throw netkit::socket_error("failed to connect to server");
 	}
 
 	co_await this->context_.wait_writable(this->sockfd);
@@ -238,109 +204,17 @@ netkit::io::task<void> netkit::sock::native::native_async_sock::connect() {
 	int error = 0;
 	socklen_t len = sizeof(error);
 
-	if (getsockopt(
-			this->sockfd,
-			SOL_SOCKET,
-			SO_ERROR,
-			&error,
-			&len
-		) < 0) {
-		throw netkit::socket_error(
-			"getsockopt(SO_ERROR) failed"
-		);
+	if (getsockopt(this->sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+		throw netkit::socket_error("getsockopt(SO_ERROR) failed");
 	}
 
 	if (error != 0) {
 		errno = error;
 
-		throw netkit::socket_error(
-			"failed to connect to server"
-		);
+		throw netkit::socket_error("failed to connect to server");
 	}
 
 	co_return;
-}
-
-void netkit::sock::native::native_async_sock::bind() {
-	auto ret = ::bind(
-		this->sockfd,
-		this->get_sa(),
-		this->get_sa_len()
-	);
-
-	if (ret < 0) {
-		throw socket_error("failed to bind socket");
-	}
-
-	this->bound = true;
-}
-
-void netkit::sock::native::native_async_sock::unbind() {
-    if (this->bound) {
-        if (::close(this->sockfd) < 0) {
-            throw socket_error("failed to unbind socket");
-        }
-        this->bound = false;
-    }
-}
-
-void netkit::sock::native::native_async_sock::listen(int backlog) {
-    if (::listen(this->sockfd, backlog == -1 ? SOMAXCONN : backlog) < 0) {
-        throw socket_error("failed to listen on socket");
-    }
-}
-
-void netkit::sock::native::native_async_sock::listen() {
-	this->listen(-1);
-}
-
-netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
-netkit::sock::native::native_async_sock::accept() {
-	while (true) {
-		sockaddr_storage client_addr{};
-		socklen_t addr_len = sizeof(client_addr);
-
-		// TODO: use fcntl and get bsd support
-		// it is just a waste of time right now since we are using epoll anyway
-		fd_t client_sockfd = ::accept4(
-			this->sockfd,
-			reinterpret_cast<sockaddr*>(&client_addr),
-			&addr_len,
-			SOCK_NONBLOCK
-		);
-
-		if (client_sockfd >= 0) {
-			if (this->type_ == type::uds) {
-				co_return std::make_unique<native_async_sock>(
-					this->context_,
-					client_sockfd,
-					sock::addr(
-						reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path
-					),
-					this->type_
-				);
-			}
-
-			auto peer = sock::native::get_peer_async(client_sockfd);
-
-			co_return std::make_unique<native_async_sock>(
-				this->context_,
-				client_sockfd,
-				peer,
-				this->type_
-			);
-		}
-
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			co_await this->context_.wait_readable(this->sockfd);
-			continue;
-		}
-
-		throw socket_error(
-			"failed to accept connection: " +
-			std::string(strerror(errno))
-		);
-	}
 }
 
 netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::send(const void* buf, size_t len) {
@@ -372,10 +246,7 @@ netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::send(cons
 			continue;
 		}
 
-		throw socket_error(
-			"failed to send: " +
-			std::string(strerror(errno))
-		);
+		throw socket_error("failed to send: " + std::string(strerror(errno)));
 	}
 
 	co_return total_sent;
@@ -383,12 +254,7 @@ netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::send(cons
 
 netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::recv(void* buf, size_t size) {
 	for (;;) {
-		auto n = ::recv(
-			this->sockfd,
-			static_cast<char*>(buf),
-			size,
-			0
-		);
+		auto n = ::recv(this->sockfd, buf, size, 0);
 
 		if (n > 0) {
 			co_return static_cast<size_t>(n);
@@ -412,7 +278,7 @@ netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::recv(void
 	}
 }
 
-void netkit::sock::native::native_async_sock::close() {
+void netkit::sock::native::native_async_sock::close() noexcept {
 	if (this->sockfd == -1)
 		return;
 
@@ -434,7 +300,7 @@ void netkit::sock::native::native_async_sock::close() {
 		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
 		port = ntohs(addr_in->sin_port);
 	} else {
-		throw netkit::ip_error("unsupported address family (Wii = IPv4 only)");
+		throw netkit::ip_error("unsupported address family");
 	}
 
 	return netkit::sock::addr{
@@ -442,7 +308,7 @@ void netkit::sock::native::native_async_sock::close() {
 		port, netkit::sock::addr_type::ipv4
 	};
 #else
-    return sock::native::get_peer_async(this->sockfd);
+    return native::get_peer(this->sockfd);
 #endif
 }
 netkit::sock::fd_t netkit::sock::native::native_async_sock::native_handle() const {

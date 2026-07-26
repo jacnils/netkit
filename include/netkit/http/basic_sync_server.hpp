@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#ifdef NETKIT_HTTP
+
 #include <../socket/native/native_sync_sock.hpp>
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/request_handler.hpp>
@@ -28,3 +30,5 @@ namespace netkit::http::server {
         virtual void stop() = 0;
     };
 }
+
+#endif

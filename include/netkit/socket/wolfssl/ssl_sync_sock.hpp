@@ -14,9 +14,9 @@
 #pragma once
 
 #ifdef NETKIT_WOLFSSL
+
 #include <wolfssl/options.h>
 #include <wolfssl/ssl.h>
-#endif
 
 #include <../native/basic_native_sync_sock.hpp>
 #include <memory>
@@ -26,7 +26,6 @@
 #include <netkit/socket/ssl_sync_sock_enum.hpp>
 
 namespace netkit::sock {
-#ifdef NETKIT_WOLFSSL
     class NETKIT_API ssl_sync_sock : public basic_sync_sock {
     public:
         explicit ssl_sync_sock(std::unique_ptr<sock::basic_sync_sock> underlying,
@@ -101,5 +100,6 @@ namespace netkit::sock {
 
         static void throw_ssl_error(const std::string& msg);
     };
-#endif
 }
+
+#endif

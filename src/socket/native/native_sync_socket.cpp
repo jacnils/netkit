@@ -10,10 +10,10 @@
  *  @brief Implementation of the synchronous socket class.
  */
 #include <netkit/socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/peer_helper.hpp>
 #include <cstring>
 #include <iostream>
 #include <netkit/except.hpp>
-#include <netkit/socket/sock_peer.hpp>
 
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
@@ -41,41 +41,6 @@
 #define NETKIT_SELECT ::net_select
 #else
 #define NETKIT_SELECT select
-#endif
-
-#ifndef NETKIT_DKP
-namespace netkit::sock::native {
-netkit::sock::addr get_peer(netkit::sock::fd_t sockfd) {
-	sockaddr_storage addr_storage{};
-	socklen_t addr_len = sizeof(addr_storage);
-
-	if (getpeername(sockfd, reinterpret_cast<sockaddr*>(&addr_storage), &addr_len) < 0) {
-		throw netkit::socket_error("getpeername() failed: " + std::string(strerror(errno)));
-	}
-
-	char ip_str[INET6_ADDRSTRLEN] = {0};
-	uint16_t port = 0;
-
-	if (addr_storage.ss_family == AF_INET) {
-		auto* addr_in = reinterpret_cast<sockaddr_in*>(&addr_storage);
-		inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
-		port = ntohs(addr_in->sin_port);
-	} else if (addr_storage.ss_family == AF_INET6) {
-		auto* addr_in6 = reinterpret_cast<sockaddr_in6*>(&addr_storage);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
-		port = ntohs(addr_in6->sin6_port);
-	} else {
-		throw netkit::ip_error("unsupported address family");
-	}
-
-	netkit::sock::addr addr{};
-	addr.ip = ip_str;
-	addr.port = port;
-	addr.type = (addr_storage.ss_family == AF_INET) ? netkit::sock::addr_type::ipv4 : netkit::sock::addr_type::ipv6;
-
-	return addr;
-}
-}
 #endif
 
 const sockaddr* netkit::sock::native::native_sync_sock::get_sa() const {
@@ -140,6 +105,13 @@ void netkit::sock::native::native_sync_sock::prep_sa() {
 		throw ip_error("invalid address type");
 	}
 }
+
+void netkit::sock::native::native_sync_sock::connect() {
+	if (::connect(sockfd, get_sa(), get_sa_len()) < 0) {
+		throw socket_error("connect failed: " + std::string(strerror(errno)));
+	}
+}
+
 #ifdef NETKIT_UNIX
 void netkit::sock::native::native_sync_sock::set_sock_opts(opt opts) {
     if (opts & opt::reuse_addr) {
@@ -335,152 +307,6 @@ netkit::sock::addr& netkit::sock::native::native_sync_sock::get_addr() {
 const netkit::sock::addr& netkit::sock::native::native_sync_sock::get_addr() const {
     return this->addr_;
 }
-#ifdef NETKIT_UNIX
-void netkit::sock::native::native_sync_sock::connect() {
-    if (::connect(this->sockfd, this->get_sa(), this->get_sa_len()) < 0) {
-        throw netkit::socket_error("failed to connect to server");
-    }
-
-#ifdef NETKIT_DKP
-	std::memcpy(&this->peer_addr, this->get_sa(), this->get_sa_len());
-	this->has_peer = true;
-#endif
-}
-#endif
-#ifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::connect() {
-    if (::connect(this->sockfd, this->get_sa(), this->get_sa_len()) == SOCKET_ERROR) {
-        throw socket_error("failed to connect to server");
-    }
-}
-#endif
-#ifdef NETKIT_UNIX
-void netkit::sock::native::native_sync_sock::bind() {
-    this->bound = true;
-
-    auto ret = ::bind(this->sockfd, this->get_sa(), this->get_sa_len());
-
-    if (ret < 0) {
-        throw socket_error("failed to bind socket: " + std::to_string(ret));
-    }
-}
-#endif
-#ifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::bind() {
-    this->bound = true;
-
-    int result = ::bind(this->sockfd, this->get_sa(), this->get_sa_len());
-
-    if (result == SOCKET_ERROR) {
-        int err = WSAGetLastError();
-        throw socket_error("failed to bind socket, error code: " + std::to_string(err));
-    }
-}
-#endif
-#ifdef NETKIT_UNIX
-void netkit::sock::native::native_sync_sock::unbind() {
-    if (this->bound) {
-        if (::close(this->sockfd) < 0) {
-            throw socket_error("failed to unbind socket");
-        }
-        this->bound = false;
-    }
-}
-#endif
-#ifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::unbind() {
-    if (this->bound) {
-        if (::closesocket(this->sockfd) == SOCKET_ERROR) {
-            int err = WSAGetLastError();
-            throw socket_error("failed to close socket, error code: " + std::to_string(err));
-        }
-        this->bound = false;
-        this->sockfd = INVALID_SOCKET;
-    }
-}
-#endif
-#ifdef NETKIT_UNIX
-void netkit::sock::native::native_sync_sock::listen(int backlog) {
-    if (::listen(this->sockfd, backlog == -1 ? SOMAXCONN : backlog) < 0) {
-        throw socket_error("failed to listen on socket");
-    }
-}
-#endif
-#ifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::listen(int backlog) {
-    if (::listen(this->sockfd, backlog == -1 ? SOMAXCONN : backlog) == SOCKET_ERROR) {
-        int err = WSAGetLastError();
-        throw socket_error("failed to listen socket, error code: " + std::to_string(err));
-    }
-}
-#endif
-void netkit::sock::native::native_sync_sock::listen() {
-    listen(-1);
-}
-#ifdef NETKIT_UNIX
-std::unique_ptr<netkit::sock::native::basic_native_sync_sock> netkit::sock::native::native_sync_sock::accept() {
-    sockaddr_storage client_addr{};
-    socklen_t addr_len = sizeof(client_addr);
-
-    int client_sockfd = ::accept(this->sockfd, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
-    if (client_sockfd < 0) {
-        throw socket_error("failed to accept connection: " + std::string(strerror(errno)));
-    }
-
-#ifndef NETKIT_DKP
-	if (this->type_ == type::uds) {
-		return std::make_unique<native_sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
-	}
-
-	auto peer = sock::get_peer(client_sockfd);
-	return std::make_unique<native_sync_sock>(client_sockfd, peer, this->type_);
-#else // fuck this code
-	char ip_str[INET6_ADDRSTRLEN]{};
-	uint16_t port = 0;
-
-	if (client_addr.ss_family == AF_INET) {
-		auto* addr_in = reinterpret_cast<sockaddr_in*>(&client_addr);
-		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
-		port = ntohs(addr_in->sin_port);
-	} else {
-		throw ip_error("unsupported address family");
-	}
-
-	sock::addr peer{
-		ip_str,
-		port,
-		addr_type::ipv4
-	};
-
-	auto sock_ptr = std::make_unique<native_sync_sock>(client_sockfd, peer, this->type_);
-
-	std::memcpy(&sock_ptr->peer_addr, &client_addr, addr_len);
-	sock_ptr->has_peer = true;
-
-	return sock_ptr;
-
-#endif
-
-}
-#endif
-#ifdef NETKIT_WINDOWS
-std::unique_ptr<netkit::sock::native::basic_native_sync_sock> netkit::sock::native::native_sync_sock::accept() {
-    sockaddr_storage client_addr{};
-    int addr_len = sizeof(client_addr);
-
-    SOCKET client_sockfd = ::accept(this->sockfd, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
-    if (client_sockfd == INVALID_SOCKET) {
-        int err = WSAGetLastError();
-        throw socket_error("failed to accept connection, error code: " + std::to_string(err));
-    }
-
-    auto peer = sock::get_peer(client_sockfd);
-    auto handle = std::make_unique<native_sync_sock>(peer, this->type_);
-    handle->sockfd = client_sockfd;
-
-    return handle;
-}
-#endif
 
 std::size_t netkit::sock::native::native_sync_sock::send(const void* buf, size_t len) {
 	return ::send(this->sockfd, buf, len, 0);
@@ -491,7 +317,7 @@ std::size_t netkit::sock::native::native_sync_sock::recv(void* buf, std::size_t 
 }
 
 #ifdef NETKIT_UNIX
-void netkit::sock::native::native_sync_sock::close() {
+void netkit::sock::native::native_sync_sock::close() noexcept {
     if (this->sockfd == -1) {
         return;
     }
@@ -500,7 +326,7 @@ void netkit::sock::native::native_sync_sock::close() {
     this->sockfd = -1;
 }
 #elifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::close() {
+void netkit::sock::native::native_sync_sock::close() noexcept {
     if (this->sockfd == INVALID_SOCKET) {
         return;
     }
@@ -536,7 +362,7 @@ void netkit::sock::native::native_sync_sock::close() {
 		port, netkit::sock::addr_type::ipv4
 	};
 #else
-    return native::get_peer(this->sockfd);
+    return netkit::sock::native::get_peer(this->sockfd);
 #endif
 }
 netkit::sock::fd_t netkit::sock::native::native_sync_sock::native_handle() const {

@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#ifdef NETKIT_HTTP
+
 #include <../socket/native/native_sync_sock.hpp>
 #include <algorithm>
 #include <fstream>
@@ -457,3 +459,5 @@ namespace netkit::http::server {
         }
     };
 }
+
+#endif

@@ -4,7 +4,8 @@ namespace netkit::stream {
 	enum class stream_status {
 		success,
 		closed,
-		error
+		error,
+		eof
 	};
 
 	struct stream_result {
