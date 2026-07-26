@@ -4,6 +4,8 @@
 
 #ifdef NETKIT_LINUX
 
+#include <netkit/io/basic_io_backend.hpp>
+
 #include <coroutine>
 #include <cstring>
 #include <iostream>
@@ -18,16 +20,9 @@
 
 namespace netkit::io {
 
-struct fd_state {
-	std::vector<std::coroutine_handle<>> read_waiters;
-	std::vector<std::coroutine_handle<>> write_waiters;
-};
-
-enum class io_event { read, write };
-
-class basic_io_context {
+class io_backend : public basic_io_backend {
 public:
-	basic_io_context() {
+	io_backend() {
 		epoll_fd_ = epoll_create1(0);
 
 		if (epoll_fd_ == -1)
@@ -50,7 +45,7 @@ public:
 		}
 	}
 
-	~basic_io_context() {
+	~io_backend() override {
 		if (wake_fd_ != -1)
 			close(wake_fd_);
 
@@ -58,13 +53,13 @@ public:
 			close(epoll_fd_);
 	}
 
-	void wake() {
+	void wake() override {
 		uint64_t value = 1;
 
 		write(wake_fd_, &value, sizeof(value));
 	}
 
-	void update_epoll(int fd, const fd_state& state) {
+	void update_state(int fd, const io_handle_state& state) override {
 		epoll_event ev{};
 		ev.data.fd = fd;
 		ev.events = 0;
@@ -92,8 +87,7 @@ public:
 				throw std::runtime_error(std::strerror(errno));
 
 			registered_fds_.insert(fd);
-		}
-		else {
+		} else {
 			ret = epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
 
 			if (ret == -1)
@@ -101,7 +95,7 @@ public:
 		}
 	}
 
-	void register_waiter(int fd, io_event ev, std::coroutine_handle<> h) {
+	void register_waiter(int fd, io_event ev, std::coroutine_handle<> h) override {
 		auto& state = fd_map_[fd];
 
 		if (ev == io_event::read)
@@ -109,10 +103,10 @@ public:
 		else
 			state.write_waiters.push_back(h);
 
-		update_epoll(fd, state);
+		update_state(fd, state);
 	}
 
-	void run() {
+	void run() override {
 		constexpr int MAX_EVENTS = 64;
 		epoll_event events[MAX_EVENTS];
 
@@ -158,27 +152,27 @@ public:
 					for (auto h : read_waiters) h.resume();
 					for (auto h : write_waiters) h.resume();
 
-					update_epoll(fd, state);
+					update_state(fd, state);
 					continue;
 				}
 
-				update_epoll(fd, state);
+				update_state(fd, state);
 			}
 		}
 	}
 
-	void stop() {
+	void stop() override {
 		running_ = false;
 	}
 
-	void poll(int timeout_ms = -1);
-
+	void poll(int timeout_ms) override;
+	void poll() override;
 private:
 	int epoll_fd_;
 	bool running_ = true;
 	int wake_fd_ = -1;
 
-	std::unordered_map<int, fd_state> fd_map_;
+	std::unordered_map<int, io_handle_state> fd_map_;
 	std::unordered_set<int> registered_fds_;
 };
 

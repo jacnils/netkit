@@ -1,11 +1,10 @@
 #pragma once
 
-#include <netkit/io/task.hpp>
-#include <netkit/definitions.hpp>
-#include <netkit/io/basic_io_context.hpp>
-#include <netkit/io/io_awaitable.hpp>
-
 #include <atomic>
+#include <netkit/io/linux/io_backend.hpp>
+#include <netkit/definitions.hpp>
+#include <netkit/io/io_awaitable.hpp>
+#include <netkit/io/task.hpp>
 
 namespace netkit::io {
 
@@ -53,7 +52,7 @@ private:
 		std::erase_if(tasks_, [](const auto& task) { return task.done(); } );
 	}
 
-	basic_io_context backend_;
+	io_backend backend_;
 	std::atomic_bool running_ = false;
 
 	std::vector<task<void>> tasks_;

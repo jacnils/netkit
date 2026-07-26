@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-dkp/_deps/wolfssl-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-no-ssl/_deps/catch2-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-openssl/_deps/catch2-src" vcs="Git" />
   </component>
 </project>

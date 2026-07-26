@@ -1,8 +1,8 @@
-#include <netkit/io/basic_io_context.hpp>
+#include <netkit/io/linux/io_backend.hpp>
 
 #ifdef NETKIT_LINUX
-void netkit::io::basic_io_context::poll(int timeout_ms)
-{
+
+void netkit::io::io_backend::poll(int timeout_ms) {
 	epoll_event events[64];
 
 	int n = epoll_wait(
@@ -22,7 +22,6 @@ void netkit::io::basic_io_context::poll(int timeout_ms)
 
 			continue;
 		}
-
 
 		auto it = fd_map_.find(fd);
 
@@ -49,7 +48,12 @@ void netkit::io::basic_io_context::poll(int timeout_ms)
 			}
 		}
 
-		update_epoll(fd, state);
+		update_state(fd, state);
 	}
 }
+
+void netkit::io::io_backend::poll() {
+	this->poll(-1);
+}
+
 #endif
