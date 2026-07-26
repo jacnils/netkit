@@ -4,46 +4,49 @@
 #include <netkit/netkit.hpp>
 
 netkit::io::task<>
-handle_client(netkit::io::io_context& ctx, std::unique_ptr<netkit::sock::basic_async_sock> client) {
-	char buffer[8192];
+handle_client(netkit::io::io_context& ctx, std::unique_ptr<netkit::tcp::async_tcp_connection> client) {
+	std::array<std::byte, 8192> buffer{};
 
+	std::string response;
 	while (true) {
-		auto received = co_await client->recv(buffer, sizeof(buffer));
+		auto received = co_await client->read(buffer);
 
-		if (received == 0) {
+		if (received.status != netkit::stream::stream_status::success) {
+			throw std::runtime_error{"error"};
+		}
+
+		if (received.bytes == 0) {
 			std::cout << "client disconnected\n";
 			break;
 		}
 
-		std::cout << buffer << "\n";
+		response.append(reinterpret_cast<const char*>(buffer.data()), received.bytes);
 
-		co_await client->send(buffer, received);
+		co_await client->write_all(std::span<const std::byte>(buffer.data(), received.bytes));
 
-		client->close();
+		break;
 	}
+
+	std::cerr << "client " << client->peer().get_ip() << " disconnected\n";
+
+	client->close();
 }
 
 netkit::io::task<>
 request(netkit::io::io_context& ctx) {
-	netkit::sock::addr addr{
-		"localhost",
-		1337,
-		netkit::sock::addr_type::hostname
-	};
+	netkit::sock::addr addr{"localhost", 1337, netkit::sock::addr_type::hostname};
 
-	netkit::sock::async_sock sock{
-		ctx,
-		addr,
-		netkit::sock::type::tcp,
-		netkit::sock::opt::reuse_addr | netkit::sock::opt::no_delay | netkit::sock::opt::no_blocking
-	};
+	netkit::tcp::async_tcp_server server{ctx, addr};
 
-	sock.bind();
-	sock.listen();
+	server.bind();
+	server.listen();
+
+	std::cerr << "server listening on port " << addr.get_port() << "\n";
 
 	// ReSharper disable once CppDFAEndlessLoop
 	while (true) {
-		auto client = co_await sock.accept();
+		auto client = co_await server.accept();
+		std::cerr << "client " << client->peer().get_ip() << " connected\n";
 		ctx.spawn(handle_client(ctx, std::move(client)));
 	}
 }

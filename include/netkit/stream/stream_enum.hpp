@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace netkit::stream {
 	enum class stream_status {
 		success,

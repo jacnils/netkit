@@ -81,6 +81,13 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/socket/native/native_sync_listener.cpp
         src/socket/native/native_async_listener.cpp
         src/socket/native/peer_helper.cpp
+        src/tcp/tcp_server.cpp
+        src/tcp/tcp_connection.cpp
+        src/stream/socket_stream.cpp
+        src/stream/socket_stream.cpp
+        src/stream/async_socket_stream.cpp
+        src/tcp/async_tcp_connection.cpp
+        src/tcp/async_tcp_server.cpp
 )
 
 set_target_properties(netkit PROPERTIES

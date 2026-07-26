@@ -17,6 +17,10 @@ public:
 		return this->read(std::span(static_cast<std::byte*>(data), size));
 	}
 
+	stream_result write(const void* data, std::size_t size) {
+		return this->write(std::span(static_cast<const std::byte*>(data), size));
+	}
+
 	virtual void close() noexcept = 0;
 };
 

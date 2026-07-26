@@ -36,8 +36,8 @@ namespace netkit::sock::native {
 
 		io::io_context& context_;
     public:
-        native_async_sock(io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
-        native_async_sock(io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::no_reuse_addr|opt::no_delay);
+        native_async_sock(io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
+        native_async_sock(io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
     	~native_async_sock() override;
         sock::addr& get_addr() override;
         [[nodiscard]] const sock::addr& get_addr() const override;

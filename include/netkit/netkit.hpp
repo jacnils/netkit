@@ -78,8 +78,13 @@
 #include <netkit/stream/basic_stream.hpp>
 #include <netkit/stream/memory_stream.hpp>
 #include <netkit/stream/socket_stream.hpp>
+#include <netkit/stream/basic_async_stream.hpp>
+#include <netkit/stream/async_socket_stream.hpp>
 
 // tcp
 #include <netkit/tcp/tcp_connection.hpp>
+#include <netkit/tcp/tcp_server.hpp>
+#include <netkit/tcp/async_tcp_connection.hpp>
+#include <netkit/tcp/async_tcp_server.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

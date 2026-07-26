@@ -15,7 +15,7 @@ constexpr fd_t INVALID_SOCKET = -1;
 
 class NETKIT_API native_async_listener  : public basic_native_async_listener {
 public:
-	native_async_listener(io::io_context& ctx, const addr& address, type t = type::tcp, opt opts = opt::no_reuse_addr | opt::no_blocking);
+	native_async_listener(io::io_context& ctx, const addr& address, type t = type::tcp, opt opts = opt::reuse_addr | opt::no_blocking);
 	~native_async_listener() override;
 
 	void bind() override;
