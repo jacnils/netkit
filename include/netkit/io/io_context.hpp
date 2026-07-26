@@ -7,8 +7,6 @@
 
 #include <atomic>
 
-#ifdef NETKIT_LINUX
-
 namespace netkit::io {
 
 class io_context {
@@ -62,5 +60,3 @@ private:
 };
 
 }
-
-#endif

@@ -5,8 +5,6 @@
 #include <netkit/io/basic_io_context.hpp>
 #include <netkit/socket/addr_type.hpp>
 
-#ifdef NETKIT_LINUX
-
 namespace netkit::io {
 	class io_context; // fw decl.
 
@@ -26,5 +24,3 @@ namespace netkit::io {
 		void await_resume() noexcept {}
 	};
 }
-
-#endif

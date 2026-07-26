@@ -6,10 +6,6 @@
 #include <utility>
 #include <type_traits>
 
-#include <netkit/definitions.hpp>
-
-#ifdef NETKIT_LINUX
-
 namespace netkit::io {
 
 template<typename T = void>
@@ -155,5 +151,3 @@ private:
 };
 
 }
-
-#endif
