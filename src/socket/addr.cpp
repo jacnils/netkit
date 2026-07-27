@@ -9,7 +9,6 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the sock_addr class.
  */
-#include <arpa/inet.h>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
@@ -32,6 +31,11 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#endif
+
+#ifdef NETKIT_WINDOWS
+#include <ws2tcpip.h>
 #endif
 
 /* solely for use internally */

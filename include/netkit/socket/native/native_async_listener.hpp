@@ -1,6 +1,13 @@
 #pragma once
 
+#include <netkit/definitions.hpp>
+
+#ifdef NETKIT_UNIX
 #include <sys/socket.h>
+#elifdef NETKIT_WINDOWS
+#include <ws2tcpip.h>
+#endif
+
 #include <memory>
 
 #include <netkit/io/io_context.hpp>

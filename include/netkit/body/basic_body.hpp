@@ -12,7 +12,7 @@
 #include <netkit/export.hpp>
 
 namespace netkit::body {
-	enum class NETKIT_API read_status {
+	enum class read_status {
 		ok,
 		eof,
 		error,

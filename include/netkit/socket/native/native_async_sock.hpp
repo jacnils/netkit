@@ -13,19 +13,25 @@
 
 #include <netkit/definitions.hpp>
 
-#ifdef NETKIT_LINUX
-
 #include <memory>
 #include <netkit/socket/native/basic_native_async_sock.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
+
+#ifdef NETKIT_UNIX
 #include <sys/socket.h>
+#elifdef NETKIT_WINDOWS
+#include <ws2tcpip.h>
+#endif
 
 namespace netkit::sock::native {
+#ifndef NETKIT_WINDOWS
+constexpr fd_t INVALID_SOCKET = -1;
+#endif
     class NETKIT_API native_async_sock : public basic_native_async_sock {
         addr addr_;
         type type_{};
-        fd_t sockfd{-1};
+        fd_t sockfd{INVALID_SOCKET};
 
         sockaddr_storage sa_storage{};
         bool bound{false};
@@ -51,5 +57,3 @@ namespace netkit::sock::native {
     	void set_sock_opts(opt opts) override;
     };
 }
-
-#endif

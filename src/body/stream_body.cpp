@@ -1,5 +1,7 @@
 #include <algorithm>
+#ifndef NOMINMAX
 #define NOMINMAX // some windows shit
+#endif
 #include <netkit/body/stream_body.hpp>
 
 netkit::body::read_result

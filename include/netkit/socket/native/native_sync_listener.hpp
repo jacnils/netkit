@@ -1,6 +1,13 @@
 #pragma once
 
+#include <netkit/definitions.hpp>
+
+#ifdef NETKIT_UNIX
 #include <sys/socket.h>
+#elifdef NETKIT_WINDOWS
+#include <ws2tcpip.h>
+#endif
+
 #include <netkit/socket/native/basic_native_sync_listener.hpp>
 
 namespace netkit::sock::native {

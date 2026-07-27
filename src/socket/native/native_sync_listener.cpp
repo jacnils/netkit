@@ -1,20 +1,25 @@
-#include <netkit/socket/native/peer_helper.hpp>
-
-#include <arpa/inet.h>
 #include <cstring>
 #include <fcntl.h>
 #include <memory>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_sync_listener.hpp>
 #include <netkit/socket/native/native_sync_sock.hpp>
-#include <netkit/socket/sock_peer.hpp>
+#include <netkit/socket/native/peer_helper.hpp>
+
+#ifdef NETKIT_UNIX
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#elifdef NETKIT_WINDOWS
+#include <afunix.h>
+#endif
+
 #include <unistd.h>
 
 void netkit::sock::native::native_sync_listener::set_sock_opts(opt opts) const {
+#ifdef NETKIT_UNIX
 	if (opts & opt::reuse_addr) {
 		::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
 	} else if (opts & opt::no_reuse_addr) {
@@ -49,6 +54,54 @@ void netkit::sock::native::native_sync_listener::set_sock_opts(opt opts) const {
 			throw socket_error("failed to set socket to blocking mode");
 		}
 	}
+#elifdef NETKIT_WINDOWS
+    if (opts & opt::reuse_addr) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set SO_REUSEADDR");
+        }
+    } else if (opts & opt::no_reuse_addr) {
+        BOOL optval = FALSE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to clear SO_REUSEADDR");
+        }
+    }
+	if ((opts & opt::no_delay) && type_ == type::tcp) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set TCP_NODELAY");
+        }
+    }
+    if (opts & opt::keep_alive) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set SO_KEEPALIVE");
+        }
+    } else if (opts & opt::no_keep_alive) {
+        BOOL optval = FALSE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to clear SO_KEEPALIVE");
+        }
+    }
+    if (opts & opt::no_blocking) {
+        u_long mode = 1;
+        if (ioctlsocket(this->sockfd_, FIONBIO, &mode) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set socket to non-blocking mode");
+        }
+    } else if (opts & opt::blocking) {
+        u_long mode = 0;
+        if (ioctlsocket(this->sockfd_, FIONBIO, &mode) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set socket to blocking mode");
+        }
+    }
+#endif
 }
 
 const sockaddr* netkit::sock::native::native_sync_listener::get_sa() const {
@@ -166,7 +219,7 @@ netkit::sock::native::native_sync_listener::accept() {
 	sockaddr_storage client_addr{};
 	socklen_t addr_len = sizeof(client_addr);
 
-	int client_sockfd = ::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
+	auto client_sockfd = ::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
 	if (client_sockfd < 0) {
 		throw socket_error("failed to accept connection: " + std::string(std::strerror(errno)));
 	}

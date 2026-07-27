@@ -2,6 +2,7 @@
 
 #include <netkit/io/task.hpp>
 #include <netkit/stream/async_socket_stream.hpp>
+#include <netkit/socket/native/native_async_sock.hpp>
 
 #include <memory>
 #include <vector>

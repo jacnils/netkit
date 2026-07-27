@@ -1,7 +1,9 @@
 #pragma once
 
-#include <netkit/socket/native/native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_sock.hpp>
 #include <netkit/stream/basic_async_stream.hpp>
+#include <netkit/socket/addr.hpp>
+#include <memory>
 
 namespace netkit::stream {
 

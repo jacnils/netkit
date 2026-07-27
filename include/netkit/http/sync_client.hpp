@@ -13,7 +13,7 @@
 
 #ifdef NETKIT_HTTP
 
-#include <../socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/http/body_parser.hpp>
 #include <netkit/http/predefined.hpp>
 

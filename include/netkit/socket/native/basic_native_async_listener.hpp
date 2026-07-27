@@ -1,9 +1,5 @@
 #pragma once
 
-#include <netkit/definitions.hpp>
-
-#ifdef NETKIT_LINUX
-
 #include <memory>
 #include <netkit/io/io_context.hpp>
 #include <netkit/socket/addr.hpp>
@@ -29,5 +25,3 @@ namespace netkit::sock::native {
     	}
     };
 }
-
-#endif

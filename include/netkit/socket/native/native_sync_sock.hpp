@@ -54,7 +54,6 @@ namespace netkit::sock::native {
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
         native_sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
-#ifdef NETKIT_UNIX
         /**
          * @brief Constructs a sync_sock object from an existing file descriptor.
          * @param existing_fd The existing file descriptor.
@@ -63,7 +62,6 @@ namespace netkit::sock::native {
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
         native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
-#endif
         ~native_sync_sock() override;
         sock::addr& get_addr() override;
         [[nodiscard]] const sock::addr& get_addr() const override;

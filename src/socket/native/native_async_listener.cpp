@@ -1,17 +1,26 @@
-#include <arpa/inet.h>
 #include <cstring>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+#include <unistd.h>
+
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_async_listener.hpp>
 #include <netkit/socket/native/native_async_sock.hpp>
 #include <netkit/socket/native/peer_helper.hpp>
+
+#ifdef NETKIT_WINDOWS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <afunix.h>
+#elif NETKIT_UNIX
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <unistd.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#endif
 
 void netkit::sock::native::native_async_listener::set_sock_opts(opt opts) const {
+#ifdef NETKIT_UNIX
 	if (opts & opt::reuse_addr) {
 		::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
 	} else if (opts & opt::no_reuse_addr) {
@@ -46,6 +55,54 @@ void netkit::sock::native::native_async_listener::set_sock_opts(opt opts) const 
 			throw socket_error("failed to set socket to blocking mode");
 		}
 	}
+#elifdef NETKIT_WINDOWS
+    if (opts & opt::reuse_addr) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set SO_REUSEADDR");
+        }
+    } else if (opts & opt::no_reuse_addr) {
+        BOOL optval = FALSE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to clear SO_REUSEADDR");
+        }
+    }
+	if ((opts & opt::no_delay) && type_ == type::tcp) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set TCP_NODELAY");
+        }
+    }
+    if (opts & opt::keep_alive) {
+        BOOL optval = TRUE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set SO_KEEPALIVE");
+        }
+    } else if (opts & opt::no_keep_alive) {
+        BOOL optval = FALSE;
+        if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to clear SO_KEEPALIVE");
+        }
+    }
+    if (opts & opt::no_blocking) {
+        u_long mode = 1;
+        if (ioctlsocket(this->sockfd_, FIONBIO, &mode) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set socket to non-blocking mode");
+        }
+    } else if (opts & opt::blocking) {
+        u_long mode = 0;
+        if (ioctlsocket(this->sockfd_, FIONBIO, &mode) == SOCKET_ERROR) {
+            closesocket(this->sockfd_);
+            throw socket_error("failed to set socket to blocking mode");
+        }
+    }
+#endif
 }
 
 const sockaddr* netkit::sock::native::native_async_listener::get_sa() const {
@@ -154,6 +211,7 @@ void netkit::sock::native::native_async_listener::listen() {
 	this->listen(-1);
 }
 
+#ifdef NETKIT_UNIX
 netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
 netkit::sock::native::native_async_listener::accept() {
 	while (true) {
@@ -202,6 +260,55 @@ netkit::sock::native::native_async_listener::accept() {
 		);
 	}
 }
+#elifdef NETKIT_WINDOWS
+netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
+netkit::sock::native::native_async_listener::accept() {
+	while (true) {
+		sockaddr_storage client_addr{};
+		int addr_len = sizeof(client_addr);
+
+		SOCKET client_sockfd = ::accept(
+			this->sockfd_,
+			reinterpret_cast<sockaddr*>(&client_addr),
+			&addr_len
+		);
+
+		if (client_sockfd != INVALID_SOCKET) {
+
+			// set non-blocking
+			u_long mode = 1;
+			ioctlsocket(client_sockfd, FIONBIO, &mode);
+
+#ifdef NETKIT_WINDOWS
+			if (this->type_ == type::uds) {
+				closesocket(client_sockfd);
+				throw socket_error("unix domain sockets not supported on win32 platform");
+			}
+#endif
+
+			auto peer = sock::native::get_peer(client_sockfd);
+
+			co_return std::make_unique<native_async_sock>(
+				this->context_,
+				client_sockfd,
+				peer,
+				this->type_
+			);
+		}
+
+		int err = WSAGetLastError();
+
+		if (err == WSAEWOULDBLOCK) {
+			co_await this->context_.wait_readable(this->sockfd_);
+			continue;
+		}
+
+		throw socket_error(
+			"failed to accept connection: " + std::to_string(err)
+		);
+	}
+}
+#endif
 
 void netkit::sock::native::native_async_listener::close() noexcept {
 	if (sockfd_ != INVALID_SOCKET) {

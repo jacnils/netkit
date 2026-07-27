@@ -213,7 +213,7 @@ netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr,
 
 #ifdef NETKIT_DKP
 	this->sockfd = ::socket(AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, IPPROTO_IP);
-#else
+#elifndef NETKIT_WINDOWS
     if (t != type::uds) {
         this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
                                                           t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
@@ -234,21 +234,26 @@ netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr,
 
     this->prep_sa();
 }
-
-netkit::sock::native::native_sync_sock::native_sync_sock(int existing_fd, const sock::addr& peer, sock::type t, opt opts)
-    : addr_(peer), type_(t), sockfd(existing_fd) {
-    if (sockfd < 0) throw socket_error("invalid fd");
-    if (this->sockfd >= 0) {
-        this->native_sync_sock::set_sock_opts(opts);
-    } else {
-        throw socket_error("cannot set options on invalid socket");
-    }
-
-    this->prep_sa();
-}
 #endif
+
+netkit::sock::native::native_sync_sock::native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts)
+	: addr_(peer), type_(t), sockfd(existing_fd) {
+	if (sockfd < 0) throw socket_error("invalid fd");
 #ifdef NETKIT_WINDOWS
-netkit::sock::native::native_sync_sock::sync_sock(const sock::addr& in_addr, sock::type t, opt opts)
+	if (this->sockfd != INVALID_SOCKET) {
+#else
+	if (this->sockfd >= 0) {
+#endif
+		this->native_sync_sock::set_sock_opts(opts);
+	} else {
+		throw socket_error("cannot set options on invalid socket");
+	}
+
+	this->prep_sa();
+}
+
+#ifdef NETKIT_WINDOWS
+netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& in_addr, sock::type t, opt opts)
     : addr_(in_addr), type_(t) {
 
     if (this->addr_.get_ip().empty() && !this->addr_.is_file_path()) {
@@ -272,7 +277,7 @@ netkit::sock::native::native_sync_sock::sync_sock(const sock::addr& in_addr, soc
         throw socket_error("Failed to create socket");
     }
 
-    this->sync_sock::set_sock_opts(opts);
+    this->native_sync_sock::set_sock_opts(opts);
     this->prep_sa();
 }
 #endif
@@ -309,11 +314,11 @@ const netkit::sock::addr& netkit::sock::native::native_sync_sock::get_addr() con
 }
 
 std::size_t netkit::sock::native::native_sync_sock::send(const void* buf, size_t len) {
-	return ::send(this->sockfd, buf, len, 0);
+	return ::send(this->sockfd, static_cast<const char*>(buf), len, 0);
 }
 
 std::size_t netkit::sock::native::native_sync_sock::recv(void* buf, std::size_t len) {
-	return ::recv(this->sockfd, buf, len, 0);
+	return ::recv(this->sockfd, static_cast<char*>(buf), len, 0);
 }
 
 #ifdef NETKIT_UNIX

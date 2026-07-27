@@ -1,10 +1,15 @@
+#include <netkit/stream/socket_stream.hpp>
+#include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
 
+#ifdef NETKIT_UNIX
 #include <arpa/inet.h>
-#include <cstring>
 #include <netinet/in.h>
-#include <netkit/socket/native/peer_helper.hpp>
 #include <sys/socket.h>
+#endif
+
+#include <cstring>
+#include <netkit/socket/native/peer_helper.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 

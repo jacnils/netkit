@@ -5,10 +5,12 @@
 
 #include <span>
 #include <stdexcept>
+#include <vector>
+#include <string>
 
 namespace netkit::stream {
 
-class NETKIT_API basic_async_stream {
+class basic_async_stream {
 public:
 	virtual ~basic_async_stream() = default;
 

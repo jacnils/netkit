@@ -1,5 +1,6 @@
 #pragma once
 
+// ReSharper disable once CppUnusedIncludeDirective
 #include <netkit/definitions.hpp>
 
 #if !defined(NETKIT_LINUX) || !defined(NETKIT_EPOLL)
