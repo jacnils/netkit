@@ -9,6 +9,7 @@ option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
 option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
 option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
+option(NETKIT_ENABLE_EPOLL "Enable using epoll backend (Linux only)" ON)
 option(NETKIT_ENABLE_HTTP "Enable netkit's HTTP abstractions" ON)
 option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
@@ -88,6 +89,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/stream/async_socket_stream.cpp
         src/tcp/async_tcp_connection.cpp
         src/tcp/async_tcp_server.cpp
+        src/io/fallback/io_backend.cpp
 )
 
 set_target_properties(netkit PROPERTIES
@@ -224,6 +226,10 @@ endif()
 
 if (NETKIT_ENABLE_DNS)
     target_compile_definitions(netkit PUBLIC NETKIT_DNS)
+endif()
+
+if (NETKIT_ENABLE_EPOLL)
+    target_compile_definitions(netkit PUBLIC NETKIT_EPOLL)
 endif()
 
 if (WIN32)

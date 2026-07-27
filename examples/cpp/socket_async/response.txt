@@ -1,9 +1,9 @@
 HTTP/1.1 301 Moved Permanently
 Location: http://www.google.com/
 Content-Type: text/html; charset=UTF-8
-Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1phIRS7D711BKE5J3groVw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
-Date: Sun, 26 Jul 2026 18:32:22 GMT
-Expires: Tue, 25 Aug 2026 18:32:22 GMT
+Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-_Z6KSerqCBOWipbdNOKQwA' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+Date: Mon, 27 Jul 2026 13:20:49 GMT
+Expires: Wed, 26 Aug 2026 13:20:49 GMT
 Cache-Control: public, max-age=2592000
 Server: gws
 Content-Length: 219
