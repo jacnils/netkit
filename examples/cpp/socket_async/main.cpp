@@ -6,7 +6,7 @@
 netkit::io::task<>
 request(netkit::io::io_context& ctx) {
 	netkit::sock::addr addr{"google.com", 80, netkit::sock::addr_type::hostname};
-	netkit::tcp::async_tcp_connection sock(ctx, addr);
+	netkit::tcp::async_tcp_stream sock(ctx, addr);
 
 	co_await sock.connect();
 

@@ -32,7 +32,8 @@ The other alternative is to use the latest release, which doesn't have a changin
 Still missing:
 
 - Asynchronous I/O for non-Linux platforms
-- Schannel support for Windows
+  - Threaded fallback is available
+- Schannel support for Windows (waste of time I reckon)
 - WebSocket abstraction
 
 ## Dependencies

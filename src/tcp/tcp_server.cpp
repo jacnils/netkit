@@ -1,5 +1,5 @@
 #include <netkit/tcp/tcp_server.hpp>
-#include <netkit/tcp/tcp_connection.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
 
 netkit::tcp::tcp_server::tcp_server(netkit::sock::addr addr)
 	: addr_(std::move(addr)), listener_(std::make_unique<sock::native::native_sync_listener>(addr_, sock::type::tcp)) {}
@@ -20,11 +20,11 @@ void netkit::tcp::tcp_server::listen() {
 	listener_->listen(-1);
 }
 
-std::unique_ptr<netkit::tcp::tcp_connection>
+std::unique_ptr<netkit::tcp::tcp_stream>
 netkit::tcp::tcp_server::accept() {
 	auto socket = listener_->accept();
 
-	return std::make_unique<netkit::tcp::tcp_connection>(
+	return std::make_unique<netkit::tcp::tcp_stream>(
 		std::move(socket)
 	);
 }

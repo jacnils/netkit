@@ -16,7 +16,7 @@
 
 int main() {
 	netkit::sock::addr addr{"google.com", 80, netkit::sock::addr_type::hostname};
-	netkit::tcp::tcp_connection connector{addr};
+	netkit::tcp::tcp_stream connector{addr};
 
 	connector.connect();
 

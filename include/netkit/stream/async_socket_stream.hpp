@@ -12,6 +12,7 @@ public:
 	[[nodiscard]] io::task<> connect() const;
 	[[nodiscard]] io::task<stream_result> read(std::span<std::byte> buffer) override;
 	[[nodiscard]] io::task<stream_result> write(std::span<const std::byte> buffer) override;
+
 	void close() noexcept override;
 
 	[[nodiscard]] sock::addr peer() const;

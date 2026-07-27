@@ -6,7 +6,7 @@
 
 namespace netkit::tcp {
 
-class tcp_connection;
+class tcp_stream;
 
 class tcp_server {
 public:
@@ -18,7 +18,7 @@ public:
 	void listen();
 	void listen(int backlog);
 
-	std::unique_ptr<tcp_connection> accept();
+	std::unique_ptr<tcp_stream> accept();
 
 	void close() noexcept;
 

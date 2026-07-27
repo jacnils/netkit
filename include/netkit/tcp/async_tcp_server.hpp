@@ -7,7 +7,7 @@
 
 namespace netkit::tcp {
 
-class async_tcp_connection;
+class async_tcp_stream;
 
 class async_tcp_server {
 public:
@@ -23,7 +23,7 @@ public:
 	void listen();
 	void listen(int backlog);
 
-	io::task<std::unique_ptr<async_tcp_connection>> accept();
+	io::task<std::unique_ptr<async_tcp_stream>> accept();
 
 	void close() noexcept;
 

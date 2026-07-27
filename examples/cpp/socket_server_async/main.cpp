@@ -4,7 +4,7 @@
 #include <netkit/netkit.hpp>
 
 netkit::io::task<>
-handle_client(netkit::io::io_context& ctx, std::unique_ptr<netkit::tcp::async_tcp_connection> client) {
+handle_client(netkit::io::io_context& ctx, std::unique_ptr<netkit::tcp::async_tcp_stream> client) {
 	std::array<std::byte, 8192> buffer{};
 
 	std::string response;
