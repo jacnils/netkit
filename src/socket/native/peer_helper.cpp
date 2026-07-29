@@ -12,8 +12,31 @@
 #include <netkit/socket/native/peer_helper.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
+#include <netkit/definitions.hpp>
 
 netkit::sock::addr netkit::sock::native::get_peer(fd_t sockfd) {
+#ifdef NETKIT_DKP
+	if (!this->has_peer) {
+		throw netkit::socket_error("peer not known");
+	}
+
+	char ip_str[INET6_ADDRSTRLEN]{};
+	uint16_t port = 0;
+
+	if (this->peer_addr.ss_family == AF_INET) {
+		auto* addr_in = (sockaddr_in*)&this->peer_addr;
+		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
+		port = ntohs(addr_in->sin_port);
+	} else {
+		throw netkit::ip_error("unsupported address family");
+	}
+
+	return netkit::sock::addr{
+		ip_str,
+		port,
+		netkit::sock::addr_type::ipv4
+	};
+#else
 	sockaddr_storage addr_storage{};
 	socklen_t addr_len = sizeof(addr_storage);
 
@@ -41,4 +64,5 @@ netkit::sock::addr netkit::sock::native::get_peer(fd_t sockfd) {
 		port,
 		(addr_storage.ss_family == AF_INET) ? sock::addr_type::ipv4 : sock::addr_type::ipv6
 	};
+#endif
 }

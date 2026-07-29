@@ -32,6 +32,9 @@
 #include <netkit/dns/response_parser.hpp>
 #include <netkit/dns/query_builder.hpp>
 
+// Platform headers
+#include <netkit/platform/socket.hpp>
+
 // Socket headers
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>

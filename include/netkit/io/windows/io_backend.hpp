@@ -3,8 +3,7 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <netkit/definitions.hpp>
 
-#if !defined(NETKIT_LINUX) || !defined(NETKIT_EPOLL)
-#if !defined(NETKIT_WINDOWS) || !defined(NETKIT_WSAPOLL)
+#if defined(NETKIT_WINDOWS) && defined(NETKIT_EPOLL)
 
 #include <atomic>
 #include <condition_variable>
@@ -17,14 +16,18 @@ namespace netkit::io {
 
 class NETKIT_API io_backend : public basic_io_backend {
 public:
-	io_backend(std::size_t threads = 4);
+	io_backend();
 	~io_backend() override;
 
 	void wake() override;
 
 	void update_state(io_handle_t, const io_handle_state&) override {}
 
-	void register_waiter(io_handle_t fd, io_event event, std::coroutine_handle<> h) override;
+	void register_waiter(
+		io_handle_t fd,
+		io_event event,
+		std::coroutine_handle<> h
+	) override;
 
 	void run() override;
 	void stop() override;
@@ -39,19 +42,15 @@ private:
 		std::coroutine_handle<> handle;
 	};
 
-	void worker();
+	SOCKET wake_read_{INVALID_SOCKET};
+	SOCKET wake_write_{INVALID_SOCKET};
 
-	std::atomic<bool> running_{true};
+	std::atomic_bool running_{true};
 
 	std::mutex mutex_;
-	std::condition_variable cv_;
-
-	std::queue<waiter> queue_;
-	std::vector<std::thread> workers_;
 	std::vector<waiter> waiters_;
 };
 
 } // namespace netkit::io
 
-#endif
 #endif

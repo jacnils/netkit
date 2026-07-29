@@ -1,6 +1,9 @@
+#include <iostream>
+#include <netkit/export.hpp>
 #include <netkit/io/fallback/io_backend.hpp>
 
 #if !defined(NETKIT_LINUX) || !defined(NETKIT_EPOLL)
+#if !defined(NETKIT_WINDOWS) || !defined(NETKIT_WSAPOLL)
 
 void netkit::io::io_backend::worker() {
 	while (running_) {
@@ -48,7 +51,7 @@ void netkit::io::io_backend::wake() {
 	cv_.notify_all();
 }
 
-void netkit::io::io_backend::register_waiter(int fd, io_event event, std::coroutine_handle<> handle) {
+void netkit::io::io_backend::register_waiter(io_handle_t fd, io_event event, std::coroutine_handle<> handle) {
 	std::lock_guard lock(mutex_);
 
 	waiters_.push_back({
@@ -73,24 +76,20 @@ void netkit::io::io_backend::stop() {
 }
 
 void netkit::io::io_backend::poll(int timeout_ms) {
-	std::unique_lock lock(mutex_);
+	std::vector<waiter> pending;
 
-	if (waiters_.empty()) {
-		if (timeout_ms < 0) {
-			cv_.wait(lock);
-		} else {
+	{
+		std::unique_lock lock(mutex_);
+
+		if (waiters_.empty()) {
 			cv_.wait_for(
 				lock,
 				std::chrono::milliseconds(timeout_ms)
 			);
 		}
+
+		pending.swap(waiters_);
 	}
-
-	std::vector<waiter> pending;
-	pending.swap(waiters_);
-
-	lock.unlock();
-
 
 	for (auto& waiter : pending) {
 		if (waiter.handle)
@@ -103,4 +102,5 @@ void netkit::io::io_backend::poll() {
 	poll(-1);
 }
 
+#endif
 #endif

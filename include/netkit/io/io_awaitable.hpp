@@ -10,7 +10,7 @@ namespace netkit::io {
 
 	struct io_awaitable {
 		io_backend& ctx;
-		int fd;
+		io_handle_t fd;
 		io_event ev;
 
 		[[nodiscard]] bool await_ready() const noexcept {

@@ -24,7 +24,6 @@ netkit::stream::async_socket_stream::write(std::span<const std::byte> buffer) {
 	co_return stream_result{ result, result == 0 ? stream_status::eof : stream_status::success };
 }
 
-
 void netkit::stream::async_socket_stream::close() noexcept {
 	if (socket_) {
 		socket_->close();

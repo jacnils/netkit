@@ -1,5 +1,6 @@
 /** netkit
- *  C++23 cross-platform networking toolkit library providing safe Unix-style sockets and protocol abstractions.
+ *  C++23 cross-platform networking toolkit library providing safe Unix-style sockets and protocol
+ * abstractions.
  *
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
@@ -9,11 +10,13 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the synchronous socket class.
  */
-#include <netkit/socket/native/native_sync_sock.hpp>
-#include <netkit/socket/native/peer_helper.hpp>
+#include <netkit/platform/socket.hpp>
+
 #include <cstring>
 #include <iostream>
 #include <netkit/except.hpp>
+#include <netkit/socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/peer_helper.hpp>
 
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
@@ -36,12 +39,6 @@
 #include <chrono>
 
 #include <unordered_map>
-
-#ifdef NETKIT_DKP
-#define NETKIT_SELECT ::net_select
-#else
-#define NETKIT_SELECT select
-#endif
 
 const sockaddr* netkit::sock::native::native_sync_sock::get_sa() const {
     return reinterpret_cast<const sockaddr*>(&sa_storage);
@@ -112,94 +109,9 @@ void netkit::sock::native::native_sync_sock::connect() {
 	}
 }
 
-#ifdef NETKIT_UNIX
 void netkit::sock::native::native_sync_sock::set_sock_opts(opt opts) {
-    if (opts & opt::reuse_addr) {
-        ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
-    } else if (opts & opt::no_reuse_addr) {
-        ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, nullptr, 0);
-    }
-    if (opts & opt::no_delay) {
-        ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opts, sizeof(opts));
-    }
-    if (opts & opt::keep_alive) {
-        ::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
-    } else if (opts & opt::no_keep_alive) {
-        ::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, nullptr, 0);
-    }
-    if (opts & opt::no_blocking) {
-        int flags = fcntl(this->sockfd, F_GETFL, 0);
-        if (flags < 0) {
-            ::close(this->sockfd);
-            throw socket_error("failed to get socket flags");
-        }
-        if (fcntl(this->sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-            ::close(this->sockfd);
-            throw socket_error("failed to set socket to non-blocking mode");
-        }
-    } else if (opts & opt::blocking) {
-        int flags = fcntl(this->sockfd, F_GETFL, 0);
-        if (flags < 0) {
-            ::close(this->sockfd);
-            throw socket_error("failed to get socket flags");
-        }
-        if (fcntl(this->sockfd, F_SETFL, flags & ~O_NONBLOCK) < 0) {
-            ::close(this->sockfd);
-            throw socket_error("failed to set socket to blocking mode");
-        }
-    }
+	netkit::platform::set_sock_opts(this->sockfd, opts);
 }
-#endif
-#ifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::set_sock_opts(opt opts) {
-    if (opts & opt::reuse_addr) {
-        BOOL optval = TRUE;
-        if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to set SO_REUSEADDR");
-        }
-    } else if (opts & opt::no_reuse_addr) {
-        BOOL optval = FALSE;
-        if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to clear SO_REUSEADDR");
-        }
-    }
-	if ((opts & opt::no_delay) && type_ == type::tcp) {
-        BOOL optval = TRUE;
-        if (setsockopt(this->sockfd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to set TCP_NODELAY");
-        }
-    }
-    if (opts & opt::keep_alive) {
-        BOOL optval = TRUE;
-        if (setsockopt(this->sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to set SO_KEEPALIVE");
-        }
-    } else if (opts & opt::no_keep_alive) {
-        BOOL optval = FALSE;
-        if (setsockopt(this->sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to clear SO_KEEPALIVE");
-        }
-    }
-    if (opts & opt::no_blocking) {
-        u_long mode = 1;
-        if (ioctlsocket(this->sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to set socket to non-blocking mode");
-        }
-    } else if (opts & opt::blocking) {
-        u_long mode = 0;
-        if (ioctlsocket(this->sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
-            closesocket(this->sockfd);
-            throw socket_error("failed to set socket to blocking mode");
-        }
-    }
-}
-#endif
 
 #ifdef NETKIT_UNIX
 netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr_(addr), type_(t) {

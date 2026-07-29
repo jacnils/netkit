@@ -57,4 +57,6 @@ int main() {
 
 	ctx.spawn(request(ctx));
 	ctx.run_until_idle();
+
+	return 0;
 }

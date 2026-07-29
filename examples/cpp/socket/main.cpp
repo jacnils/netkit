@@ -12,7 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <string_view>
-#include <netkit/tcp/tcp_connection.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
 
 int main() {
 	netkit::sock::addr addr{"google.com", 80, netkit::sock::addr_type::hostname};

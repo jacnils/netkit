@@ -10,11 +10,13 @@ option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the 
 option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
 option(NETKIT_ENABLE_EPOLL "Enable using epoll backend (Linux only)" ON)
+option(NETKIT_ENABLE_WSAPOLL "Enable using wsapoll backend (Windows only)" ON)
 option(NETKIT_ENABLE_HTTP "Enable netkit's HTTP abstractions" ON)
 option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
+option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" ON)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
     set(NETKIT_DKP ON)
@@ -90,7 +92,10 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/tcp/async_tcp_stream.cpp
         src/tcp/async_tcp_server.cpp
         src/io/fallback/io_backend.cpp
+        src/io/windows/io_backend.cpp
 )
+
+add_library(netkit::netkit ALIAS netkit)
 
 set_target_properties(netkit PROPERTIES
         EXPORT_NAME netkit
@@ -230,6 +235,10 @@ endif()
 
 if (NETKIT_ENABLE_EPOLL)
     target_compile_definitions(netkit PUBLIC NETKIT_EPOLL)
+endif()
+
+if (NETKIT_ENABLE_WSAPOLL)
+    target_compile_definitions(netkit PUBLIC NETKIT_WSAPOLL)
 endif()
 
 if (WIN32)
@@ -395,4 +404,8 @@ if (NETKIT_ENABLE_C_BINDINGS)
     endif()
 else()
     message(STATUS "C bindings disabled")
+endif()
+
+if (NETKIT_BUILD_EXAMPLES)
+    add_subdirectory(examples/cpp)
 endif()

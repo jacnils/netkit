@@ -1,20 +1,19 @@
 #pragma once
 
 #include <atomic>
-#include <netkit/io/linux/io_backend.hpp>
-#include <netkit/definitions.hpp>
+#include <netkit/io/io_backend.hpp>
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/task.hpp>
 
 namespace netkit::io {
 
-class io_context {
+class NETKIT_API io_context {
 public:
 	void run() {
 		running_ = true;
 
 		while (running_) {
-			backend_.poll(-1);
+			backend_.poll(!tasks_.empty() ? 0 : -1);
 
 			cleanup_tasks();
 		}
@@ -24,7 +23,7 @@ public:
 		running_ = true;
 
 		while (running_ && !tasks_.empty()) {
-			backend_.poll(-1);
+			backend_.poll(!tasks_.empty() ? 0 : -1);
 
 			cleanup_tasks();
 		}
@@ -35,11 +34,11 @@ public:
 		backend_.wake();
 	}
 
-	io_awaitable wait_readable(int fd) {
+	io_awaitable wait_readable(io_handle_t fd) {
 		return io_awaitable{backend_, fd, io_event::read};
 	}
 
-	io_awaitable wait_writable(int fd) {
+	io_awaitable wait_writable(io_handle_t fd) {
 		return io_awaitable{backend_, fd, io_event::write};
 	}
 

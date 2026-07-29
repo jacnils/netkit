@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <netkit/export.hpp>
+
 #if defined(__APPLE__)
 #define NETKIT_MACOS 1
 #endif
