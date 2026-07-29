@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file basic_async_sock.hpp
+ *  @file basic_native_async_sock.hpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Provides a basic interface for asynchronous sockets.
@@ -28,7 +28,13 @@ namespace netkit::sock::native {
         virtual netkit::io::task<void> connect() = 0;
     	virtual netkit::io::task<std::size_t> send(const void* buf, std::size_t len) = 0;
     	[[nodiscard]] virtual netkit::io::task<std::size_t> recv(void* buf, std::size_t len) = 0;
+    	virtual netkit::io::task<std::pair<std::size_t, addr>> recvfrom(void* buf, std::size_t len) = 0;
+    	virtual netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) = 0;
     	virtual void close() noexcept = 0;
+
+    	virtual void bind() = 0;
+    	virtual void bind(const addr& addr) = 0;
+    	virtual void unbind() noexcept = 0;
 
     	virtual addr& get_addr() {
 	        throw std::logic_error{"socket does not have an addr object"};

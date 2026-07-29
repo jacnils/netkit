@@ -18,6 +18,8 @@
 #include <string>
 
 namespace netkit::sock {
+	using sockaddr_len = int;
+
     class NETKIT_API addr final {
         std::filesystem::path path{};
         std::string hostname{};
@@ -25,7 +27,11 @@ namespace netkit::sock {
         int port{};
         addr_type type{addr_type::hostname};
 
+    	sockaddr_storage sa_storage_{};
+
         addr() = default;
+
+    	void prep_sa();
     public:
         /**
          * @brief Constructs a sock_addr object.
@@ -42,6 +48,7 @@ namespace netkit::sock {
          */
         explicit addr(std::filesystem::path path);
 #endif
+    	addr(const sockaddr* sa, sockaddr_len len);
         /**
          * @brief Check whether the address is IPv4 or IPv6.
          * @return True if the address is IPv4, false if it is IPv6 or invalid.
@@ -83,5 +90,8 @@ namespace netkit::sock {
 		 */
 		[[nodiscard]] addr_type get_type() const;
         ~addr() = default;
+
+    	[[nodiscard]] const sockaddr* get_sa() const noexcept;
+    	[[nodiscard]] sockaddr_len get_sa_len() const noexcept;
     };
 }

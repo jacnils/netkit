@@ -11,6 +11,7 @@ namespace netkit::sock::native {
     public:
         virtual ~basic_native_async_listener() = default;
 		virtual void bind() = 0;
+    	virtual void bind(const addr& addr) = 0;
     	virtual void unbind() = 0;
     	virtual void listen() = 0;
     	virtual void listen(int backlog) = 0;

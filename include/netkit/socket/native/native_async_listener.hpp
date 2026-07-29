@@ -26,7 +26,9 @@ public:
 	~native_async_listener() override;
 
 	void bind() override;
+	void bind(const addr& addr) override;
 	void unbind() override;
+
 	void listen(int backlog) override;
 	void listen() override;
 
@@ -53,14 +55,6 @@ private:
 	bool listening_{false};
 
 	sockaddr_storage sa_storage_{};
-
-	void prep_sa();
-
-	[[nodiscard]]
-	const sockaddr* get_sa() const;
-
-	[[nodiscard]]
-	socklen_t get_sa_len() const;
 };
 
 }

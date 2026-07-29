@@ -35,13 +35,8 @@ namespace netkit::sock::native {
 #else
         fd_t sockfd{-1};
 #endif
-        sockaddr_storage sa_storage{};
         bool bound{false};
         mutable std::string old_bytes;
-
-        [[nodiscard]] const sockaddr* get_sa() const;
-        [[nodiscard]] socklen_t get_sa_len() const;
-    	void prep_sa();
 #ifdef NETKIT_DKP
     	sockaddr_storage peer_addr{};
     	bool has_peer{false};
@@ -74,6 +69,13 @@ namespace netkit::sock::native {
          */
         std::size_t send(const void* buf, std::size_t len) override;
         [[nodiscard]] std::size_t recv(void* buf, std::size_t len) override;
+    	std::pair<std::size_t, addr> recvfrom(void* buf, size_t size) override;
+    	std::size_t sendto(const void* buf, std::size_t len, const addr& dest) override;
+
+    	void bind() override;
+    	void bind(const addr& addr) override;
+    	void unbind() noexcept override;
+
         /**
          * @brief Close the socket.
          */

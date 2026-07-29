@@ -12,7 +12,6 @@
  */
 #include <netkit/platform/socket.hpp>
 
-#include <cstring>
 #include <iostream>
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_sync_sock.hpp>
@@ -21,7 +20,6 @@
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <afunix.h>
 #elif NETKIT_UNIX
 #include <sys/socket.h>
 #ifndef NETKIT_DKP
@@ -39,71 +37,8 @@
 #include <chrono>
 #include <unordered_map>
 
-const sockaddr* netkit::sock::native::native_sync_sock::get_sa() const {
-    return reinterpret_cast<const sockaddr*>(&sa_storage);
-}
-
-socklen_t netkit::sock::native::native_sync_sock::get_sa_len() const {
-    if (addr_.is_ipv4()) return sizeof(sockaddr_in);
-    if (addr_.is_ipv6()) return sizeof(sockaddr_in6);
-#ifndef NETKIT_DKP
-    if (addr_.is_file_path()) {
-        const auto& path = addr_.get_path();
-        return static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + path.string().size() + 1);
-    }
-#endif
-
-    throw netkit::socket_error("invalid address type");
-}
-
-void netkit::sock::native::native_sync_sock::prep_sa() {
-	memset(&sa_storage, 0, sizeof(sa_storage));
-
-	if (addr_.is_ipv4()) {
-		auto* sa4 = reinterpret_cast<sockaddr_in*>(&sa_storage);
-		sa4->sin_family = AF_INET;
-		sa4->sin_port = htons(addr_.get_port());
-		if (inet_pton(AF_INET, addr_.get_ip().c_str(), &sa4->sin_addr) <= 0) {
-			throw parsing_error("invalid IPv4 address");
-		}
-	} else if (addr_.is_ipv6()) {
-		auto* sa6 = reinterpret_cast<sockaddr_in6*>(&sa_storage);
-		sa6->sin6_family = AF_INET6;
-		sa6->sin6_port = htons(addr_.get_port());
-
-		std::string ip = addr_.get_ip();
-		unsigned long scope = 0;
-
-		auto pos = ip.find('%');
-		if (pos != std::string::npos) {
-			scope = std::stoul(ip.substr(pos + 1));
-			ip = ip.substr(0, pos);   // strip %scope before inet_pton
-		}
-
-		if (inet_pton(AF_INET6, ip.c_str(), &sa6->sin6_addr) <= 0) {
-			throw parsing_error("invalid IPv6 address");
-		}
-
-		if (scope != 0) {
-			sa6->sin6_scope_id = scope;
-		}
-#ifndef NETKIT_DKP
-	} else if (addr_.is_file_path()) {
-		auto* sa_un = reinterpret_cast<sockaddr_un*>(&sa_storage);
-		sa_un->sun_family = AF_UNIX;
-		const auto& path = addr_.get_path().string();
-		if (path.size() >= sizeof(sa_un->sun_path)) {
-			throw socket_error("UNIX socket path too long");
-		}
-		std::memcpy(sa_un->sun_path, path.c_str(), path.size() + 1);
-#endif
-	} else {
-		throw ip_error("invalid address type");
-	}
-}
-
 void netkit::sock::native::native_sync_sock::connect() {
-	if (platform::connect(sockfd, get_sa(), get_sa_len()) < 0) {
+	if (platform::connect(sockfd, addr_.get_sa(), addr_.get_sa_len()) < 0) {
 		throw socket_error("connect failed: " + platform::last_error_message());
 	}
 }
@@ -132,7 +67,6 @@ netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr,
 		throw socket_error{"failed to create socket"};
 
 	this->native_sync_sock::set_sock_opts(opts);
-	this->prep_sa();
 }
 
 netkit::sock::native::native_sync_sock::native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts)
@@ -142,7 +76,6 @@ netkit::sock::native::native_sync_sock::native_sync_sock(fd_t existing_fd, const
 		throw socket_error{"invalid fd"};
 
 	this->native_sync_sock::set_sock_opts(opts);
-	this->prep_sa();
 }
 
 netkit::sock::native::native_sync_sock::~native_sync_sock() {
@@ -165,10 +98,43 @@ std::size_t netkit::sock::native::native_sync_sock::recv(void* buf, std::size_t 
 	return platform::recv(this->sockfd, static_cast<char*>(buf), len, 0);
 }
 
+std::pair<std::size_t, netkit::sock::addr>
+netkit::sock::native::native_sync_sock::recvfrom(void* buf, size_t size) {
+	sockaddr_storage sa{};
+	socklen_t sa_len = sizeof(sa);
+
+	auto ret = platform::recvfrom(this->sockfd, buf, size, 0, reinterpret_cast<sockaddr*>(&sa), &sa_len);
+
+	if (ret < 0) {
+		throw socket_error("recvfrom failed: " + platform::last_error_message());
+	}
+
+	addr from(reinterpret_cast<sockaddr*>(&sa), sa_len);
+
+	return {
+		static_cast<std::size_t>(ret),
+		std::move(from)
+	};
+}
+
+
+std::size_t
+netkit::sock::native::native_sync_sock::sendto(const void* buf, std::size_t len, const addr& dest) {
+	auto ret = platform::sendto(this->sockfd, static_cast<const char*>(buf), static_cast<int>(len), 0, dest.get_sa(), dest.get_sa_len());
+
+	if (ret < 0) {
+		throw socket_error("sendto failed: " + platform::last_error_message());
+	}
+
+	return static_cast<std::size_t>(ret);
+}
+
 void netkit::sock::native::native_sync_sock::close() noexcept {
 	if (!platform::valid_socket(this->sockfd)) {
 		return;
 	}
+
+	this->bound = false;
 
 	platform::close_socket(this->sockfd);
 }
@@ -179,4 +145,29 @@ void netkit::sock::native::native_sync_sock::close() noexcept {
 
 netkit::sock::fd_t netkit::sock::native::native_sync_sock::native_handle() const {
 	return this->sockfd;
+}
+
+void netkit::sock::native::native_sync_sock::bind() {
+	if (platform::bind(sockfd, addr_.get_sa(), addr_.get_sa_len()) < 0) {
+		throw socket_error("bind failed");
+	}
+
+	bound = true;
+}
+
+void netkit::sock::native::native_sync_sock::bind(const addr& addr) {
+	if (bound) {
+		throw socket_error{"bind failed"};
+	}
+
+	if (platform::bind(sockfd, addr.get_sa(), addr.get_sa_len()) < 0) {
+		throw socket_error("bind failed");
+	}
+
+	addr_ = addr;
+	bound = true;
+}
+
+void netkit::sock::native::native_sync_sock::unbind() noexcept {
+	this->close();
 }

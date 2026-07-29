@@ -13,11 +13,11 @@ class task;
 
 template<typename T>
 struct promise_return {
-	T value;
+	std::optional<T> value;
 
 	template<typename U>
 	void return_value(U&& v) {
-		value = std::forward<U>(v);
+		value.emplace(std::forward<U>(v));
 	}
 };
 
@@ -50,10 +50,8 @@ public:
 				}
 
 				std::coroutine_handle<> await_suspend(handle_type h) noexcept {
-					auto continuation = h.promise().continuation;
-
-					if (continuation)
-						return continuation;
+					if (auto _continuation = h.promise().continuation)
+						return _continuation;
 
 					return std::noop_coroutine();
 				}
@@ -96,7 +94,7 @@ public:
 			}
 			else {
 				auto value = std::move(
-					handle_.promise().value
+					*handle_.promise().value
 				);
 
 				handle_.destroy();

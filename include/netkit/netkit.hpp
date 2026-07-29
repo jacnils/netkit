@@ -91,4 +91,14 @@
 #include <netkit/tcp/tcp_server.hpp>
 #include <netkit/tcp/tcp_stream.hpp>
 
+// datagram
+#include <netkit/datagram/basic_async_datagram.hpp>
+#include <netkit/datagram/basic_datagram.hpp>
+#include <netkit/datagram/async_socket_datagram.hpp>
+#include <netkit/datagram/socket_datagram.hpp>
+
+// udp
+#include <netkit/udp/async_udp_datagram.hpp>
+#include <netkit/udp/udp_datagram.hpp>
+
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

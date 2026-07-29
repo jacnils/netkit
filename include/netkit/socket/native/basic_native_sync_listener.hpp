@@ -12,6 +12,7 @@ namespace netkit::sock::native {
         virtual ~basic_native_sync_listener() = default;
 
         virtual void bind() = 0;
+    	virtual void bind(const addr& addr) = 0;
         virtual void unbind() = 0;
 
         virtual void listen(int backlog) = 0;

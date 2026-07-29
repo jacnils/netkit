@@ -93,6 +93,8 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/tcp/async_tcp_server.cpp
         src/io/fallback/io_backend.cpp
         src/io/windows/io_backend.cpp
+        src/udp/udp_datagram.cpp
+        src/udp/async_udp_datagram.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)

@@ -33,12 +33,7 @@ constexpr fd_t INVALID_SOCKET = -1;
         type type_{};
         fd_t sockfd{INVALID_SOCKET};
 
-        sockaddr_storage sa_storage{};
         bool bound{false};
-
-        [[nodiscard]] const sockaddr* get_sa() const;
-        [[nodiscard]] socklen_t get_sa_len() const;
-    	void prep_sa();
 
 		io::io_context& context_;
     public:
@@ -49,11 +44,18 @@ constexpr fd_t INVALID_SOCKET = -1;
         [[nodiscard]] const sock::addr& get_addr() const override;
         netkit::io::task<void> connect() override;
 
+    	void bind() override;
+    	void bind(const addr& addr) override;
+    	void unbind() noexcept override;
+
         netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
     	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;
         void close() noexcept override;
         [[nodiscard]] sock::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
-    	void set_sock_opts(opt opts) override;
+		netkit::io::task<std::pair<std::size_t, netkit::sock::addr>> recvfrom(void*	buf, size_t size) override;
+		netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) override;
+
+		void set_sock_opts(opt opts) override;
     };
 }

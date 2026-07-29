@@ -268,4 +268,20 @@ inline int listen(socket_t sock, int backlog) {
 	return ::listen(sock, backlog);
 }
 
+inline socket_result recvfrom(socket_t sock, void* buffer, size_t length, int flags, sockaddr* addr, socklen_t* addrlen) {
+#ifdef NETKIT_WINDOWS
+	return ::recvfrom(sock, static_cast<char*>(buffer), static_cast<int>(length), flags, addr, addrlen);
+#else
+	return ::recvfrom(sock, buffer, length, flags, addr, addrlen);
+#endif
+}
+
+inline socket_result sendto(socket_t sock, const void* buffer, size_t length, int flags, const sockaddr* addr, socklen_t addrlen) {
+#ifdef NETKIT_WINDOWS
+	return ::sendto(sock, static_cast<const char*>(buffer), static_cast<int>(length), flags, addr, addrlen);
+#else
+	return ::sendto(sock, buffer, length, flags, addr, addrlen);
+#endif
+}
+
 }

@@ -36,11 +36,12 @@
 
 #ifdef NETKIT_WINDOWS
 #include <ws2tcpip.h>
+#include <afunix.h>
 #endif
 
 /* solely for use internally */
 #ifndef NETKIT_DKP
-#ifdef NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER
+#if defined(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER) && defined(NETKIT_DNS)
 [[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
     if (hostname == "localhost") {
         return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
@@ -96,7 +97,7 @@
 
 	int res = getaddrinfo(hostname.c_str(), nullptr, &hints, &result);
 	if (res != 0) {
-#ifdef _WIN32
+#ifdef NETKIT_WINDOWS
 		throw netkit::dns_error("getaddrinfo failed: " + std::to_string(res));
 #else
 		throw netkit::dns_error(gai_strerror(res));
@@ -234,10 +235,14 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
     if (this->hostname == ip) {
         this->hostname.clear();
     }
+
+	prep_sa();
 }
 
 #ifndef NETKIT_DKP
-netkit::sock::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {}
+netkit::sock::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {
+	prep_sa();
+}
 #endif
 
 bool netkit::sock::addr::is_ipv4() const noexcept {
@@ -287,4 +292,108 @@ int netkit::sock::addr::get_port() const {
 
 netkit::sock::addr_type netkit::sock::addr::get_type() const {
 	return type;
+}
+
+const sockaddr* netkit::sock::addr::get_sa() const noexcept {
+	return reinterpret_cast<const sockaddr*>(&sa_storage_);
+}
+
+socklen_t netkit::sock::addr::get_sa_len() const noexcept {
+	if (this->is_ipv4()) return sizeof(sockaddr_in);
+	if (this->is_ipv6()) return sizeof(sockaddr_in6);
+#ifndef NETKIT_DKP
+	if (this->is_file_path()) {
+		const auto& file_path = this->get_path();
+		return static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + file_path.string().size() + 1);
+	}
+#endif
+
+	return 0;
+}
+
+void netkit::sock::addr::prep_sa() {
+	memset(&sa_storage_, 0, sizeof(sa_storage_));
+
+	if (this->is_ipv4()) {
+		auto* sa4 = reinterpret_cast<sockaddr_in*>(&sa_storage_);
+		sa4->sin_family = AF_INET;
+		sa4->sin_port = htons(this->get_port());
+		if (inet_pton(AF_INET, this->get_ip().c_str(), &sa4->sin_addr) <= 0) {
+			throw parsing_error("invalid IPv4 address");
+		}
+	} else if (this->is_ipv6()) {
+		auto* sa6 = reinterpret_cast<sockaddr_in6*>(&sa_storage_);
+		sa6->sin6_family = AF_INET6;
+		sa6->sin6_port = htons(this->get_port());
+
+		std::string ip_addr = this->get_ip();
+		unsigned long scope = 0;
+
+		auto pos = ip.find('%');
+		if (pos != std::string::npos) {
+			scope = std::stoul(ip_addr.substr(pos + 1));
+			ip_addr = ip_addr.substr(0, pos);   // strip %scope before inet_pton
+		}
+
+		if (inet_pton(AF_INET6, ip_addr.c_str(), &sa6->sin6_addr) <= 0) {
+			throw parsing_error("invalid IPv6 address");
+		}
+
+		if (scope != 0) {
+			sa6->sin6_scope_id = scope;
+		}
+	} else if (this->is_file_path()) {
+		auto* sa_un = reinterpret_cast<sockaddr_un*>(&sa_storage_);
+		sa_un->sun_family = AF_UNIX;
+
+		const auto& f_path = this->get_path().string();
+		if (f_path.size() >= sizeof(sa_un->sun_path)) {
+			throw socket_error("UNIX socket path too long");
+		}
+		std::memcpy(sa_un->sun_path, f_path.c_str(), f_path.size() + 1);
+	} else {
+		throw ip_error("invalid address type");
+	}
+}
+
+netkit::sock::addr::addr(const sockaddr* sa, socklen_t len) {
+	switch (sa->sa_family) {
+	case AF_INET: {
+		auto* sa4 = reinterpret_cast<const sockaddr_in*>(sa);
+
+		char _ip[INET_ADDRSTRLEN]{};
+		if (!inet_ntop(AF_INET, &sa4->sin_addr, _ip, sizeof(_ip))) {
+			throw socket_error("inet_ntop failed");
+		}
+
+		ip = _ip;
+		port = ntohs(sa4->sin_port);
+		type = addr_type::ipv4;
+		break;
+	}
+
+	case AF_INET6: {
+		auto* sa6 = reinterpret_cast<const sockaddr_in6*>(sa);
+
+		char _ip[INET6_ADDRSTRLEN]{};
+		if (!inet_ntop(AF_INET6, &sa6->sin6_addr, _ip, sizeof(_ip))) {
+			throw socket_error("inet_ntop failed");
+		}
+
+		ip = _ip;
+		port = ntohs(sa6->sin6_port);
+
+		if (sa6->sin6_scope_id != 0) {
+			ip += "%" + std::to_string(sa6->sin6_scope_id);
+		}
+
+		type = addr_type::ipv6;
+		break;
+	}
+
+	default:
+		throw socket_error("unsupported address family");
+	}
+
+	this->prep_sa();
 }

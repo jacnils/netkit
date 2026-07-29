@@ -4,7 +4,7 @@
  *  Copyright (c) 2025-2026 Jacob Nilsson
  *  Licensed under the MIT License.
  *
- *  @file basic_sync_sock.hpp
+ *  @file basic_native_sync_sock.hpp
  *  @license MIT
  *  @note Part of the Netkit library.
  *  @brief Provides a basic interface for synchronous sockets.
@@ -27,6 +27,11 @@ namespace netkit::sock::native {
     	virtual void connect() = 0;
         virtual std::size_t send(const void* buf, std::size_t len) = 0;
         [[nodiscard]] virtual std::size_t recv(void* buf, std::size_t len) = 0;
+    	virtual std::pair<std::size_t, addr> recvfrom(void* buf, size_t size) = 0;
+    	virtual std::size_t sendto(const void* buf, std::size_t len, const addr& dest) = 0;
+    	virtual void bind() = 0;
+    	virtual void bind(const addr& addr) = 0;
+    	virtual void unbind() noexcept = 0;
         virtual addr& get_addr() {
 	        throw std::logic_error{"socket does not have an addr object"};
         }

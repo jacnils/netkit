@@ -15,15 +15,14 @@ namespace netkit::sock::native {
 constexpr fd_t INVALID_SOCKET = -1;
 #endif
 
-class NETKIT_API native_sync_listener
-	: public basic_native_sync_listener
-{
+class NETKIT_API native_sync_listener : public basic_native_sync_listener {
 public:
 	void set_sock_opts(opt opts) const;
 	native_sync_listener(const addr& address, type t = type::tcp, opt opts = opt::reuse_addr|opt::blocking);
 	~native_sync_listener() override = default;
 
 	void bind() override;
+	void bind(const addr& addr) override;
 	void unbind() override;
 
 	void listen(int backlog) override;
@@ -46,16 +45,6 @@ private:
 	bool listening_{false};
 
 	opt opts_;
-
-	sockaddr_storage sa_storage_{};
-
-	void prep_sa();
-
-	[[nodiscard]]
-	const sockaddr* get_sa() const;
-
-	[[nodiscard]]
-	socklen_t get_sa_len() const;
 };
 
 }
