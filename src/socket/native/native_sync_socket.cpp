@@ -37,7 +37,6 @@
 #endif
 
 #include <chrono>
-
 #include <unordered_map>
 
 const sockaddr* netkit::sock::native::native_sync_sock::get_sa() const {
@@ -104,18 +103,17 @@ void netkit::sock::native::native_sync_sock::prep_sa() {
 }
 
 void netkit::sock::native::native_sync_sock::connect() {
-	if (::connect(sockfd, get_sa(), get_sa_len()) < 0) {
-		throw socket_error("connect failed: " + std::string(strerror(errno)));
+	if (platform::connect(sockfd, get_sa(), get_sa_len()) < 0) {
+		throw socket_error("connect failed: " + platform::last_error_message());
 	}
 }
 
 void netkit::sock::native::native_sync_sock::set_sock_opts(opt opts) {
-	netkit::platform::set_sock_opts(this->sockfd, opts);
+	platform::set_sock_opts(this->sockfd, opts);
 }
 
-#ifdef NETKIT_UNIX
 netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr_(addr), type_(t) {
-    this->sockfd = -1;
+	this->sockfd = -1;
 
 	if (!addr.is_file_path()) {
 		if (addr.get_ip().empty()) {
@@ -123,99 +121,33 @@ netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr,
 		}
 	}
 
-#ifdef NETKIT_DKP
-	this->sockfd = ::socket(AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, IPPROTO_IP);
-#elifndef NETKIT_WINDOWS
-    if (t != type::uds) {
-        this->sockfd = ::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
-                                                          t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
-    } else {
-        this->sockfd = ::socket(AF_UNIX, SOCK_STREAM, 0);
-    }
-#endif
-
-    if (this->sockfd < 0) {
-        throw socket_error("failed to create socket");
-    }
-
-    if (this->sockfd >= 0) {
-        this->native_sync_sock::set_sock_opts(opts);
-    } else {
-        throw socket_error("cannot set options on invalid socket");
-    }
-
-    this->prep_sa();
-}
-#endif
-
-netkit::sock::native::native_sync_sock::native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts)
-	: addr_(peer), type_(t), sockfd(existing_fd) {
-	if (sockfd < 0) throw socket_error("invalid fd");
-#ifdef NETKIT_WINDOWS
-	if (this->sockfd != INVALID_SOCKET) {
-#else
-	if (this->sockfd >= 0) {
-#endif
-		this->native_sync_sock::set_sock_opts(opts);
+	if (t != type::uds) {
+		this->sockfd = platform::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
+														  t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
 	} else {
-		throw socket_error("cannot set options on invalid socket");
+		this->sockfd = platform::socket(AF_UNIX, SOCK_STREAM, 0);
 	}
 
+	if (!platform::valid_socket(sockfd))
+		throw socket_error{"failed to create socket"};
+
+	this->native_sync_sock::set_sock_opts(opts);
 	this->prep_sa();
 }
 
-#ifdef NETKIT_WINDOWS
-netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& in_addr, sock::type t, opt opts)
-    : addr_(in_addr), type_(t) {
+netkit::sock::native::native_sync_sock::native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts)
+	: addr_(peer), type_(t), sockfd(existing_fd) {
 
-    if (this->addr_.get_ip().empty() && !this->addr_.is_file_path()) {
-        throw socket_error("IP address or file path is empty");
-    }
+	if (!platform::valid_socket(sockfd))
+		throw socket_error{"invalid fd"};
 
-    int domain = AF_UNIX;
-    int sock_type = SOCK_STREAM;
-    int protocol = 0;
-
-    if (t != type::uds) {
-        domain = this->addr_.is_ipv6() ? AF_INET6 : AF_INET;
-        sock_type = (t == type::tcp) ? SOCK_STREAM : SOCK_DGRAM;
-        protocol = (t == type::tcp) ? IPPROTO_TCP : IPPROTO_UDP;
-    } else {
-        protocol = 0;
-    }
-
-    this->sockfd = socket(domain, sock_type, protocol);
-    if (this->sockfd == INVALID_SOCKET) {
-        throw socket_error("Failed to create socket");
-    }
-
-    this->native_sync_sock::set_sock_opts(opts);
-    this->prep_sa();
+	this->native_sync_sock::set_sock_opts(opts);
+	this->prep_sa();
 }
-#endif
-#ifdef NETKIT_UNIX
+
 netkit::sock::native::native_sync_sock::~native_sync_sock() {
-    if (this->sockfd == -1) {
-        return;
-    }
-    if (::close(this->sockfd) < 0) {
-        ;
-    }
+	this->native_sync_sock::close();
 }
-#endif
-#ifdef NETKIT_WINDOWS
-netkit::sock::native::native_sync_sock::~native_sync_sock() {
-    if (this->sockfd == INVALID_SOCKET) {
-        return;
-    }
-
-    if (::closesocket(this->sockfd) == SOCKET_ERROR) {
-        return;
-    }
-
-    this->sockfd = INVALID_SOCKET;
-}
-#endif
 
 netkit::sock::addr& netkit::sock::native::native_sync_sock::get_addr() {
     return this->addr_;
@@ -226,62 +158,25 @@ const netkit::sock::addr& netkit::sock::native::native_sync_sock::get_addr() con
 }
 
 std::size_t netkit::sock::native::native_sync_sock::send(const void* buf, size_t len) {
-	return ::send(this->sockfd, static_cast<const char*>(buf), len, 0);
+	return platform::send(this->sockfd, static_cast<const char*>(buf), len, 0);
 }
 
 std::size_t netkit::sock::native::native_sync_sock::recv(void* buf, std::size_t len) {
-	return ::recv(this->sockfd, static_cast<char*>(buf), len, 0);
+	return platform::recv(this->sockfd, static_cast<char*>(buf), len, 0);
 }
 
-#ifdef NETKIT_UNIX
 void netkit::sock::native::native_sync_sock::close() noexcept {
-    if (this->sockfd == -1) {
-        return;
-    }
+	if (!platform::valid_socket(this->sockfd)) {
+		return;
+	}
 
-    (void)::close(this->sockfd);
-    this->sockfd = -1;
+	platform::close_socket(this->sockfd);
 }
-#elifdef NETKIT_WINDOWS
-void netkit::sock::native::native_sync_sock::close() noexcept {
-    if (this->sockfd == INVALID_SOCKET) {
-        return;
-    }
 
-    ::shutdown(this->sockfd, SD_BOTH);
-
-    if (::closesocket(this->sockfd) != 0) {
-        ;
-    }
-
-    sockfd = INVALID_SOCKET;
-}
-#endif
 [[nodiscard]] netkit::sock::addr netkit::sock::native::native_sync_sock::get_peer() const {
-#ifdef NETKIT_DKP
-	if (!this->has_peer) {
-		throw netkit::socket_error("peer not known");
-	}
-
-	char ip_str[INET6_ADDRSTRLEN]{};
-	uint16_t port = 0;
-
-	if (this->peer_addr.ss_family == AF_INET) {
-		auto* addr_in = (sockaddr_in*)&this->peer_addr;
-		inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
-		port = ntohs(addr_in->sin_port);
-	} else {
-		throw netkit::ip_error("unsupported address family (Wii = IPv4 only)");
-	}
-
-	return netkit::sock::addr{
-		ip_str,
-		port, netkit::sock::addr_type::ipv4
-	};
-#else
-    return netkit::sock::native::get_peer(this->sockfd);
-#endif
+	return native::get_peer(this->sockfd);
 }
+
 netkit::sock::fd_t netkit::sock::native::native_sync_sock::native_handle() const {
 	return this->sockfd;
 }

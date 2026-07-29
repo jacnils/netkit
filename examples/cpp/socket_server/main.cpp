@@ -1,13 +1,13 @@
 #include <iostream>
 #include <string_view>
 
-#include <netkit/tcp/tcp_connection.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
 #include <netkit/tcp/tcp_server.hpp>
 
 [[noreturn]] int main() {
 	netkit::sock::addr addr{
 		"0.0.0.0", // or simply "localhost"
-		8080,
+		1337,
 		netkit::sock::addr_type::ipv4
 	};
 
@@ -16,7 +16,7 @@
 	server.bind();
 	server.listen();
 
-	std::cout << "server listening on port 8080\n";
+	std::cout << "server listening on port 1337\n";
 
 	while (true) {
 		auto client = server.accept();

@@ -88,13 +88,12 @@ void netkit::sock::native::native_async_listener::prep_sa() {
 }
 
 netkit::sock::native::native_async_listener::native_async_listener(io::io_context& ctx, const addr& address, type t, opt opts) : context_(ctx), addr_(address), type_(t), opts_(opts) {
-	sockfd_ = ::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
+	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
 
-	if (sockfd_ == INVALID_SOCKET)
+	if (!platform::valid_socket(sockfd_))
 		throw socket_error("failed creating socket");
 
 	set_sock_opts(opts_);
-
 	prep_sa();
 }
 
@@ -103,10 +102,8 @@ netkit::sock::native::native_async_listener::~native_async_listener() {
 }
 
 void netkit::sock::native::native_async_listener::bind() {
-	if (::bind(sockfd_, get_sa(), get_sa_len()) < 0) {
-		throw socket_error(
-			"bind failed"
-		);
+	if (platform::bind(sockfd_, get_sa(), get_sa_len()) < 0) {
+		throw socket_error("bind failed");
 	}
 
 	bound_ = true;
@@ -119,7 +116,7 @@ void netkit::sock::native::native_async_listener::unbind() {
 void netkit::sock::native::native_async_listener::listen(int backlog) {
 	if (!bound_) throw socket_error("listener not bound");
 
-	if (::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
+	if (platform::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
 		throw socket_error("failed to listen on socket");
 	}
 
@@ -130,23 +127,19 @@ void netkit::sock::native::native_async_listener::listen() {
 	this->listen(-1);
 }
 
-#ifdef NETKIT_UNIX
 netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
 netkit::sock::native::native_async_listener::accept() {
 	while (true) {
 		sockaddr_storage client_addr{};
 		socklen_t addr_len = sizeof(client_addr);
 
-		// TODO: use fcntl and get bsd support
-		// it is just a waste of time right now since we are using epoll anyway
-		fd_t client_sockfd = ::accept4(
+		fd_t client_sockfd = platform::accept(
 			this->sockfd_,
 			reinterpret_cast<sockaddr*>(&client_addr),
-			&addr_len,
-			SOCK_NONBLOCK
+			&addr_len
 		);
 
-		if (client_sockfd >= 0) {
+		if (platform::valid_socket(client_sockfd)) {
 			if (this->type_ == type::uds) {
 				co_return std::make_unique<native_async_sock>(
 					this->context_,
@@ -168,77 +161,23 @@ netkit::sock::native::native_async_listener::accept() {
 			);
 		}
 
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+		if (platform::last_socket_error() == platform::socket_err::would_block) {
 			co_await this->context_.wait_readable(this->sockfd_);
 			continue;
 		}
 
-		throw socket_error(
-			"failed to accept connection: " +
-			std::string(strerror(errno))
-		);
+		throw socket_error("failed to accept connection: " + platform::last_error_message());
 	}
 }
-#elifdef NETKIT_WINDOWS
-netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
-netkit::sock::native::native_async_listener::accept() {
-	while (true) {
-		sockaddr_storage client_addr{};
-		int addr_len = sizeof(client_addr);
-
-		SOCKET client_sockfd = ::accept(
-			this->sockfd_,
-			reinterpret_cast<sockaddr*>(&client_addr),
-			&addr_len
-		);
-
-		if (client_sockfd != INVALID_SOCKET) {
-
-			// set non-blocking
-			u_long mode = 1;
-			ioctlsocket(client_sockfd, FIONBIO, &mode);
-
-#ifdef NETKIT_WINDOWS
-			if (this->type_ == type::uds) {
-				closesocket(client_sockfd);
-				throw socket_error("unix domain sockets not supported on win32 platform");
-			}
-#endif
-
-			auto peer = sock::native::get_peer(client_sockfd);
-
-			co_return std::make_unique<native_async_sock>(
-				this->context_,
-				client_sockfd,
-				peer,
-				this->type_
-			);
-		}
-
-		int err = WSAGetLastError();
-
-		if (err == WSAEWOULDBLOCK) {
-			co_await this->context_.wait_readable(this->sockfd_);
-			continue;
-		}
-
-		throw socket_error(
-			"failed to accept connection: " + std::to_string(err)
-		);
-	}
-}
-#endif
 
 void netkit::sock::native::native_async_listener::close() noexcept {
-	if (sockfd_ != INVALID_SOCKET) {
-		::close(sockfd_);
-		sockfd_ = INVALID_SOCKET;
+	if (platform::valid_socket(sockfd_)) {
+		platform::close_socket(sockfd_);
+		this->bound_ = this->listening_ = false;
 	}
-
-	this->bound_ = this->listening_ = false;
 }
 
-netkit::sock::fd_t netkit::sock::native::native_async_listener::native_handle() const{
+netkit::sock::fd_t netkit::sock::native::native_async_listener::native_handle() const {
 	return sockfd_;
 }
 

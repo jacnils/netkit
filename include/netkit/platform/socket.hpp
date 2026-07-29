@@ -221,11 +221,6 @@ inline std::string last_error_message() {
 #endif
 
 inline socket_t socket(int domain, int type, int protocol) {
-#ifdef NETKIT_WINDOWS
-	if (domain == AF_UNIX) {
-		throw socket_error{"unix domain sockets are not supported in win32 platform"};
-	}
-#endif
 	return ::socket(domain, type, protocol);
 }
 

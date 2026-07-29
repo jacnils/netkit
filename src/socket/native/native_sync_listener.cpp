@@ -1,7 +1,6 @@
 #include <netkit/platform/socket.hpp>
 
 #include <cstring>
-#include <fcntl.h>
 #include <memory>
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_sync_listener.hpp>
@@ -14,7 +13,8 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#elifdef NETKIT_WINDOWS
+#include <fcntl.h>
+#elif defined(NETKIT_WINDOWS)
 #include <afunix.h>
 #endif
 
@@ -89,28 +89,18 @@ void netkit::sock::native::native_sync_listener::prep_sa() {
 
 netkit::sock::native::native_sync_listener::native_sync_listener(const addr& address, type t, opt opts)
 : addr_(address), type_(t), opts_(opts) {
-	sockfd_ = ::socket(
-		addr_.is_ipv6()
-			? AF_INET6
-			: AF_INET,
-		SOCK_STREAM,
-		0
-	);
+	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
 
-	if (sockfd_ < 0)
-		throw socket_error(
-			"failed creating socket"
-		);
+	if (!platform::valid_socket(sockfd_))
+		throw socket_error("failed creating socket");
 
 	set_sock_opts(opts_);
 	prep_sa();
 }
 
 void netkit::sock::native::native_sync_listener::bind() {
-	if (::bind(sockfd_, get_sa(), get_sa_len()) < 0) {
-		throw socket_error(
-			"bind failed"
-		);
+	if (platform::bind(sockfd_, get_sa(), get_sa_len()) < 0) {
+		throw socket_error("bind failed");
 	}
 
 	bound_ = true;
@@ -123,7 +113,7 @@ void netkit::sock::native::native_sync_listener::unbind() {
 void netkit::sock::native::native_sync_listener::listen(int backlog) {
 	if (!bound_) throw socket_error("listener not bound");
 
-	if (::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
+	if (platform::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
 		throw socket_error("failed to listen on socket");
 	}
 
@@ -139,30 +129,26 @@ netkit::sock::native::native_sync_listener::accept() {
 	sockaddr_storage client_addr{};
 	socklen_t addr_len = sizeof(client_addr);
 
-	auto client_sockfd = ::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
-	if (client_sockfd < 0) {
+	auto client_sockfd = platform::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
+	if (!platform::valid_socket(client_sockfd)) {
 		throw socket_error("failed to accept connection: " + std::string(std::strerror(errno)));
 	}
 
+#ifndef NETKIT_DKP
 	if (this->type_ == type::uds) {
 		return std::make_unique<native_sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
 	}
-
-	if (this->type_ == type::uds) {
-		return std::make_unique<native_sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
-	}
+#endif
 
 	auto peer = native::get_peer(client_sockfd);
 	return std::make_unique<native_sync_sock>(client_sockfd, peer, this->type_);
 }
 
 void netkit::sock::native::native_sync_listener::close() noexcept {
-	if (sockfd_ != INVALID_SOCKET) {
-		::close(sockfd_);
-		sockfd_ = INVALID_SOCKET;
+	if (platform::valid_socket(sockfd_)) {
+		platform::close_socket(sockfd_);
+		this->bound_ = this->listening_ = false;
 	}
-
-	this->bound_ = this->listening_ = false;
 }
 
 netkit::sock::fd_t netkit::sock::native::native_sync_listener::native_handle() const{
