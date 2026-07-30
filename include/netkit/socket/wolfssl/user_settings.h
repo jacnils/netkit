@@ -44,6 +44,7 @@ static int gen_seed(unsigned char* output, unsigned int sz) {
 #define OPENSSL_COEXIST
 
 /* uncomment if wolfssl debugging is desired
+ * however, netkit cmakelists defines this if -DNETKIT_DEBUG and/or -DNETKIT_WOLFSSL_DEBUG
 #define DEBUG_WOLFSSL
 */
 #define WOLFSSL_ALT_CERT_CHAINS
