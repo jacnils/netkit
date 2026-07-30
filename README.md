@@ -19,7 +19,7 @@ The other alternative is to use the latest release, which doesn't have a changin
 - HTTP/1.0 and HTTP/1.1 body parser, including headers and body.
 - IPv4 and IPv6 support
 - TCP and UDP support
-- TLS/SSL sockets and HTTP abstraction (OpenSSL or WolfSSL integration)
+- TLS/SSL sockets and HTTP abstraction (WolfSSL integration)
 - DNS resolution
 - Network interface enumeration
 - Exceptions for errors
@@ -38,7 +38,7 @@ Still missing:
 
 ## Dependencies
 
-- OpenSSL or WolfSSL (optional)
+- WolfSSL (optional)
 - C++23 compiler
 - CMake
 
@@ -46,8 +46,7 @@ Still missing:
 
 netkit's CMakeLists.txt offers multiple options:
 
-- NETKIT_ENABLE_OPENSSL: Enable OpenSSL-backed SSL/TLS (not compatible with DevkitPro)
-- NETKIT_ENABLE_WOLFSSL: Enable WolfSSL-backed SSL/TLS (cannot be used with NETKIT_ENABLE_OPENSSL)
+- NETKIT_ENABLE_WOLFSSL: Enable WolfSSL-backed SSL/TLS
 - NETKIT_ENABLE_TESTS: Enable Catch2 tests for the main C++ library
 - NETKIT_ENABLE_C_BINDINGS: Enable C bindings for netkit
 - NETKIT_ENABLE_C_TESTS: Enable tests for netkit C bindings

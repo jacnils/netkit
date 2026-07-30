@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(netkit LANGUAGES C CXX)
 
-option(NETKIT_ENABLE_OPENSSL "Enable OpenSSL support in netkit" OFF)
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
 option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" OFF)
@@ -22,10 +21,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "Nint
     set(NETKIT_DKP ON)
 else()
     set(NETKIT_DKP OFF)
-endif()
-
-if (NETKIT_DKP)
-    set(NETKIT_ENABLE_OPENSSL OFF CACHE BOOL "" FORCE)
 endif()
 
 if (NETKIT_BUILD_SHARED)
@@ -69,8 +64,6 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/dns/query_builder.cpp
         src/socket/native/native_sync_socket.cpp
         src/dns/cache.cpp
-        src/socket/openssl/ssl_sync_sock.cpp
-        src/socket/wolfssl/ssl_sync_sock.cpp
         src/http/predefined.cpp
         src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
@@ -95,6 +88,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/io/windows/io_backend.cpp
         src/udp/udp_datagram.cpp
         src/udp/async_udp_datagram.cpp
+        src/stream/wolfssl/tls_stream.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)
@@ -118,40 +112,7 @@ target_include_directories(netkit
         $<INSTALL_INTERFACE:include>
 )
 
-if (NETKIT_ENABLE_OPENSSL AND NETKIT_ENABLE_WOLFSSL)
-    message(STATUS "NETKIT_ENABLE_WOLFSSL AND NETKIT_ENABLE_OPENSSL cannot be used simultaneously.")
-    set(NETKIT_ENABLE_OPENSSL Off)
-endif()
-
-if (NETKIT_ENABLE_OPENSSL)
-    find_package(OpenSSL)
-
-    if (NOT NETKIT_BUILD_SHARED)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-    endif()
-
-    if (NOT OpenSSL_FOUND)
-        message(STATUS "OpenSSL not found. You can install it via system package manager or vcpkg.")
-
-        if (DEFINED ENV{VCPKG_ROOT})
-            set(CMAKE_TOOLCHAIN_FILE
-                    "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-                    CACHE STRING ""
-            )
-            find_package(OpenSSL REQUIRED)
-        else()
-            message(STATUS "Not using VCPKG")
-        endif()
-    endif()
-
-    if (OpenSSL_FOUND)
-        message(STATUS "OpenSSL enabled in netkit")
-        target_compile_definitions(netkit PUBLIC NETKIT_OPENSSL)
-        target_link_libraries(netkit PUBLIC OpenSSL::SSL OpenSSL::Crypto)
-    else()
-        message(FATAL_ERROR "OpenSSL requested but not found.")
-    endif()
-elseif (NETKIT_ENABLE_WOLFSSL)
+if (NETKIT_ENABLE_WOLFSSL)
     find_package(wolfSSL QUIET)
 
     if (NOT NETKIT_BUILD_SHARED)
@@ -181,7 +142,7 @@ elseif (NETKIT_ENABLE_WOLFSSL)
                     WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
             )
 
-            include_directories(${CMAKE_SOURCE_DIR}/include/netkit/sock/wolfssl)
+            include_directories(${CMAKE_SOURCE_DIR}/include/netkit/stream/wolfssl)
         endif()
 
         FetchContent_Declare(
@@ -288,7 +249,7 @@ install(TARGETS netkit
 if (NETKIT_DKP AND NETKIT_ENABLE_WOLFSSL)
     install(
         FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/socket/wolfssl/user_settings.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h
         DESTINATION
         include/wolfssl/wolfcrypt/
     )

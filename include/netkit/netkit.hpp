@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#define NETKIT_NETKIT
+
 // Essential headers
 #include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
@@ -39,10 +41,6 @@
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 #include <netkit/socket/native/native_sync_sock.hpp>
-#include <netkit/socket/openssl/ssl_sync_sock.hpp>
-#include <netkit/socket/ssl_sync_sock.hpp>
-#include <netkit/socket/ssl_sync_sock_enum.hpp>
-#include <netkit/socket/wolfssl/ssl_sync_sock.hpp>
 #include <netkit/socket/native/basic_native_async_sock.hpp>
 #include <netkit/socket/native/native_async_sock.hpp>
 #include <netkit/socket/sync_sock.hpp>
@@ -84,6 +82,9 @@
 #include <netkit/stream/socket_stream.hpp>
 #include <netkit/stream/basic_async_stream.hpp>
 #include <netkit/stream/async_socket_stream.hpp>
+#include <netkit/stream/wolfssl/tls_stream.hpp>
+#include <netkit/stream/tls_stream.hpp>
+#include <netkit/stream/tls_stream_enum.hpp>
 
 // tcp
 #include <netkit/tcp/async_tcp_server.hpp>

@@ -1,11 +1,11 @@
 #pragma once
 
+#include <netkit/socket/addr.hpp>
 #include <netkit/stream/stream_enum.hpp>
-
 #include <span>
-#include <vector>
-#include <string>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace netkit::stream {
 
@@ -95,6 +95,10 @@ public:
 	}
 
 	virtual void close() noexcept = 0;
+
+	virtual std::optional<sock::addr> get_addr() {
+		return {};
+	}
 };
 
 }

@@ -48,8 +48,6 @@ void netkit::sock::native::native_sync_sock::set_sock_opts(opt opts) {
 }
 
 netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr, sock::type t, opt opts) : addr_(addr), type_(t) {
-	this->sockfd = -1;
-
 	if (!addr.is_file_path()) {
 		if (addr.get_ip().empty()) {
 			throw socket_error("IP address/file path is empty");

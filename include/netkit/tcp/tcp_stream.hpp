@@ -25,6 +25,9 @@ public:
 	void close() noexcept override;
 
 	[[nodiscard]] sock::addr peer() const;
+	std::optional<sock::addr> get_addr() override {
+		return stream_.get_addr();
+	}
 
 	stream::socket_stream& stream();
 

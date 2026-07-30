@@ -18,6 +18,10 @@ public:
 	void close() noexcept override;
 
 	[[nodiscard]] sock::addr peer() const;
+
+	std::optional<sock::addr> get_addr() override {
+		return socket_->get_addr();
+	}
 private:
 	std::unique_ptr<sock::native::basic_native_async_sock> socket_;
 };
