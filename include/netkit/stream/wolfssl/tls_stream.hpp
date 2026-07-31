@@ -10,6 +10,9 @@
 namespace netkit::stream {
 class tls_stream : public netkit::stream::basic_stream {
 public:
+	using basic_stream::write;
+	using basic_stream::read;
+
 	explicit tls_stream(std::unique_ptr<tcp::tcp_stream> stream,
 		version ver = version::TLS_1_2, verification verif = verification::peer,
 		const std::string& ca_cert = {});

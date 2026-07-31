@@ -7,6 +7,9 @@ namespace netkit::stream {
 
 class socket_stream : public basic_stream {
 public:
+	using basic_stream::write;
+	using basic_stream::read;
+
 	explicit socket_stream(std::unique_ptr<sock::native::basic_native_sync_sock> socket)
 	: socket_(std::move(socket)) {}
 

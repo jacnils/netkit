@@ -10,7 +10,7 @@ Please note, this library is still work in progress. Usage is not recommended ye
 
 If you still intend to use the library, there are two ways to go. You can either use the unstable master branch directly which may change its API entirely.
 
-The other alternative is to use the latest release, which doesn't have a changing API but will make migration later potentially time consuming.
+The other alternative is to use the latest release, which doesn't have a changing API but will make migration later potentially time-consuming.
 
 ## Features
 

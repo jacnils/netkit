@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/except.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <span>
@@ -50,6 +51,10 @@ public:
 				std::span(data.data(), data.size())
 			)
 		);
+	}
+
+	stream_result write_all(const void* data, std::size_t size) {
+		return write_all(std::span(static_cast<const std::byte*>(data), size));
 	}
 
 	std::vector<std::byte> read_all(std::size_t max_bytes = 16 * 1024 * 1024) {

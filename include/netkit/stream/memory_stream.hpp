@@ -9,6 +9,9 @@ namespace netkit::stream {
 
 class memory_stream : public basic_stream {
 public:
+	using basic_stream::write;
+	using basic_stream::read;
+
 	memory_stream() = default;
 
 	explicit memory_stream(std::vector<std::byte> data) : buffer_(std::move(data)) {}

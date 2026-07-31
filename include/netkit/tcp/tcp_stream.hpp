@@ -12,6 +12,9 @@ namespace netkit::tcp {
 
 class tcp_stream : public stream::basic_stream {
 public:
+	using basic_stream::write;
+	using basic_stream::read;
+
 	tcp_stream(const sock::addr& addr) : stream_(std::make_unique<sock::native::native_sync_sock>(addr, sock::type::tcp)) {}
 	tcp_stream(std::unique_ptr<sock::native::basic_native_sync_sock> socket) : stream_(std::move(socket)) {}
 

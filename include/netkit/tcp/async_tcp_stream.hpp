@@ -12,6 +12,8 @@ namespace netkit::tcp {
 
 class NETKIT_API async_tcp_stream : public stream::basic_async_stream {
 public:
+	using basic_async_stream::write;
+	using basic_async_stream::read;
 	async_tcp_stream(io::io_context& ctx, const sock::addr& addr) : stream_(std::make_unique<sock::native::native_async_sock>(ctx, addr, sock::type::tcp)) {}
 	async_tcp_stream(std::unique_ptr<sock::native::basic_native_async_sock> socket) : stream_(std::move(socket)) {}
 	~async_tcp_stream() override;

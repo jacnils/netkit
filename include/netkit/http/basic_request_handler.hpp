@@ -13,14 +13,14 @@
 
 #ifdef NETKIT_HTTP
 
-#include <../socket/native/basic_native_sync_sock.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
 #include <netkit/http/server_predefined.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
     class basic_request_handler {
     public:
-        virtual void handle(std::unique_ptr<netkit::sock::basic_sync_sock>&, server_settings&, const request_callback&) const = 0;
+        virtual void handle(std::unique_ptr<tcp::tcp_stream>&, server_settings&, const request_callback&) const = 0;
         virtual ~basic_request_handler() = default;
     };
 }

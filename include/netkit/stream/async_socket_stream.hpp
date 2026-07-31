@@ -9,6 +9,9 @@ namespace netkit::stream {
 
 class NETKIT_API async_socket_stream : public basic_async_stream {
 public:
+	using basic_async_stream::write;
+	using basic_async_stream::read;
+
 	explicit async_socket_stream(std::unique_ptr<sock::native::basic_native_async_sock> socket) : socket_(std::move(socket)) {}
 
 	[[nodiscard]] io::task<> connect() const;

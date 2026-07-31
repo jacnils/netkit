@@ -13,7 +13,6 @@
 
 #ifdef NETKIT_HTTP
 
-#include <../socket/native/native_sync_sock.hpp>
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/request_handler.hpp>
 #include <netkit/network/utility.hpp>
