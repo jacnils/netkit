@@ -32,23 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install OpenSSL
-        run: |
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            sudo apt update
-            sudo apt install -y libssl-dev libwolfssl-dev
-            echo "CMAKE_PREFIX_PATH=/usr" >> $GITHUB_ENV
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            brew update
-            brew install openssl
-            OPENSSL_DIR=$(brew --prefix openssl)
-            echo "CMAKE_PREFIX_PATH=${OPENSSL_DIR}" >> $GITHUB_ENV
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            choco install openssl.light -y
-            echo "CMAKE_PREFIX_PATH=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-          fi
-        shell: bash
-
       - name: Set reusable strings
         id: strings
         shell: bash
@@ -61,6 +44,7 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DNETKIT_ENABLE_TESTS=ON
           -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
           -S ${{ github.workspace }}
 
