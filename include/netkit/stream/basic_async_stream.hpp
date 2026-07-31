@@ -7,6 +7,10 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <string_view>
+#include <array>
+#include <cstddef>
+#include <optional>
 
 namespace netkit::stream {
 
