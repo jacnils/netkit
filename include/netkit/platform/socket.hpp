@@ -187,7 +187,7 @@ inline socket_err last_socket_error() {
 	switch (errno) {
 	case 0: return socket_err::none;
 	case EWOULDBLOCK:
-	case EAGAIN: return socket_err::would_block;
+	//case EAGAIN: return socket_err::would_block; /* identical to EWOULDBLOCK */
 	case EINPROGRESS: return socket_err::in_progress;
 	case EINTR: return socket_err::interrupted;
 	case ECONNREFUSED: return socket_err::connection_refused;
