@@ -94,7 +94,7 @@ netkit::sock::native::native_async_sock::connect() {
 	co_await this->context_.wait_writable(this->sockfd);
 
 	int error = 0;
-	int len = sizeof(error);
+	socklen_t len = sizeof(error);
 
 	if (getsockopt(this->sockfd, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error), &len) < 0) {
 		throw socket_error("getsockopt(SO_ERROR) failed");
