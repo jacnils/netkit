@@ -12,6 +12,7 @@
 #include <mutex>
 #include <netkit/io/basic_io_backend.hpp>
 #include <queue>
+#include <thread>
 
 namespace netkit::io {
 
