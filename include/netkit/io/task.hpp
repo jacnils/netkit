@@ -5,6 +5,7 @@
 #include <iostream>
 #include <utility>
 #include <type_traits>
+#include <optional>
 
 namespace netkit::io {
 
