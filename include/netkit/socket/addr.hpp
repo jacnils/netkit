@@ -17,6 +17,13 @@
 #include <netkit/socket/addr_type.hpp>
 #include <string>
 
+#ifdef NETKIT_WINDOWS
+#include <ws2tcpip.h>
+#else
+#include <sys/un.h>
+#include <netinet/in.h>
+#endif
+
 namespace netkit::sock {
 	using sockaddr_len = int;
 
