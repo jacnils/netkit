@@ -7,51 +7,47 @@
  *  @file main.cpp
  *  @license MIT
  *  @note Example code using the Netkit library.
- *  @note Only functional if Netkit was built with OpenSSL support.
- *  @note See examples/socket/main.cpp for a non-SSL/TLS version.
- *  @brief A lower-level example demonstrating the usage of sync_sock to make a simple HTTP request, with SSL/TLS.
+ *  @note See examples/socket_ssl for a TLS/SSL version of this example.
  */
 #include <iostream>
 #include <fstream>
 #include <string_view>
-#include <netkit/netkit.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
+#include <netkit/stream/tls_stream.hpp>
 
 int main() {
-    netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
-    std::unique_ptr<netkit::sock::basic_sync_sock> _sock = std::make_unique<netkit::sock::sync_sock>(
-        addr, netkit::sock::type::tcp);
+	netkit::sock::addr addr{"google.com", 443, netkit::sock::addr_type::hostname};
+	std::unique_ptr<netkit::tcp::tcp_stream> connector_ = std::make_unique<netkit::tcp::tcp_stream>(addr);
 
-    netkit::sock::ssl_sync_sock sock((std::move(_sock)),
-        netkit::sock::mode::client,
-        netkit::sock::version::TLS_1_2,
-        netkit::sock::verification::peer
-        );
+	connector_->connect();
 
-    sock.connect();
-    sock.perform_handshake();
+	netkit::stream::tls_stream connector(std::move(connector_),
+		netkit::stream::version::TLS_1_1,
+		netkit::stream::verification::none
+		);
+
+	connector.perform_handshake();
 
     constexpr std::string_view request = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\n";
-    std::string response;
 
-    int sent = sock.send(request.data(), request.size());
+    auto write_result = connector.write_all(request);
 
-    while (true) {
-        auto res = sock.recv(6);
+	if (write_result.status != netkit::stream::stream_status::success) {
+		throw std::runtime_error{"write failed"};
+	}
 
-        response += res.data;
+	auto response = connector.read_all_string();
 
-        if (res.status == netkit::sock::recv_status::closed)
-			break;
+	connector.close();
 
-		if (res.status == netkit::sock::recv_status::timeout)
-			break;
+    std::ofstream file("response.txt");
 
-		if (res.status == netkit::sock::recv_status::error)
-			std::cout << "error" << "\n";
-			continue;
+    if (file.is_open()) {
+    	file.write(response.data(), response.size());
+        file.close();
+    } else {
+        std::cerr << "Failed to open file" << std::endl;
     }
 
-    std::cout << response << std::flush;
-
-	return EXIT_SUCCESS;
+    std::cout << "Response written to response.txt" << std::endl;
 }

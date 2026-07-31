@@ -1,11 +1,11 @@
 #if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
 #include <netkit-c/sock/sock_addr.h>
 #include <netkit-c/sock/sock_addr_types.h>
 #include <netkit-c/sock/ssl_sync_sock.h>
-#include <netkit/sock/ssl_sync_sock.hpp>
+#include <netkit/socket/ssl_sync_sock.hpp>
 
 struct netkit_sync_sock {
 	std::unique_ptr<netkit::sock::ssl_sync_sock> impl;

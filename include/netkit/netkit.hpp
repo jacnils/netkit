@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#define NETKIT_NETKIT
+
 // Essential headers
 #include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
@@ -32,15 +34,18 @@
 #include <netkit/dns/response_parser.hpp>
 #include <netkit/dns/query_builder.hpp>
 
+// Platform headers
+#include <netkit/platform/socket.hpp>
+
 // Socket headers
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/sock_peer.hpp>
-#include <netkit/sock/sync_sock.hpp>
-#include <netkit/sock/ssl_sync_sock_enum.hpp>
-#include <netkit/sock/openssl/ssl_sync_sock.hpp>
-#include <netkit/sock/wolfssl/ssl_sync_sock.hpp>
-#include <netkit/sock/ssl_sync_sock.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/addr_type.hpp>
+#include <netkit/socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/native_async_sock.hpp>
+#include <netkit/socket/sync_sock.hpp>
+#include <netkit/socket/async_sock.hpp>
+#include <netkit/socket/native/peer_helper.hpp>
 
 // HTTP headers
 #include <netkit/http/basic_request_handler.hpp>
@@ -62,5 +67,39 @@
 #include <netkit/body/buffer_body_view.hpp>
 #include <netkit/body/stream_body.hpp>
 #include <netkit/body/multipart_part_body.hpp>
+
+// io
+#include <netkit/io/linux/io_backend.hpp>
+#include <netkit/io/fallback/io_backend.hpp>
+#include <netkit/io/io_awaitable.hpp>
+#include <netkit/io/io_context.hpp>
+#include <netkit/io/task.hpp>
+
+// streams
+#include <netkit/stream/stream_enum.hpp>
+#include <netkit/stream/basic_stream.hpp>
+#include <netkit/stream/memory_stream.hpp>
+#include <netkit/stream/socket_stream.hpp>
+#include <netkit/stream/basic_async_stream.hpp>
+#include <netkit/stream/async_socket_stream.hpp>
+#include <netkit/stream/wolfssl/tls_stream.hpp>
+#include <netkit/stream/tls_stream.hpp>
+#include <netkit/stream/tls_stream_enum.hpp>
+
+// tcp
+#include <netkit/tcp/async_tcp_server.hpp>
+#include <netkit/tcp/async_tcp_stream.hpp>
+#include <netkit/tcp/tcp_server.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
+
+// datagram
+#include <netkit/datagram/basic_async_datagram.hpp>
+#include <netkit/datagram/basic_datagram.hpp>
+#include <netkit/datagram/async_socket_datagram.hpp>
+#include <netkit/datagram/socket_datagram.hpp>
+
+// udp
+#include <netkit/udp/async_udp_datagram.hpp>
+#include <netkit/udp/udp_datagram.hpp>
 
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

@@ -11,132 +11,162 @@
  */
 #pragma once
 
+#ifdef NETKIT_HTTP
+
+#include <netkit/tcp/tcp_stream.hpp>
 #include <algorithm>
 #include <fstream>
-#include <ranges>
-
+#include <netkit/body/buffer_body.hpp>
 #include <netkit/http/basic_request_handler.hpp>
 #include <netkit/http/multipart.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/network/utility.hpp>
-#include <netkit/sock/sync_sock.hpp>
 #include <netkit/utility.hpp>
-#include <netkit/body/buffer_body.hpp>
+#include <ranges>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
     class request_handler : public basic_request_handler<> {
-        static std::vector<cookie> get_cookies_from_request(const std::string& cookie_header) {
-            std::vector<cookie> cookies;
-            std::string cookie_str = cookie_header + ";";
+	    static std::vector<cookie> get_cookies_from_request(const std::string& cookie_header) {
+	    	std::vector<cookie> cookies;
+	    	std::string cookie_str = cookie_header + ";";
 
-            while (cookie_str.find(';') != std::string::npos) {
-                std::string cookie = cookie_str.substr(0, cookie_str.find(';'));
-                cookie_str = cookie_str.substr(cookie_str.find(';') + 1);
+	    	while (cookie_str.find(';') != std::string::npos) {
+	    		std::string cookie = cookie_str.substr(0, cookie_str.find(';'));
+	    		cookie_str = cookie_str.substr(cookie_str.find(';') + 1);
 
-                std::string name = cookie.substr(0, cookie.find('='));
-                std::string value = cookie.substr(cookie.find('=') + 1);
+	    		std::string name = cookie.substr(0, cookie.find('='));
+	    		std::string value = cookie.substr(cookie.find('=') + 1);
 
-                if (!name.empty() && !value.empty()) {
-                    if (name.front() == ' ') {
-                        name = name.substr(1);
-                    }
-                    cookies.push_back({name, value});
-                }
-            }
+	    		if (!name.empty() && !value.empty()) {
+	    			if (name.front() == ' ') {
+	    				name = name.substr(1);
+	    			}
+	    			cookies.push_back({name, value});
+	    		}
+	    	}
 
-            return cookies;
-        }
+	    	return cookies;
+	    }
 
-        static std::unordered_map<std::string, std::string> default_read_from_session_file(const std::string& f) {
-            std::unordered_map<std::string, std::string> session;
+    	static std::unordered_map<std::string, std::string> default_read_from_session_file(const std::string& f) {
+	    	std::unordered_map<std::string, std::string> session;
 
-            std::ifstream file(f);
+	    	std::ifstream file(f);
 
-            if (!file.good()) {
-                file.close();
-                return {};
-            }
+	    	if (!file.good()) {
+	    		file.close();
+	    		return {};
+	    	}
 
-            if (!file.is_open()) {
-                throw std::runtime_error("failed to open session file (read_from_session_file()): " + f);
-            }
+	    	if (!file.is_open()) {
+	    		throw std::runtime_error("failed to open session file (read_from_session_file()): " + f);
+	    	}
 
-            std::string line{};
-            while (std::getline(file, line)) {
-                if (line.find('=') != std::string::npos) {
-                    std::string key = line.substr(0, line.find('='));
-                    std::string value = line.substr(line.find('=') + 1);
+	    	std::string line{};
+	    	while (std::getline(file, line)) {
+	    		if (line.find('=') != std::string::npos) {
+	    			std::string key = line.substr(0, line.find('='));
+	    			std::string value = line.substr(line.find('=') + 1);
 
-                    session[key] = value;
-                }
-            }
+	    			session[key] = value;
+	    		}
+	    	}
 
-            file.close();
+	    	file.close();
 
-            return session;
-        }
+	    	return session;
+	    }
 
-        static void default_write_to_session_file(const std::string& f, const std::unordered_map<std::string, std::string>& session) {
-            auto directory = std::filesystem::path(f).parent_path();
-            if (!std::filesystem::exists(directory)) {
-                std::filesystem::create_directories(directory);
-            }
-            std::ofstream file(f, std::ios::trunc);
+    	static void default_write_to_session_file(const std::string& f, const std::unordered_map<std::string, std::string>& session) {
+	    	auto directory = std::filesystem::path(f).parent_path();
+	    	if (!std::filesystem::exists(directory)) {
+	    		std::filesystem::create_directories(directory);
+	    	}
+	    	std::ofstream file(f, std::ios::trunc);
 
-            if (!file.is_open() || !file.good()) {
-                throw std::runtime_error("failed to open session file (write_to_session_file()): " + f);
-            }
+	    	if (!file.is_open() || !file.good()) {
+	    		throw std::runtime_error("failed to open session file (write_to_session_file()): " + f);
+	    	}
 
-            for (const auto& it : session) {
-                file << it.first << "=" << it.second << "\n";
-            }
+	    	for (const auto& it : session) {
+	    		file << it.first << "=" << it.second << "\n";
+	    	}
 
-            file.close();
-        }
+	    	file.close();
+	    }
 
-        [[nodiscard]] static std::unordered_map<std::string, std::string> get_headers(const std::string& header_part) {
-            std::unordered_map<std::string, std::string> headers_map;
-            std::istringstream hs(header_part);
-            std::string l{};
-            while (std::getline(hs, l) && l != "\r") {
-                if (l.back() == '\r') l.pop_back();
-                auto cpos = l.find(':');
-                if (cpos != std::string::npos) {
-                    auto key = l.substr(0, cpos);
-                    auto value = l.substr(cpos + 1);
-                    auto trim = [](std::string& s) {
-                        s.erase(0, s.find_first_not_of(" \t"));
-                        s.erase(s.find_last_not_of(" \t") + 1);
-                    };
-                    trim(key);
-                    trim(value);
-                	headers_map[key] = value;
-                }
-            }
+    	[[nodiscard]] static std::unordered_map<std::string, std::string> get_headers(const std::string& header_part) {
+	    	std::unordered_map<std::string, std::string> headers_map;
+	    	std::istringstream hs(header_part);
+	    	std::string l{};
+	    	while (std::getline(hs, l) && l != "\r") {
+	    		if (l.back() == '\r') l.pop_back();
+	    		auto cpos = l.find(':');
+	    		if (cpos != std::string::npos) {
+	    			auto key = l.substr(0, cpos);
+	    			auto value = l.substr(cpos + 1);
+	    			auto trim = [](std::string& s) {
+	    				s.erase(0, s.find_first_not_of(" \t"));
+	    				s.erase(s.find_last_not_of(" \t") + 1);
+	    			};
+	    			trim(key);
+	    			trim(value);
+	    			headers_map[key] = value;
+	    		}
+	    	}
 
-            return headers_map;
-        }
+	    	return headers_map;
+	    }
 
-        struct status_line {
-            std::string method{"GET"};
-            std::string path{"/"};
-            std::string http_version{"HTTP/1.1"};
-        };
+    	struct status_line {
+	    	std::string method{"GET"};
+	    	std::string path{"/"};
+	    	std::string http_version{"HTTP/1.1"};
+	    };
 
-        status_line get_status_line(const std::string& header_part) const {
-            status_line line{};
-            std::istringstream hs(header_part);
-            std::string first_line{};
-            if (std::getline(hs, first_line)) {
-                if (first_line.back() == '\r') first_line.pop_back();
-                std::istringstream line_ss(first_line);
-                line_ss >> line.method >> line.path >> line.http_version;
-            }
-            return line;
+    	status_line get_status_line(const std::string& header_part) const {
+    		status_line line{};
+    		std::istringstream hs(header_part);
+    		std::string first_line{};
+    		if (std::getline(hs, first_line)) {
+    			if (first_line.back() == '\r') first_line.pop_back();
+    			std::istringstream line_ss(first_line);
+    			line_ss >> line.method >> line.path >> line.http_version;
+    		}
+    		return line;
+    	}
+
+    	mutable std::string overflow_bytes{};
+    	std::string read_until(std::unique_ptr<tcp::tcp_stream>& client_sock, const std::string& delimiter) const {
+        	std::string ret;
+        	char buffer[4096];
+
+        	while (true) {
+        		const auto [bytes, status] = client_sock->read(buffer, sizeof(buffer));
+
+        		if (status == stream::stream_status::error) {
+        			throw socket_error{"error occurred"};
+        		}
+
+        		ret.append(buffer, bytes);
+
+        		int pos = ret.find_first_of(delimiter);
+        		if (pos != std::string::npos) {
+        			overflow_bytes = ret.substr(pos);
+        			ret = ret.substr(0, pos);
+        			break;
+        		}
+
+        		if (status == stream::stream_status::eof) {
+        			break;
+        		}
+        	}
+
+        	return ret;
         }
     public:
-        void handle(std::unique_ptr<sock::basic_sync_sock>& client_sock, server_settings& settings, const request_callback& callback) const override {
+        void handle(std::unique_ptr<tcp::tcp_stream>& client_sock, server_settings& settings, const request_callback& callback) const override {
             if (!client_sock) {
                 return;
             }
@@ -152,7 +182,7 @@ namespace netkit::http::server {
                 }
 
                 request req{};
-                std::string headers = client_sock->recv(5, "\r\n\r\n").data;
+                std::string headers = read_until(client_sock, "\r\n\r\n");
                 const auto headers_vec = get_headers(headers);
                 if (headers.empty()) {
                     return;
@@ -176,14 +206,14 @@ namespace netkit::http::server {
                             break;
                         }
                     } else if (line.starts_with("Expect:") && line.find("100-continue") != std::string::npos) {
-                        client_sock->send("HTTP/1.1 100 Continue\r\n\r\n");
+                        client_sock->write_all("HTTP/1.1 100 Continue\r\n\r\n");
                     } else if (line.starts_with("Expect:") && line.find("100-continue") == std::string::npos) {
                         std::string response = "HTTP/1.1 417 Expectation Failed\r\n"
                             "Content-Length: 0\r\n"
                             "Connection: close\r\n"
                             "\r\n";
 
-                        client_sock->send(response);
+                        client_sock->write_all(response);
                         return;
                     } else if (line.starts_with("Upgrade:") && line.find("websocket") != std::string::npos) {
                         std::string response = "HTTP/1.1 426 Upgrade Required\r\n"
@@ -191,7 +221,7 @@ namespace netkit::http::server {
                             "Connection: close\r\n"
                             "\r\n";
 
-                        client_sock->send(response);
+                        client_sock->write_all(response);
                         return;
                     } else if (line.starts_with("Connection:") && line.find("close") != std::string::npos) {
                         close = true;
@@ -200,26 +230,19 @@ namespace netkit::http::server {
 
             	  // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                    std::string chunked = client_sock->overflow_bytes();
-                    client_sock->clear_overflow_bytes();
-
-                    while (chunked.find("0\r\n\r\n") == std::string::npos) {
-                        auto res = client_sock->recv(5, "", 0); // no eof
-                        if (res.status == sock::recv_status::closed) break;
-                        if (res.status == sock::recv_status::timeout) close = true;
-                        if (res.data.empty()) continue;
-                        chunked += res.data;
-                    }
+                    std::string chunked = overflow_bytes;
+                	overflow_bytes.clear();
+                	chunked = read_until(client_sock, "0\r\n\r\n");
 
                     std::string decoded = netkit::utility::decode_chunked(chunked);
                     req.headers = get_headers(headers);
                 	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
-                    std::string initial = client_sock->overflow_bytes();
-                    client_sock->clear_overflow_bytes();
-                	  req.headers = get_headers(headers);
+                    std::string initial = overflow_bytes;
+                	overflow_bytes.clear();
 
-                	  req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(initial));
+                	req.headers = get_headers(headers);
+                	req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(initial));
                 } else {
                     req.headers = get_headers(headers);
                 }
@@ -241,7 +264,7 @@ namespace netkit::http::server {
                 }();
 
                 if (req.ip_address.empty()) {
-                    req.ip_address = client_sock->get_peer().get_ip();
+                    req.ip_address = client_sock->peer().get_ip();
                 }
 
                 if (!netkit::network::is_ipv4(req.ip_address) && !netkit::network::is_ipv6(req.ip_address)) {
@@ -427,30 +450,46 @@ namespace netkit::http::server {
             	header_section << "Content-Length: " << response.body->size().value_or(0) << "\r\n";
                 header_section << "\r\n";
 
-            	client_sock->send(header_section.str());
+            	client_sock->write_all(header_section.str());
 
             	char buf[4096];
 
             	while (true) {
             		auto result = response.body->read(buf, sizeof(buf));
 
-            		if (result.get_status() == netkit::body::read_status::error)
-            			break;
+            		using status_t = netkit::body::read_status;
 
-            		if (result.get_status() == netkit::body::read_status::timeout)
+            		switch (result.get_status()) {
+            		case status_t::error:
+            			throw std::runtime_error("Body read error");
+
+            		case status_t::timeout:
             			continue;
 
-            		auto bytes = result.get_bytes_read();
+            		case status_t::ok:
+            		case status_t::eof: {
+            			auto bytes = result.get_bytes_read();
 
-            		if (bytes > 0) {
-            			int sbytes = client_sock->send(buf, bytes);
-            			if (sbytes != bytes) {
-            				throw std::runtime_error{"Only sent" + std::to_string(sbytes) + " bytes out of " + std::to_string(bytes) + " to send"};
+            			if (bytes > 0) {
+            				std::size_t total_sent = 0;
+
+            				while (total_sent < bytes) {
+            					auto [sent, write_status] =
+									client_sock->write_all(buf + total_sent, bytes - total_sent);
+
+            					if (write_status == netkit::stream::stream_status::error)
+            						throw std::runtime_error("Socket write error");
+
+            					total_sent += sent;
+            				}
             			}
-            		}
 
-            		if (result.get_status() == netkit::body::read_status::eof)
+            			if (result.get_status() == status_t::eof)
+            				return; // done
+
             			break;
+            		}
+            		}
             	}
             }
 
@@ -458,3 +497,5 @@ namespace netkit::http::server {
         }
     };
 }
+
+#endif

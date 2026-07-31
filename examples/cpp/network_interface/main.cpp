@@ -10,7 +10,6 @@
  *  @brief A clone of the 'ifconfig' command that lists network interfaces and their addresses.
  */
 #include <iostream>
-#include <unistd.h>
 #include <netkit/netkit.hpp>
 
 const std::string RESET = "\033[0m";

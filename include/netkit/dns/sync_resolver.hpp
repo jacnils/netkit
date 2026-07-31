@@ -11,15 +11,18 @@
  */
 #pragma once
 
+#ifdef NETKIT_DNS
+
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/nameserver_list.hpp>
 #include <netkit/dns/query_builder.hpp>
 #include <netkit/dns/record_type.hpp>
 #include <netkit/dns/response_parser.hpp>
 #include <netkit/network/utility.hpp>
-#include <netkit/sock/addr.hpp>
-#include <netkit/sock/addr_type.hpp>
-#include <netkit/sock/sync_sock.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/socket/addr_type.hpp>
+#include <netkit/udp/udp_datagram.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
 
 #ifdef NETKIT_UNIX
 #include <arpa/inet.h>
@@ -83,79 +86,95 @@ namespace netkit::dns {
 
 			std::vector<dns::record> all_records;
 
-			auto send_udp = [&query](const std::string &server,
-                                netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t> > {
-				netkit::sock::addr addr(server, 53, family);
-				netkit::sock::sync_sock sock(
-					addr,
-					netkit::sock::type::udp,
-					netkit::sock::opt::blocking |
-					netkit::sock::opt::no_delay
+        	auto send_udp = [&query](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::sock::addr addr(server, 53, family);
+
+        		netkit::udp::udp_datagram sock(addr);
+
+        		std::array<std::byte, 4096> buffer{};
+
+        		sock.send_to(
+					std::as_bytes(std::span(query)),
+					addr
 				);
 
-				sock.connect();
+        		auto [size, from] = sock.recv_from(buffer);
 
-		        sock.send(query.data(), query.size());
+        		if (size < 12)
+        			return std::nullopt;
 
-				auto resp = sock.recv(2, 4096).data;
+        		uint16_t flags =
+					(static_cast<uint8_t>(buffer[2]) << 8) |
+					static_cast<uint8_t>(buffer[3]);
 
-				if (resp.size() < 12)
-					return std::nullopt;
+        		if (flags & 0x0200)
+        			return std::nullopt;
 
-				uint16_t flags = (resp[2] << 8) | resp[3];
-
-				if (flags & 0x0200)
-					return std::nullopt;
-
-				return std::vector<uint8_t>(resp.begin(), resp.end());
-			};
-
-
-			auto send_tcp = [&](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
-				netkit::sock::addr addr(server, 53, family);
-				netkit::sock::sync_sock sock(
-					addr,
-					netkit::sock::type::tcp,
-					netkit::sock::opt::blocking |
-					netkit::sock::opt::no_delay
+        		return std::vector<uint8_t>(
+					reinterpret_cast<uint8_t*>(buffer.data()),
+					reinterpret_cast<uint8_t*>(buffer.data()) + size
 				);
-				sock.connect();
+        	};
 
-				uint8_t _lenbuf[2] = {
-					static_cast<uint8_t>(query.size() >> 8),
-					static_cast<uint8_t>(query.size())
+
+        	auto send_tcp = [&query](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::sock::addr addr(server, 53, family);
+        		netkit::tcp::tcp_stream sock(addr);
+
+        		sock.connect();
+
+        		std::array<std::byte, 2> lenbuf{
+        			std::byte(query.size() >> 8),
+					std::byte(query.size() & 0xFF)
 				};
 
-				sock.send(reinterpret_cast<char*>(_lenbuf), 2);
-				sock.send(reinterpret_cast<char *>(query.data()), query.size());
+        		if (sock.write(lenbuf).status != stream::stream_status::success)
+        			return std::nullopt;
 
-				std::string lenbuf;
-				while (lenbuf.size() < 2) {
-					auto chunk = sock.recv(2, 2 - lenbuf.size()).data;
-					if (chunk.empty())
-						return std::nullopt;
-					lenbuf += chunk;
-				}
+        		if (sock.write(std::as_bytes(std::span(query))).status != stream::stream_status::success)
+        			return std::nullopt;
 
-				uint16_t resp_len =
-					(static_cast<uint8_t>(lenbuf[0]) << 8) |
-					static_cast<uint8_t>(lenbuf[1]);
-				if (resp_len == 0)
-					return std::nullopt;
+        		std::array<std::byte, 2> resp_len_buf{};
+        		std::size_t total = 0;
 
-				std::string resp;
-				resp.reserve(resp_len);
+        		while (total < 2) {
+        			auto res = sock.read(
+						std::span(resp_len_buf).subspan(total)
+					);
 
-				while (resp.size() < resp_len) {
-					size_t to_read = resp_len - resp.size();
-					auto chunk = sock.recv(2, to_read).data;
-					if (chunk.empty())
-						return std::nullopt;
-					resp += chunk;
-				}
+        			if (res.status != stream::stream_status::success || res.bytes == 0)
+        				return std::nullopt;
 
-				return std::vector<uint8_t>(resp.begin(), resp.end());
-			};
+        			total += res.bytes;
+        		}
+
+        		uint16_t resp_len =
+					(static_cast<uint16_t>(std::to_integer<uint8_t>(resp_len_buf[0])) << 8) |
+					std::to_integer<uint8_t>(resp_len_buf[1]);
+
+        		if (resp_len == 0)
+        			return std::nullopt;
+
+        		std::vector<std::byte> resp(resp_len);
+
+        		total = 0;
+
+        		while (total < resp_len) {
+        			auto res = sock.read(
+						std::span(resp).subspan(total)
+					);
+
+        			if (res.status != stream::stream_status::success || res.bytes == 0)
+        				return std::nullopt;
+
+        			total += res.bytes;
+        		}
+
+        		return std::vector<uint8_t>(
+					reinterpret_cast<uint8_t*>(resp.data()),
+					reinterpret_cast<uint8_t*>(resp.data()) + resp.size()
+				);
+        	};
 
 			auto try_server = [&](const std::string& server, netkit::sock::addr_type family) -> bool {
 				auto udp_resp = send_udp(server, family);
@@ -211,5 +230,7 @@ namespace netkit::dns {
 		}
     };
 }
+
+#endif
 
 #endif

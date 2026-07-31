@@ -11,9 +11,11 @@
  */
 #pragma once
 
-#include <netkit/sock/sync_sock.hpp>
-#include <netkit/http/predefined.hpp>
+#ifdef NETKIT_HTTP
+
+#include <netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/http/body_parser.hpp>
+#include <netkit/http/predefined.hpp>
 
 namespace netkit::http::client {
     /**
@@ -181,5 +183,6 @@ namespace netkit::http::client {
             return BP(ret).parse();
         }
     };
-
 }
+
+#endif

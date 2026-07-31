@@ -17,7 +17,7 @@
 #include <netkit/http/multipart.hpp>
 
 namespace netkit::http::utility {
-	enum class NETKIT_API multipart_state {
+	enum class multipart_state {
 		boundary,
 		headers,
 		data,

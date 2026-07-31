@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <netkit/export.hpp>
+
 #if defined(__APPLE__)
 #define NETKIT_MACOS 1
 #endif
@@ -24,6 +26,10 @@
 #ifdef __DEVKITPPC__
 #define NETKIT_UNIX 1
 #define NETKIT_DKP 1
+#endif
+
+#if defined(__linux) || defined(linux)
+#define NETKIT_LINUX 1
 #endif
 
 #ifndef NETKIT_FALLBACK_IPV4_DNS_1

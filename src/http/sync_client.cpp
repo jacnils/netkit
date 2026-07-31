@@ -9,59 +9,67 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the synchronous HTTP client class.
  */
-#include <netkit/http/sync_client.hpp>
-#include <netkit/sock/ssl_sync_sock.hpp>
-#include <netkit/utility.hpp>
-#include <netkit/except.hpp>
-#include <netkit/network/utility.hpp>
+#ifdef NETKIT_HTTP
 
+#include <netkit/except.hpp>
+#include <netkit/http/sync_client.hpp>
+#include <netkit/network/utility.hpp>
+#include <netkit/tcp/tcp_stream.hpp>
+#include <netkit/stream/wolfssl/tls_stream.hpp>
+#include <netkit/utility.hpp>
 #include <variant>
 
 std::string netkit::http::client::sync_client::make_request(const std::string& request) const {
     sock::addr addr(hostname, port, sock::addr_type::hostname);
 
 #if defined(NETKIT_SSL)
-	using variant_sock = std::variant<netkit::sock::sync_sock, netkit::sock::ssl_sync_sock>;
+	using variant_sock = std::variant<netkit::tcp::tcp_stream, netkit::stream::tls_stream>;
 #else
-	using variant_sock = std::variant<netkit::sock::sync_sock>;
+	using variant_sock = std::variant<netkit::tcp::tcp_stream>;
 #endif
 
     std::optional<variant_sock> sock{std::nullopt};
-#if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
+#if defined(NETKIT_SSL)
     if (port == 443) {
-        auto tcp_sock = std::make_unique<netkit::sock::sync_sock>(addr, netkit::sock::type::tcp);
-        sock.emplace(std::in_place_type<netkit::sock::ssl_sync_sock>,
-                     std::move(tcp_sock),
-                     netkit::sock::mode::client);
+        auto tcp_sock = std::make_unique<netkit::tcp::tcp_stream>(addr);
+    	tcp_sock->connect();
+        sock.emplace(std::in_place_type<netkit::stream::tls_stream>,
+                     std::move(tcp_sock));
+    	std::get<netkit::stream::tls_stream>(*sock).perform_handshake();
     } else {
-        sock.emplace(netkit::sock::sync_sock(addr, netkit::sock::type::tcp));
-        std::get<netkit::sock::sync_sock>(*sock).connect();
+    	sock.emplace(std::in_place_type<netkit::tcp::tcp_stream>, addr);
+    	std::get<netkit::tcp::tcp_stream>(*sock).connect();
     }
 #else
-    sock.emplace(sock::sync_sock(addr, sock::type::tcp));
-    std::get<sock::sync_sock>(*sock).connect();
+	sock.emplace(std::in_place_type<netkit::tcp::tcp_stream>, addr);
+	std::get<netkit::tcp::tcp_stream>(*sock).connect();
 #endif
 
     auto& s = *sock;
-    std::visit([](auto& sckt){ sckt.connect(); }, s);
-    std::visit([&](auto& sckt) { sckt.send(request.data(), request.size()); }, s);
+
+	const auto write_data = [&](const std::string& data) {
+		std::visit([&](auto& socket) {
+			socket.write_all(data);
+		}, s);
+	};
+
+	const auto recv_data = [&]() -> std::string {
+		std::string ret;
+		std::visit([&](auto& socket) {
+			ret = socket.read_all_string();
+		}, s);
+		return ret;
+	};
+
+	write_data(request);
 
     std::string raw;
     std::string s_headers;
-    while (true) {
-        auto result = std::visit([&](auto& sckt) { return sckt.recv(timeout, "\r\n\r\n", 0); }, s);
-        if (result.status == sock::recv_status::timeout) {
-            throw std::runtime_error("timeout while reading headers");
-        }
-        if (result.status == sock::recv_status::closed) {
-            throw std::runtime_error("connection closed during headers");
-        }
-        if (result.data.empty()) {
-            throw std::runtime_error("empty recv data unexpectedly");
-        }
 
-        raw += result.data;
-        if (auto pos = raw.find("\r\n\r\n"); pos != std::string::npos) {
+    while (true) {
+		raw += recv_data();
+
+        if (auto pos = raw.find_first_of("\r\n\r\n"); pos != std::string::npos) {
             s_headers = raw.substr(0, pos + 4);
             raw = raw.substr(pos + 4);
             break;
@@ -69,36 +77,22 @@ std::string netkit::http::client::sync_client::make_request(const std::string& r
     }
 
     bool is_chunked = false;
-    std::size_t content_length = 0;
 
     std::istringstream header_stream(s_headers);
     std::string line;
     while (std::getline(header_stream, line) && line != "\r") {
         if (line.starts_with("Transfer-Encoding:") && line.find("chunked") != std::string::npos) {
             is_chunked = true;
-        } else if (line.starts_with("Content-Length:")) {
-            content_length = std::stoul(line.substr(15));
         }
     }
-
 
     std::string s_body;
 
     if (is_chunked) {
         std::string chunked_data = std::move(raw);
-        while (chunked_data.find("0\r\n\r\n") == std::string::npos) {
-            std::string chunk = std::visit([&](auto& sckt) { return sckt.recv(timeout, 8192); }, s).data;
-            if (chunk.empty()) throw std::runtime_error("connection closed during chunked body");
-            chunked_data += chunk;
-        }
         s_body = utility::decode_chunked(chunked_data);
     } else {
         s_body = std::move(raw);
-        while (s_body.size() < content_length) {
-            auto res = std::visit([&](auto& sckt) { return sckt.recv(30, "", 0); }, s);
-            if (res.data.empty()) break;
-            s_body += res.data;
-        }
     }
 
     return s_headers + s_body;
@@ -207,3 +201,5 @@ netkit::http::method netkit::http::client::sync_client::get_method() const {
 netkit::http::version netkit::http::client::sync_client::get_version() const {
     return this->v;
 }
+
+#endif

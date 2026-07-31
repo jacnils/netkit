@@ -1,8 +1,7 @@
 #pragma once
 
-#include <netkit/http/multipart_reader.hpp>
 #include <netkit/body/basic_body.hpp>
-#include <netkit/sock/basic_sync_sock.hpp>
+#include <netkit/http/multipart_reader.hpp>
 
 namespace netkit::body {
 	class multipart_part_body : public basic_body {

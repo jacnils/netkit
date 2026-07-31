@@ -1,3 +1,5 @@
 # Reporting a Vulnerability
 
-Please report vulnerabilities to me through email. You can email me at `contact@jacobnilsson.com`.
+As of now, before the v1.0.0 release, we will discuss vulnerabilities in the open, as we don't expect
+anyone to use this in security critical applications. Please file an issue on the GitHub repository,
+or pull request if you have a fix.

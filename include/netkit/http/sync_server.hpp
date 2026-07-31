@@ -12,12 +12,15 @@
  */
 #pragma once
 
-#include <thread>
+#ifdef NETKIT_HTTP
+
 #include <functional>
 #include <netkit/except.hpp>
-#include <netkit/http/server_predefined.hpp>
 #include <netkit/http/basic_sync_server.hpp>
-#include <netkit/sock/addr.hpp>
+#include <netkit/http/server_predefined.hpp>
+#include <netkit/socket/addr.hpp>
+#include <netkit/tcp/tcp_server.hpp>
+#include <thread>
 
 namespace netkit::http::server {
     /**
@@ -28,7 +31,7 @@ namespace netkit::http::server {
         bool running = true;
         server_settings settings;
         std::function<response(const request&)> callback;
-        std::unique_ptr<sock::sync_sock> sock;
+        std::unique_ptr<tcp::tcp_server> sock;
     public:
         /**
          * @brief  Constructor for the server class
@@ -43,8 +46,7 @@ namespace netkit::http::server {
             }
 
             sock::addr addr = {"localhost", settings.port, netkit::sock::addr_type::hostname};
-            this->sock = std::make_unique<sock::sync_sock>(addr, netkit::sock::type::tcp,
-                netkit::sock::opt::reuse_addr|netkit::sock::opt::no_delay|netkit::sock::opt::blocking);
+            this->sock = std::make_unique<tcp::tcp_server>(addr);
 
             try {
                 sock->bind();
@@ -84,3 +86,5 @@ namespace netkit::http::server {
         }
     };
 }
+
+#endif
