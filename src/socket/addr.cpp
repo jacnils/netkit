@@ -298,7 +298,7 @@ const sockaddr* netkit::sock::addr::get_sa() const noexcept {
 	return reinterpret_cast<const sockaddr*>(&sa_storage_);
 }
 
-socklen_t netkit::sock::addr::get_sa_len() const noexcept {
+netkit::sock::sockaddr_len netkit::sock::addr::get_sa_len() const noexcept {
 	if (this->is_ipv4()) return sizeof(sockaddr_in);
 	if (this->is_ipv6()) return sizeof(sockaddr_in6);
 #ifndef NETKIT_DKP
