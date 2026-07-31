@@ -30,11 +30,8 @@ namespace netkit::sock::native {
     class NETKIT_API native_sync_sock : public basic_native_sync_sock {
         addr addr_;
         type type_{};
-#ifdef NETKIT_WINDOWS
-        fd_t sockfd{INVALID_SOCKET};
-#else
-        fd_t sockfd{-1};
-#endif
+        fd_t sockfd{};
+
         bool bound{false};
         mutable std::string old_bytes;
 #ifdef NETKIT_DKP

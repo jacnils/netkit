@@ -16,9 +16,6 @@
 #include <netkit/socket/native/basic_native_async_sock.hpp>
 
 namespace netkit::sock::native {
-#ifndef NETKIT_WINDOWS
-constexpr fd_t INVALID_SOCKET = -1;
-#endif
 
 class NETKIT_API native_async_listener  : public basic_native_async_listener {
 public:
@@ -47,7 +44,7 @@ private:
 	addr addr_;
 	type type_;
 
-	fd_t sockfd_{INVALID_SOCKET};
+	fd_t sockfd_{};
 
 	opt opts_;
 

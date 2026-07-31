@@ -11,10 +11,6 @@
 #include <netkit/socket/native/basic_native_sync_listener.hpp>
 
 namespace netkit::sock::native {
-#ifndef NETKIT_WINDOWS
-constexpr fd_t INVALID_SOCKET = -1;
-#endif
-
 class NETKIT_API native_sync_listener : public basic_native_sync_listener {
 public:
 	void set_sock_opts(opt opts) const;
@@ -39,7 +35,7 @@ private:
 	addr addr_;
 	type type_;
 
-	fd_t sockfd_{INVALID_SOCKET};
+	fd_t sockfd_{};
 
 	bool bound_{false};
 	bool listening_{false};
