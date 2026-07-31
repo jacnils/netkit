@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <cstddef>
+#include <optional>
 
 namespace netkit::stream {
 

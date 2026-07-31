@@ -34,7 +34,10 @@
 #ifdef NETKIT_WINDOWS
 #include <winsock2.h>
 #else
+#include <netinet/tcp.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <cstring>
 #endif
 
 namespace netkit::platform {
