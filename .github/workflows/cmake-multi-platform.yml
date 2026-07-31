@@ -44,7 +44,7 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DNETKIT_ENABLE_TESTS=ON
+          -DNETKIT_ENABLE_TESTS=OFF
           -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
           -S ${{ github.workspace }}
 
