@@ -74,7 +74,7 @@ public:
 			if (res.status != stream_status::success)
 				throw std::runtime_error("read failed");
 
-			auto amount = std::min(res.bytes, max_bytes - total);
+			auto amount = (std::min)(res.bytes, max_bytes - total);
 
 			result.insert(
 				result.end(),

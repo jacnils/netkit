@@ -205,6 +205,10 @@ if (NETKIT_ENABLE_WSAPOLL)
 endif()
 
 if (WIN32)
+    add_definitions(-DNOMINMAX)
+endif()
+
+if (WIN32)
     target_link_libraries(netkit PUBLIC ws2_32 iphlpapi dnsapi crypt32)
 elseif (UNIX AND NOT APPLE)
     target_link_libraries(netkit PUBLIC resolv)
