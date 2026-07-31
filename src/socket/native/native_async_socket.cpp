@@ -13,7 +13,6 @@
 
 #include <netkit/socket/native/native_async_sock.hpp>
 #include <chrono>
-#include <unistd.h>
 #include <netkit/except.hpp>
 
 #include <netkit/socket/native/peer_helper.hpp>
@@ -25,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <fcntl.h>
+#include <unistd.h>
 #elif defined(NETKIT_WINDOWS)
 #include <ws2tcpip.h>
 #endif
