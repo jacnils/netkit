@@ -1,12 +1,13 @@
 #pragma once
 
-#include <netkit/except.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <array>
+#include <cstddef>
 
 namespace netkit::stream {
 
