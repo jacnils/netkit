@@ -15,7 +15,7 @@ option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
-option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" ON)
+option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
     set(NETKIT_DKP ON)
@@ -39,6 +39,10 @@ if (NOT NETKIT_BUILD_SHARED AND WIN32)
     set(CMAKE_EXE_LINKER_FLAGS
             "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++"
     )
+endif()
+
+if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
