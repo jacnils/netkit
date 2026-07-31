@@ -304,7 +304,7 @@ netkit::sock::sockaddr_len netkit::sock::addr::get_sa_len() const noexcept {
 #ifndef NETKIT_DKP
 	if (this->is_file_path()) {
 		const auto& file_path = this->get_path();
-		return static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + file_path.string().size() + 1);
+		return static_cast<sockaddr_len>(offsetof(sockaddr_un, sun_path) + file_path.string().size() + 1);
 	}
 #endif
 
@@ -356,7 +356,7 @@ void netkit::sock::addr::prep_sa() {
 	}
 }
 
-netkit::sock::addr::addr(const sockaddr* sa, socklen_t len) {
+netkit::sock::addr::addr(const sockaddr* sa, sockaddr_len len) {
 	switch (sa->sa_family) {
 	case AF_INET: {
 		auto* sa4 = reinterpret_cast<const sockaddr_in*>(sa);
