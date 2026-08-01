@@ -22,10 +22,12 @@ public:
 	void run_until_idle() {
 		running_ = true;
 
-		while (running_ && !tasks_.empty()) {
-			backend_.poll(!tasks_.empty() ? 0 : -1);
-
+		while (running_) {
+			backend_.poll(-1);
 			cleanup_tasks();
+
+			if (tasks_.empty())
+				break;
 		}
 	}
 

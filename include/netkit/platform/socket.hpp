@@ -21,7 +21,7 @@
  * That's what this header is for -- abstracting away a few of Microsoft's many horrible design choices.
  * Frankly, having to support Windows is a nuisance more than anything.
  *
- * Linux/*BSD/macOS users, count your blessings; at least you don't have to deal with this utter piece of shit.
+ * Linux/BSD/macOS users, count your blessings; at least you don't have to deal with this utter piece of shit.
  */
 #pragma once
 
@@ -186,8 +186,14 @@ inline socket_err last_socket_error() {
 #else
 	switch (errno) {
 	case 0: return socket_err::none;
+#if EWOULDBLOCK == EAGAIN
+	case EAGAIN:
+		return socket_err::would_block;
+#else
+	case EAGAIN:
 	case EWOULDBLOCK:
-	//case EAGAIN: return socket_err::would_block; /* identical to EWOULDBLOCK */
+		return socket_err::would_block;
+#endif
 	case EINPROGRESS: return socket_err::in_progress;
 	case EINTR: return socket_err::interrupted;
 	case ECONNREFUSED: return socket_err::connection_refused;
