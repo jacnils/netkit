@@ -26,7 +26,15 @@ void netkit::sock::native::native_sync_listener::set_sock_opts(opt opts) const {
 
 netkit::sock::native::native_sync_listener::native_sync_listener(const addr& address, type t, opt opts)
 : addr_(address), type_(t), opts_(opts) {
-	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
+#ifndef NETKIT_DKP
+	if (this->type_ == type::uds) {
+		sockfd_ = platform::socket(AF_UNIX, SOCK_STREAM, 0);
+	} else {
+		sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	}
+#else
+	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+#endif
 
 	if (!platform::valid_socket(sockfd_))
 		throw socket_error("failed creating socket");
@@ -36,7 +44,7 @@ netkit::sock::native::native_sync_listener::native_sync_listener(const addr& add
 
 void netkit::sock::native::native_sync_listener::bind() {
 	if (platform::bind(sockfd_, addr_.get_sa(), addr_.get_sa_len()) < 0) {
-		throw socket_error("bind failed");
+		throw socket_error("bind failed: " + platform::last_error_message());
 	}
 
 	bound_ = true;

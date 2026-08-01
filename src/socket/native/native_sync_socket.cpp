@@ -55,15 +55,13 @@ netkit::sock::native::native_sync_sock::native_sync_sock(const sock::addr& addr,
 	}
 
 #ifndef NETKIT_DKP
-	if (t != type::uds) {
-		this->sockfd = platform::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
-														  t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	if (this->type_ == type::uds) {
+		sockfd = platform::socket(AF_UNIX, SOCK_STREAM, 0);
 	} else {
-		this->sockfd = platform::socket(AF_UNIX, SOCK_STREAM, 0);
+		sockfd = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
 	}
 #else
-	this->sockfd = platform::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
-												  t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	sockfd = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
 #endif
 
 	if (!platform::valid_socket(sockfd))

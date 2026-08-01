@@ -27,7 +27,15 @@ void netkit::sock::native::native_async_listener::set_sock_opts(opt opts) const 
 }
 
 netkit::sock::native::native_async_listener::native_async_listener(io::io_context& ctx, const addr& address, type t, opt opts) : context_(ctx), addr_(address), type_(t), opts_(opts) {
-	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, SOCK_STREAM, 0);
+#ifndef NETKIT_DKP
+	if (this->type_ == type::uds) {
+		sockfd_ = platform::socket(AF_UNIX, SOCK_STREAM, 0);
+	} else {
+		sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	}
+#else
+	sockfd_ = platform::socket(addr_.is_ipv6() ? AF_INET6 : AF_INET, t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+#endif
 
 	if (!platform::valid_socket(sockfd_))
 		throw socket_error("failed creating socket");
