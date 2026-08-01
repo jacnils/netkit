@@ -40,6 +40,10 @@
 #include <cstring>
 #endif
 
+#ifdef NETKIT_DKP
+#include <unordered_map>
+#endif
+
 namespace netkit::platform {
 
 #ifdef NETKIT_WINDOWS
@@ -260,9 +264,66 @@ inline socket_result recv(socket_t sock, void* buffer, std::size_t length, int f
 #endif
 }
 
-// this is identical, but let's stick with the theme, shall we?
+// some nasty devkitpro hacks incoming
+#ifdef NETKIT_DKP
+inline std::unordered_map<socket_t, sock::addr>& peer_cache() {
+	static std::unordered_map<socket_t, sock::addr> cache;
+	return cache;
+}
+
+inline void cache_peer(socket_t fd, sock::addr peer) {
+	peer_cache().emplace(fd, std::move(peer));
+}
+
+inline std::optional<sock::addr> take_cached_peer(socket_t fd) {
+	auto& cache = peer_cache();
+
+	auto it = cache.find(fd);
+
+	if (it == cache.end())
+		return std::nullopt;
+
+	auto peer = std::move(it->second);
+	cache.erase(it);
+
+	return peer;
+}
+#endif
+
 inline socket_t accept(socket_t sock, sockaddr* addr, socket_length_t* length) {
+#ifndef NETKIT_DKP
 	return ::accept(sock, addr, length);
+#else
+	socket_t client = ::accept(sock, addr, length);
+
+	if (!platform::valid_socket(client))
+		return client;
+
+	auto* addr_in = reinterpret_cast<sockaddr_in*>(addr);
+
+	char ip_str[INET_ADDRSTRLEN]{};
+
+	inet_ntop(
+		AF_INET,
+		&addr_in->sin_addr,
+		ip_str,
+		sizeof(ip_str)
+	);
+
+	auto peer = sock::addr(
+		ip_str,
+		ntohs(addr_in->sin_port),
+		sock::addr_type::ipv4
+	);
+
+	platform::cache_peer(
+		client,
+		std::move(peer)
+	);
+
+	return client;
+
+#endif
 }
 
 inline int connect(socket_t sock, const sockaddr* addr, socket_length_t length) {

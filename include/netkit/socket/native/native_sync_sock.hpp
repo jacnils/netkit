@@ -34,10 +34,6 @@ namespace netkit::sock::native {
 
         bool bound{false};
         mutable std::string old_bytes;
-#ifdef NETKIT_DKP
-    	sockaddr_storage peer_addr{};
-    	bool has_peer{false};
-#endif
     public:
         /**
          * @brief Constructs a sync_sock object.

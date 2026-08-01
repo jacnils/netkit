@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#elifdef NETKIT_DKP
 #endif
 
 #ifdef NETKIT_WINDOWS
@@ -342,6 +343,7 @@ void netkit::sock::addr::prep_sa() {
 		if (scope != 0) {
 			sa6->sin6_scope_id = scope;
 		}
+#ifndef NETKIT_DKP
 	} else if (this->is_file_path()) {
 		auto* sa_un = reinterpret_cast<sockaddr_un*>(&sa_storage_);
 		sa_un->sun_family = AF_UNIX;
@@ -351,6 +353,7 @@ void netkit::sock::addr::prep_sa() {
 			throw socket_error("UNIX socket path too long");
 		}
 		std::memcpy(sa_un->sun_path, f_path.c_str(), f_path.size() + 1);
+#endif
 	} else {
 		throw ip_error("invalid address type");
 	}

@@ -18,7 +18,7 @@
 #include <netkit/socket/native/peer_helper.hpp>
 #include <netkit/platform/socket.hpp>
 
-#ifdef NETKIT_UNIX
+#if defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -42,12 +42,17 @@ netkit::sock::native::native_async_sock::native_async_sock(netkit::io::io_contex
 		}
 	}
 
+#ifdef NETKIT_DKP
+	this->sockfd = platform::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
+														  t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+#else
     if (t != type::uds) {
         this->sockfd = platform::socket(addr.is_ipv6() ? AF_INET6 : AF_INET,
                                                           t == type::tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
     } else {
         this->sockfd = platform::socket(AF_UNIX, SOCK_STREAM, 0);
     }
+#endif
 
 	if (!platform::valid_socket(sockfd)) {
 		throw socket_error{"failed to create socket"};

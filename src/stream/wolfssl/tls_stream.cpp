@@ -180,7 +180,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 void netkit::stream::tls_stream::perform_handshake() const {
 	int ret = wolfSSL_connect(ssl_);
 
-	if (ret != SSL_SUCCESS) {
+	if (ret != WOLFSSL_SUCCESS) {
 		int err = wolfSSL_get_error(ssl_, ret);
 
 		throw std::runtime_error("TLS handshake failed: " + std::to_string(err));

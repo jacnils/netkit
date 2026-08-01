@@ -10,7 +10,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <afunix.h>
-#elif NETKIT_UNIX
+#elif defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -18,6 +18,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#elif defined(NETKIT_DKP)
+#include <network.h>
 #endif
 
 void netkit::sock::native::native_async_listener::set_sock_opts(opt opts) const {
@@ -89,6 +91,7 @@ netkit::sock::native::native_async_listener::accept() {
 		);
 
 		if (platform::valid_socket(client_sockfd)) {
+#ifndef NETKIT_DKP
 			if (this->type_ == type::uds) {
 				co_return std::make_unique<native_async_sock>(
 					this->context_,
@@ -99,6 +102,7 @@ netkit::sock::native::native_async_listener::accept() {
 					this->type_
 				);
 			}
+#endif
 
 			auto peer = sock::native::get_peer(client_sockfd);
 

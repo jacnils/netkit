@@ -19,9 +19,11 @@
 
 #ifdef NETKIT_WINDOWS
 #include <ws2tcpip.h>
-#else
+#elif defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
 #include <sys/un.h>
 #include <netinet/in.h>
+#elif defined(NETKIT_DKP)
+#include <network.h>
 #endif
 
 namespace netkit::sock {

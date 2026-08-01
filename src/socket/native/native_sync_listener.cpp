@@ -7,7 +7,7 @@
 #include <netkit/socket/native/native_sync_sock.hpp>
 #include <netkit/socket/native/peer_helper.hpp>
 
-#ifdef NETKIT_UNIX
+#if defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -16,6 +16,8 @@
 #include <fcntl.h>
 #elif defined(NETKIT_WINDOWS)
 #include <afunix.h>
+#elif defined(NETKIT_DKP)
+// nothing
 #endif
 
 void netkit::sock::native::native_sync_listener::set_sock_opts(opt opts) const {
