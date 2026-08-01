@@ -102,4 +102,10 @@
 #include <netkit/udp/async_udp_datagram.hpp>
 #include <netkit/udp/udp_datagram.hpp>
 
+// uds
+#include <netkit/uds/async_uds_server.hpp>
+#include <netkit/uds/async_uds_stream.hpp>
+#include <netkit/uds/uds_server.hpp>
+#include <netkit/uds/uds_stream.hpp>
+
 #pragma message ("Use of netkit.hpp directly is discouraged for all uses, except test code.")

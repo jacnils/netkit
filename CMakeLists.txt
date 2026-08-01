@@ -93,6 +93,10 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/udp/udp_datagram.cpp
         src/udp/async_udp_datagram.cpp
         src/stream/wolfssl/tls_stream.cpp
+        src/uds/async_uds_server.cpp
+        src/uds/async_uds_stream.cpp
+        src/uds/uds_server.cpp
+        src/uds/uds_stream.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)
