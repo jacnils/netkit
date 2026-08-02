@@ -14,8 +14,8 @@ The other alternative is to use the latest release, which doesn't have a changin
 
 ## Features
 
-- OS-independent socket abstractions, both synchronous and asynchronous
-- Higher-level socket abstractions
+- OS-independent socket abstractions, both synchronous and asynchronous using C++20 coroutines
+- Higher-level socket abstractions, including TCP, UDP and UDS
 - HTTP/1.0 and HTTP/1.1 body parser, including headers and body.
 - IPv4 and IPv6 support
 - TCP and UDP support
@@ -24,17 +24,10 @@ The other alternative is to use the latest release, which doesn't have a changin
 - Network interface enumeration
 - Exceptions for errors
 - Inheritable classes for easy extension
-- Designed for C++23, with optional C bindings for use in non-C++ projects and interoperability with other programming languages entirely
+- Designed for C++23
 - Support for Windows, Linux, macOS and other Unix-compatible systems.
 - Support for DevkitPro (Wii and GameCube)
 - Permissive MIT license, allowing use in both open source and proprietary software.
-
-Still missing:
-
-- Asynchronous I/O for non-Linux platforms
-  - Threaded fallback is available
-- Schannel support for Windows (waste of time I reckon)
-- WebSocket abstraction
 
 ## Dependencies
 
@@ -48,8 +41,6 @@ netkit's CMakeLists.txt offers multiple options:
 
 - NETKIT_ENABLE_WOLFSSL: Enable WolfSSL-backed SSL/TLS
 - NETKIT_ENABLE_TESTS: Enable Catch2 tests for the main C++ library
-- NETKIT_ENABLE_C_BINDINGS: Enable C bindings for netkit
-- NETKIT_ENABLE_C_TESTS: Enable tests for netkit C bindings
 - NETKIT_ENABLE_WINDOWS_CERTSTORE: Enable getting CA certificates from the Windows store
 - NETKIT_ENABLE_FALLBACK_CA: Enable fallback hardcoded CA certificate (required for DevkitPro with TLS enabled)
 - NETKIT_WOLFSSL_DEBUG: Enable debugging for WolfSSL and netkit WolfSSL functions
@@ -59,7 +50,7 @@ netkit's CMakeLists.txt offers multiple options:
 
 ```bash
 mkdir -p build/; cd build/
-cmake .. -DCMAKE_BUILD_TYPE=Release # if using devkitpro, -DCMAKE_TOOLCHAIN_FILE=${DEVKITPRO}/cmake/Wii.cmake
+cmake .. -DCMAKE_BUILD_TYPE=Release # if using devkitpro, -DCMAKE_TOOLCHAIN_FILE=${DEVKITPRO:-/opt/devkitpro}/cmake/Wii.cmake
 cmake --build .
 cmake --install .
 ```
@@ -84,9 +75,7 @@ target_link_libraries(netkit-example PRIVATE
 ...
 ```
 
-If you wish to use the C bindings, link with `netkit::netkit-c` instead.
-
-See `examples/c/` and `examples/cpp/` for further examples of how to use the library.
+See `examples/` for further examples of how to use the library.
 
 Netkit can also be statically linked, and for users of DevkitPro it will be automatically.
 
