@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(netkit LANGUAGES CXX)
+project(netkit LANGUAGES CXX VERSION 0.3.0)
 
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
