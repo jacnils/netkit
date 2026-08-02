@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
-project(netkit LANGUAGES C CXX)
+project(netkit LANGUAGES CXX)
 
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
-option(NETKIT_ENABLE_C_BINDINGS "Enable experimental C bindings for netkit" OFF)
-option(NETKIT_ENABLE_C_TESTS "Enable C building tests" OFF)
 option(NETKIT_ENABLE_WINDOWS_CERTSTORE "Enable getting CA certificates from the Windows store" ON)
 option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for DevkitPro)" ON)
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
@@ -304,83 +302,6 @@ if (NETKIT_ENABLE_TESTS)
     catch_discover_tests(netkit-tests)
 endif()
 
-if (NETKIT_ENABLE_C_BINDINGS)
-    message(STATUS "C bindings enabled")
-    add_library(netkit-c ${NETKIT_LIB_TYPE}
-            src/c/sock/addr.cpp
-            src/c/sock/sync_sock.cpp
-            src/c/sock/ssl_sync_sock.cpp
-            src/c/network/utility.cpp
-    )
-
-    set_target_properties(netkit-c PROPERTIES
-            EXPORT_NAME netkit-c
-            POSITION_INDEPENDENT_CODE ON
-            CXX_VISIBILITY_PRESET hidden
-            VISIBILITY_INLINES_HIDDEN ON
-            VERSION 0.1.0
-            SOVERSION 1
-    )
-
-    if (NETKIT_BUILD_SHARED)
-        target_compile_definitions(netkit-c PUBLIC NETKIT_C_SHARED)
-    endif()
-
-    if (WIN32 AND NETKIT_BUILD_SHARED)
-        target_compile_definitions(netkit-c
-                PRIVATE NETKIT_C_BUILD_DLL
-        )
-    endif()
-
-    target_link_libraries(netkit-c
-            PUBLIC netkit
-    )
-
-    target_include_directories(netkit-c
-            PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:include>
-    )
-
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/netkit-c/
-            DESTINATION include/netkit-c
-            FILES_MATCHING
-            PATTERN "*.h"
-    )
-
-    install(TARGETS netkit-c
-            EXPORT netkitTargets
-            RUNTIME DESTINATION bin
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-    )
-
-    if (NETKIT_ENABLE_C_TESTS)
-        message(STATUS "C API tests enabled")
-
-        add_executable(netkit-c-tests
-            tests/c/test_sock_addr.c
-            tests/c/test_network_utility.c
-            tests/c/test_main.c
-        )
-
-        add_dependencies(netkit-c-tests
-            netkit
-            netkit-c
-        )
-
-        target_link_libraries(netkit-c-tests
-                PRIVATE netkit netkit-c
-        )
-
-        add_test(NAME netkit-c-tests COMMAND netkit-c-tests)
-    else()
-        message(STATUS "C API tests disabled")
-    endif()
-else()
-    message(STATUS "C bindings disabled")
-endif()
-
 if (NETKIT_BUILD_EXAMPLES)
-    add_subdirectory(examples/cpp)
+    add_subdirectory(examples)
 endif()
