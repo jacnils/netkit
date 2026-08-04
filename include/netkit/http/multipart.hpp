@@ -16,6 +16,7 @@
 #include <memory>
 #include <netkit/export.hpp>
 #include <netkit/body/basic_body.hpp>
+#include <netkit/body/basic_async_body.hpp>
 
 namespace netkit::http::utility {
 	struct NETKIT_API multipart_part {
