@@ -95,6 +95,9 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/uds/async_uds_stream.cpp
         src/uds/uds_server.cpp
         src/uds/uds_stream.cpp
+        src/body/async_stream_body.cpp
+        src/body/async_multipart_part_body.cpp
+        src/http/async_multipart_reader.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)

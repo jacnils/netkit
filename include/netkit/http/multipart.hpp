@@ -25,6 +25,13 @@ namespace netkit::http::utility {
 		std::unique_ptr<body::basic_body> data;
 	};
 
+	struct NETKIT_API async_multipart_part {
+		std::string name;
+		std::string filename;
+		std::string content_type;
+		std::unique_ptr<body::basic_async_body> data;
+	};
+
 	NETKIT_API std::string extract_boundary(const std::string& content_type);
 	NETKIT_API std::vector<multipart_part> parse_multipart_form_data(const char* body, std::size_t size, const std::string& content_type);
 	NETKIT_API std::vector<multipart_part> parse_multipart_form_data(body::basic_body& body, const std::string& content_type);

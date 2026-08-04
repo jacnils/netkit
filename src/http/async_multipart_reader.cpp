@@ -1,5 +1,5 @@
-#include <netkit/http/multipart_reader.hpp>
-#include <netkit/body/multipart_part_body.hpp>
+#include <netkit/http/async_multipart_reader.hpp>
+#include <netkit/body/async_multipart_part_body.hpp>
 #include <cstring>
 #include <string>
 #include <string_view>
@@ -7,23 +7,23 @@
 #include <sstream>
 #include <algorithm>
 
-bool netkit::http::utility::multipart_reader::fill_buffer() {
+netkit::io::task<bool> netkit::http::utility::async_multipart_reader::fill_buffer() {
 	char temp[8192];
 
-	auto res = source_.read(temp, sizeof(temp));
+	auto res = co_await source_.read(temp, sizeof(temp));
 
 	if (res.get_status() == body::read_status::eof)
-		return false;
+		co_return false;
 
 	if (res.get_status() != body::read_status::ok)
-		return false;
+		co_return false;
 
 	buffer_.append(temp, res.get_bytes_read());
 
-	return true;
+	co_return true;
 }
 
-void netkit::http::utility::multipart_reader::parse_part_headers(std::string_view headers, multipart_part& part) {
+void netkit::http::utility::async_multipart_reader::parse_part_headers(std::string_view headers, async_multipart_part& part) {
 	std::istringstream stream{std::string{headers}};
 	std::string line;
 
@@ -74,15 +74,15 @@ void netkit::http::utility::multipart_reader::parse_part_headers(std::string_vie
 	}
 }
 
-bool netkit::http::utility::multipart_reader::read_boundary() {
+netkit::io::task<bool> netkit::http::utility::async_multipart_reader::read_boundary() {
 	std::string marker = "--" + boundary_;
 
 	while (true) {
 		auto pos = buffer_.find(marker);
 
 		if (pos == std::string::npos) {
-			if (!fill_buffer())
-				return false;
+			if (!co_await fill_buffer())
+				co_return false;
 
 			continue;
 		}
@@ -91,18 +91,18 @@ bool netkit::http::utility::multipart_reader::read_boundary() {
 
 		if (buffer_.starts_with("--")) {
 			state_ = multipart_state::finished;
-			return false;
+			co_return false;
 		}
 
 		if (buffer_.starts_with("\r\n"))
 			buffer_.erase(0, 2);
 
 		state_ = multipart_state::headers;
-		return true;
+		co_return true;
 	}
 }
 
-bool netkit::http::utility::multipart_reader::read_headers(multipart_part& part) {
+netkit::io::task<bool> netkit::http::utility::async_multipart_reader::read_headers(async_multipart_part& part) {
 	while (true) {
 		size_t pos = buffer_.find("\r\n\r\n");
 
@@ -118,21 +118,21 @@ bool netkit::http::utility::multipart_reader::read_headers(multipart_part& part)
 			buffer_.erase(0, pos + skip);
 
 			parse_part_headers(headers, part);
-			return true;
+			co_return true;
 		}
 
-		if (!fill_buffer())
-			return false;
+		if (!co_await fill_buffer())
+			co_return false;
 	}
 }
 
-netkit::body::read_result netkit::http::utility::multipart_reader::read_part(char* out, std::size_t max_bytes) noexcept {
+netkit::io::task<netkit::body::read_result> netkit::http::utility::async_multipart_reader::read_part(char* out, std::size_t max_bytes) noexcept {
 	if (part_finished_) {
-		return { body::read_status::eof, 0 };
+		co_return body::read_result { body::read_status::eof, 0 };
 	}
 
 	if (state_ != multipart_state::data)
-		return { body::read_status::error, 0 };
+		co_return body::read_result { body::read_status::error, 0 };
 
 	const std::string delimiter = "\r\n--" + boundary_;
 
@@ -146,7 +146,7 @@ netkit::body::read_result netkit::http::utility::multipart_reader::read_part(cha
 				std::memcpy(out, buffer_.data(), amount);
 				buffer_.erase(0, amount);
 
-				return {
+				co_return body::read_result {
 					body::read_status::ok,
 					amount
 				};
@@ -154,7 +154,7 @@ netkit::body::read_result netkit::http::utility::multipart_reader::read_part(cha
 
 			part_finished_ = true;
 
-			return {
+			co_return body::read_result {
 				body::read_status::eof,
 				0
 			};
@@ -162,44 +162,44 @@ netkit::body::read_result netkit::http::utility::multipart_reader::read_part(cha
 
 		char temp[8192];
 
-		auto res = source_.read(temp, sizeof(temp));
+		auto res = co_await source_.read(temp, sizeof(temp));
 
 		if (res.get_status() != body::read_status::ok)
-			return res;
+			co_return res;
 
 		buffer_.append(temp, res.get_bytes_read());
 	}
 }
 
-bool netkit::http::utility::multipart_reader::next(multipart_part& part) {
+netkit::io::task<bool> netkit::http::utility::async_multipart_reader::next(async_multipart_part& part) {
 	if (state_ == multipart_state::finished)
-		return false;
+		co_return false;
 
 	if (state_ == multipart_state::data) {
 		if (!part_finished_)
-			return false;
+			co_return false;
 
 		state_ = multipart_state::boundary;
 	}
 
 	if (state_ == multipart_state::boundary) {
-		if (!read_boundary())
-			return false;
+		if (!co_await read_boundary())
+			co_return false;
 	}
 
 	if (state_ == multipart_state::headers) {
 		part = {};
 
-		if (!read_headers(part))
-			return false;
+		if (!co_await read_headers(part))
+			co_return false;
 
-		part.data = std::make_unique<body::multipart_part_body>(*this);
+		part.data = std::make_unique<body::async_multipart_part_body>(*this);
 
 		part_finished_ = false;
 		state_ = multipart_state::data;
 
-		return true;
+		co_return true;
 	}
 
-	return false;
+	co_return false;
 }

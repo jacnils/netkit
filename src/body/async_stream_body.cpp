@@ -1,16 +1,17 @@
 #include <algorithm>
+#include <cstring>
 #ifndef NOMINMAX
 #define NOMINMAX // some windows shit
 #endif
-#include <netkit/body/stream_body.hpp>
+#include <netkit/body/async_stream_body.hpp>
 
-netkit::body::read_result
-netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
+netkit::io::task<netkit::body::read_result>
+netkit::body::async_stream_body::read(char* out, std::size_t max_bytes) noexcept {
 	if (max_bytes == 0)
-		return {read_status::ok, 0};
+		co_return read_result{read_status::ok, 0};
 
 	if (remaining_ && *remaining_ == 0)
-		return {read_status::eof, 0};
+		co_return read_result{read_status::eof, 0};
 
 
 	auto consume = [&](std::string& src) -> std::optional<std::size_t> {
@@ -38,10 +39,10 @@ netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 	};
 
 	if (auto n = consume(buffer_))
-		return {read_status::ok, *n};
+		co_return read_result{read_status::ok, *n};
 
 	if (auto n = consume(overflow_))
-		return {read_status::ok, *n};
+		co_return read_result{read_status::ok, *n};
 
 	std::array<std::byte, 8192> temp{};
 
@@ -56,7 +57,7 @@ netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 			*remaining_
 		);
 
-	auto result = stream_.read(
+	auto result = co_await stream_.read(
 		std::span<std::byte>(
 			temp.data(),
 			want
@@ -64,13 +65,13 @@ netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 	);
 
 	if (result.status == stream::stream_status::closed)
-		return {read_status::eof, 0};
+		co_return read_result{read_status::eof, 0};
 
 	if (result.status != stream::stream_status::success)
-		return {read_status::error, 0};
+		co_return read_result{read_status::error, 0};
 
 	if (result.bytes == 0)
-		return {read_status::eof, 0};
+		co_return read_result{read_status::eof, 0};
 
 	auto n = std::min(
 		max_bytes,
@@ -83,10 +84,8 @@ netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 		n
 	);
 
-
 	if (remaining_)
 		*remaining_ -= n;
-
 
 	if (n < result.bytes) {
 		overflow_.assign(
@@ -95,8 +94,7 @@ netkit::body::stream_body::read(char* out, std::size_t max_bytes) noexcept {
 		);
 	}
 
-
-	return {
+	co_return read_result{
 		read_status::ok,
 		n
 	};

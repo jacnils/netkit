@@ -11,17 +11,16 @@
 #include <netkit/body/read_status_enum.hpp>
 
 namespace netkit::body {
-	class NETKIT_API basic_body {
+	class NETKIT_API basic_async_body {
 	public:
-		virtual ~basic_body() = default;
+		virtual ~basic_async_body() = default;
 
-		virtual read_result read(char* buffer, std::size_t max_bytes) noexcept = 0;
+		virtual netkit::io::task<read_result> read(char* buffer, std::size_t max_bytes) noexcept = 0;
 
-		read_result read(std::span<char> buffer) noexcept {
-			auto res = read(buffer.data(), buffer.size());
-			return res;
+		io::task<read_result> read(std::span<char> buffer) noexcept {
+			co_return co_await read(buffer.data(), buffer.size());
 		}
-		
+
 		[[nodiscard]] virtual std::optional<std::size_t> size() const {
 			return std::nullopt;
 		}
@@ -30,16 +29,16 @@ namespace netkit::body {
 			return false;
 		}
 
-		std::string read_all(std::optional<std::size_t> size = std::nullopt) {
-			return netkit::body::read_all<basic_body>(*this, size);
+		io::task<std::string> read_all(std::optional<std::size_t> size = std::nullopt) {
+			co_return co_await body::read_all<basic_async_body>(*this, size);
 		}
 	};
 
-	inline std::ostream& write(std::ostream& os, basic_body& body) {
+	inline io::task<void> write(std::ostream& os, basic_async_body& body) {
 		std::array<char, 8192> buffer{};
 
 		while (true) {
-			auto res = body.read(buffer.data(), buffer.size());
+			auto res = co_await body.read(buffer.data(), buffer.size());
 
 			if (res.get_status() == read_status::error) {
 				os.setstate(std::ios::badbit);
@@ -54,11 +53,9 @@ namespace netkit::body {
 				break;
 			}
 		}
-
-		return os;
 	}
 
-	inline std::ostream& operator<<(std::ostream& os, basic_body& body) {
-		return body::write(os, body);
+	inline netkit::io::task<void> write_to(std::ostream& os, basic_async_body& body) {
+		co_await body::write(os, body);
 	}
 }

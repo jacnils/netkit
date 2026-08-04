@@ -53,6 +53,8 @@
 #include <netkit/http/body_parser.hpp>
 #include <netkit/http/multipart.hpp>
 #include <netkit/http/multipart_reader.hpp>
+#include <netkit/http/multipart_reader_state.hpp>
+#include <netkit/http/async_multipart_reader.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/http/request_handler.hpp>
 #include <netkit/http/response.hpp>
@@ -67,10 +69,16 @@
 #include <netkit/body/buffer_body_view.hpp>
 #include <netkit/body/stream_body.hpp>
 #include <netkit/body/multipart_part_body.hpp>
+#include <netkit/body/basic_async_body.hpp>
+#include <netkit/body/async_stream_body.hpp>
+#include <netkit/body/read_status_enum.hpp>
+#include <netkit/body/async_multipart_part_body.hpp>
 
 // io
 #include <netkit/io/linux/io_backend.hpp>
 #include <netkit/io/fallback/io_backend.hpp>
+#include <netkit/io/windows/io_backend.hpp>
+#include <netkit/io/io_backend.hpp>
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/io_context.hpp>
 #include <netkit/io/task.hpp>

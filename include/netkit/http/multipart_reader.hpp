@@ -15,17 +15,15 @@
 #include <netkit/export.hpp>
 #include <netkit/body/basic_body.hpp>
 #include <netkit/http/multipart.hpp>
+#include <netkit/http/multipart_reader_state.hpp>
 
 namespace netkit::http::utility {
-	enum class multipart_state {
-		boundary,
-		headers,
-		data,
-		finished
-	};
-
 	class NETKIT_API multipart_reader {
 	public:
+		multipart_reader(const multipart_reader&) = delete;
+		multipart_reader& operator=(const multipart_reader&) = delete;
+		multipart_reader(multipart_reader&&) = delete;
+		
 		explicit multipart_reader(body::basic_body& body, std::string boundary) : source_(body), boundary_(std::move(boundary)) {};
 		body::read_result read_part(char* buffer, std::size_t max_bytes) noexcept;
 		bool next(multipart_part& part);
@@ -33,10 +31,9 @@ namespace netkit::http::utility {
 		friend class multipart_part_body;
 
 		bool fill_buffer();
-		void parse_part_headers(std::string_view headers, multipart_part& part);
+		static void parse_part_headers(std::string_view headers, multipart_part& part);
 		bool read_boundary();
 		bool read_headers(multipart_part& part);
-		body::read_result read_current_part(char* out, size_t max) noexcept;
 
 		body::basic_body& source_;
 
