@@ -2,15 +2,7 @@
 
 [![CMake on Linux, macOS, and Windows](https://github.com/jacnils/netkit/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/jacnils/netkit/actions/workflows/cmake-multi-platform.yml)
 
-C++23 cross-platform networking toolkit library providing safe Unix-style sockets and protocol abstractions.
-
-## Warning
-
-Please note, this library is still work in progress. Usage is not recommended yet, aside from tests. Contributions and bug reports are much appreciated!
-
-If you still intend to use the library, there are two ways to go. You can either use the unstable master branch directly which may change its API entirely.
-
-The other alternative is to use the latest release, which doesn't have a changing API but will make migration later potentially time-consuming.
+C++23 cross-platform networking toolkit library providing (a)sync socket and protocol abstractions
 
 ## Features
 
@@ -20,7 +12,6 @@ The other alternative is to use the latest release, which doesn't have a changin
 - IPv4 and IPv6 support
 - TCP and UDP support
 - TLS/SSL sockets and HTTP abstraction (WolfSSL integration)
-- DNS resolution
 - Network interface enumeration
 - Exceptions for errors
 - Inheritable classes for easy extension
@@ -77,7 +68,7 @@ target_link_libraries(netkit-example PRIVATE
 
 See `examples/` for further examples of how to use the library.
 
-Netkit can also be statically linked, and for users of DevkitPro it will be automatically.
+netkit can also be statically linked, and for users of DevkitPro it will be automatically.
 
 ## License
 
