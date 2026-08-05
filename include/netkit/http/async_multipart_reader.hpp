@@ -31,6 +31,7 @@ namespace netkit::http::utility {
 		friend class async_async_multipart_part_body;
 
 		io::task<bool> fill_buffer();
+		io::task<size_t> boundary_overlap() const;
 		static void parse_part_headers(std::string_view headers, async_multipart_part& part);
 		io::task<bool> read_boundary();
 		io::task<bool> read_headers(async_multipart_part& part);

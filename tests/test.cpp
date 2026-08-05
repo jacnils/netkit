@@ -137,8 +137,8 @@ std::vector<std::byte> to_bytes(const std::string& s) {
 	return out;
 }
 
-netkit::stream::memory_stream make_stream(const std::string& str) {
-	return netkit::stream::memory_stream(to_bytes(str));
+auto make_stream(const std::string& str) {
+	return netkit::stream::memory_stream{to_bytes(str)};
 }
 
 TEST_CASE("Chunked body decoding", "[chunked]") {
@@ -328,4 +328,173 @@ TEST_CASE("Chunked body chunk extensions", "[chunked]") {
 	}
 
 	REQUIRE(output == "Wiki");
+}
+
+class memory_body : public netkit::body::basic_body {
+public:
+	explicit memory_body(
+		std::string data,
+		std::size_t chunk_size
+	)
+		: data_(std::move(data)),
+		  chunk_size_(chunk_size)
+	{}
+
+	netkit::body::read_result read(char* buffer, std::size_t max_bytes) noexcept override {
+		if (offset_ >= data_.size()) {
+			return {
+				netkit::body::read_status::eof,
+				0
+			};
+		}
+
+		auto remaining = data_.size() - offset_;
+
+		auto amount = std::min({
+			remaining,
+			max_bytes,
+			chunk_size_
+		});
+
+		std::memcpy(
+			buffer,
+			data_.data() + offset_,
+			amount
+		);
+
+		offset_ += amount;
+
+		return {
+			netkit::body::read_status::ok,
+			amount
+		};
+	}
+
+	std::optional<std::size_t> size() const override {
+		return data_.size();
+	}
+
+	bool rewind() override {
+		offset_ = 0;
+		return true;
+	}
+
+private:
+	std::string data_;
+	std::size_t offset_{0};
+	std::size_t chunk_size_;
+};
+
+TEST_CASE("multipart headers split across reads") {
+	std::string input =
+		"--boundary\r\n"
+		"Content-Disposition: form-data; name=\"x\"; filename=\"test.txt\"\r\n"
+		"Content-Type: text/plain\r\n"
+		"\r\n"
+		"hello world\r\n"
+		"--boundary--\r\n";
+
+	memory_body body(input, 1);
+
+	netkit::http::utility::multipart_reader reader(
+		body,
+		"boundary"
+	);
+
+	netkit::http::utility::multipart_part part;
+
+	REQUIRE(reader.next(part));
+
+	REQUIRE(part.name == "x");
+	REQUIRE(part.filename == "test.txt");
+	REQUIRE(part.content_type == "text/plain");
+
+	char buffer[64];
+	std::string output;
+
+	while (true) {
+		auto result = part.data->read(buffer, sizeof(buffer));
+
+		REQUIRE(
+			result.get_status() != netkit::body::read_status::error
+		);
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		output.append(
+			buffer,
+			result.get_bytes_read()
+		);
+	}
+
+	REQUIRE(output == "hello world");
+}
+
+TEST_CASE("multipart multiple parts") {
+	std::string input =
+		"--boundary\r\n"
+		"Content-Disposition: form-data; name=\"first\"\r\n"
+		"\r\n"
+		"hello\r\n"
+		"--boundary\r\n"
+		"Content-Disposition: form-data; name=\"second\"\r\n"
+		"\r\n"
+		"world\r\n"
+		"--boundary--\r\n";
+
+	memory_body body(input, 1);
+
+	netkit::http::utility::multipart_reader reader(
+		body,
+		"boundary"
+	);
+
+	netkit::http::utility::multipart_part part;
+
+	REQUIRE(reader.next(part));
+	REQUIRE(part.name == "first");
+	REQUIRE(part.data->read_all() == "hello");
+
+	REQUIRE(reader.next(part));
+	REQUIRE(part.name == "second");
+	REQUIRE(part.data->read_all() == "world");
+
+	REQUIRE_FALSE(reader.next(part));
+}
+
+TEST_CASE("multipart binary data") {
+	std::string binary{
+		'\0',
+		'\xff',
+		'\x01',
+		'h',
+		'e',
+		'l',
+		'l',
+		'o'
+	};
+
+	std::string input =
+		"--boundary\r\n"
+		"Content-Disposition: form-data; name=\"file\"; filename=\"test.bin\"\r\n"
+		"Content-Type: application/octet-stream\r\n"
+		"\r\n" +
+		binary +
+		"\r\n--boundary--\r\n";
+
+	memory_body body(input, 1);
+
+	netkit::http::utility::multipart_reader reader(
+		body,
+		"boundary"
+	);
+
+	netkit::http::utility::multipart_part part;
+
+	REQUIRE(reader.next(part));
+
+	REQUIRE(part.filename == "test.bin");
+	REQUIRE(part.content_type == "application/octet-stream");
+	REQUIRE(part.data->read_all() == binary);
 }

@@ -31,6 +31,7 @@ namespace netkit::http::utility {
 		friend class multipart_part_body;
 
 		bool fill_buffer();
+		std::size_t boundary_overlap() const;
 		static void parse_part_headers(std::string_view headers, multipart_part& part);
 		bool read_boundary();
 		bool read_headers(multipart_part& part);

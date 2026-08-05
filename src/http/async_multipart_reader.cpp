@@ -23,6 +23,20 @@ netkit::io::task<bool> netkit::http::utility::async_multipart_reader::fill_buffe
 	co_return true;
 }
 
+netkit::io::task<unsigned long> netkit::http::utility::async_multipart_reader::boundary_overlap() const {
+	const std::string delimiter = "\r\n--" + boundary_;
+
+	auto max = std::min(buffer_.size(), delimiter.size() - 1);
+
+	for (std::size_t i = max; i > 0; i--) {
+		if (buffer_.compare(buffer_.size() - i, i, delimiter, 0, i) == 0) {
+			co_return i;
+		}
+	}
+
+	co_return 0;
+}
+
 void netkit::http::utility::async_multipart_reader::parse_part_headers(std::string_view headers, async_multipart_part& part) {
 	std::istringstream stream{std::string{headers}};
 	std::string line;
@@ -104,18 +118,11 @@ netkit::io::task<bool> netkit::http::utility::async_multipart_reader::read_bound
 
 netkit::io::task<bool> netkit::http::utility::async_multipart_reader::read_headers(async_multipart_part& part) {
 	while (true) {
-		size_t pos = buffer_.find("\r\n\r\n");
-
-		size_t skip = 4;
-
-		if (pos == std::string::npos) {
-			pos = buffer_.find("\n\n");
-			skip = 2;
-		}
+		auto pos = buffer_.find("\r\n\r\n");
 
 		if (pos != std::string::npos) {
-			std::string headers = buffer_.substr(0, pos);
-			buffer_.erase(0, pos + skip);
+			auto headers = buffer_.substr(0, pos);
+			buffer_.erase(0, pos + 4);
 
 			parse_part_headers(headers, part);
 			co_return true;
@@ -127,12 +134,8 @@ netkit::io::task<bool> netkit::http::utility::async_multipart_reader::read_heade
 }
 
 netkit::io::task<netkit::body::read_result> netkit::http::utility::async_multipart_reader::read_part(char* out, std::size_t max_bytes) noexcept {
-	if (part_finished_) {
-		co_return body::read_result { body::read_status::eof, 0 };
-	}
-
-	if (state_ != multipart_state::data)
-		co_return body::read_result { body::read_status::error, 0 };
+	if (part_finished_)
+		co_return body::read_result{body::read_status::eof, 0};
 
 	const std::string delimiter = "\r\n--" + boundary_;
 
@@ -140,13 +143,18 @@ netkit::io::task<netkit::body::read_result> netkit::http::utility::async_multipa
 		auto pos = buffer_.find(delimiter);
 
 		if (pos != std::string::npos) {
-			std::size_t amount = std::min(pos, max_bytes);
+			auto amount = std::min(pos, max_bytes);
 
 			if (amount > 0) {
-				std::memcpy(out, buffer_.data(), amount);
+				std::memcpy(
+					out,
+					buffer_.data(),
+					amount
+				);
+
 				buffer_.erase(0, amount);
 
-				co_return body::read_result {
+				co_return body::read_result{
 					body::read_status::ok,
 					amount
 				};
@@ -154,20 +162,39 @@ netkit::io::task<netkit::body::read_result> netkit::http::utility::async_multipa
 
 			part_finished_ = true;
 
-			co_return body::read_result {
+			co_return body::read_result{
 				body::read_status::eof,
 				0
 			};
 		}
 
-		char temp[8192];
+		auto keep = co_await boundary_overlap();
 
-		auto res = co_await source_.read(temp, sizeof(temp));
+		if (buffer_.size() > keep) {
+			auto amount = std::min(
+				buffer_.size() - keep,
+				max_bytes
+			);
 
-		if (res.get_status() != body::read_status::ok)
-			co_return res;
+			std::memcpy(
+				out,
+				buffer_.data(),
+				amount
+			);
 
-		buffer_.append(temp, res.get_bytes_read());
+			buffer_.erase(0, amount);
+
+			co_return body::read_result {
+				body::read_status::ok,
+				amount
+			};
+		}
+
+		if (!co_await fill_buffer())
+			co_return body::read_result {
+				body::read_status::error,
+				0
+			};
 	}
 }
 
