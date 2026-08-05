@@ -78,6 +78,8 @@
 #include <netkit/body/async_buffer_body.hpp>
 #include <netkit/body/async_file_body.hpp>
 #include <netkit/body/async_buffer_body_view.hpp>
+#include <netkit/body/async_chunked_body.hpp>
+#include <netkit/body/chunked_body.hpp>
 
 // io
 #include <netkit/io/linux/io_backend.hpp>

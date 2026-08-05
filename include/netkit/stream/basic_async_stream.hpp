@@ -2,6 +2,7 @@
 
 #include <netkit/stream/stream_enum.hpp>
 #include <netkit/io/task.hpp>
+#include <netkit/socket/addr.hpp>
 
 #include <span>
 #include <stdexcept>

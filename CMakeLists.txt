@@ -98,6 +98,8 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/body/async_stream_body.cpp
         src/body/async_multipart_part_body.cpp
         src/http/async_multipart_reader.cpp
+        src/body/async_chunked_body.cpp
+        src/body/chunked_body.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)

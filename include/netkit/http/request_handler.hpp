@@ -25,7 +25,8 @@
 #include <netkit/utility.hpp>
 #include <netkit/except.hpp>
 #include <netkit/body/async_stream_body.hpp>
-#include <netkit/body/async_buffer_body.hpp>
+#include <netkit/body/async_chunked_body.hpp>
+#include <netkit/body/chunked_body.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
@@ -260,13 +261,9 @@ namespace netkit::http::server {
                     }
                 }
 
-                // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                	auto [_overflow, data] = co_await read_until(client_sock, "0\r\n\r\n");
-
-                    std::string decoded = overflow + netkit::utility::decode_chunked(data);
                     req.headers = get_headers(headers);
-                	req.body = std::make_unique<netkit::body::async_buffer_body>(decoded);
+                    req.body = std::make_unique<netkit::body::async_chunked_body>(*client_sock, std::move(overflow));
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
                 	req.headers = get_headers(headers);
                 	req.body = std::make_unique<netkit::body::async_stream_body>(*client_sock, content_length, std::move(overflow));
@@ -589,13 +586,9 @@ namespace netkit::http::server {
                     }
                 }
 
-            	  // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                	auto [_overflow, data] = read_until(client_sock, "0\r\n\r\n");
-
-                    std::string decoded = overflow + netkit::utility::decode_chunked(data);
                     req.headers = get_headers(headers);
-                	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
+                    req.body = std::make_unique<netkit::body::chunked_body>(*client_sock, std::move(overflow));
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
                 	req.headers = get_headers(headers);
                 	req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(overflow));

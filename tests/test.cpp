@@ -130,3 +130,202 @@ TEST_CASE("Ensure general utility functions work", "[utility]") {
 	std::string joined = netkit::utility::join(tokens, ",");
 	REQUIRE(joined == to_split);
 }
+
+std::vector<std::byte> to_bytes(const std::string& s) {
+	std::vector<std::byte> out(s.size());
+	std::memcpy(out.data(), s.data(), s.size());
+	return out;
+}
+
+netkit::stream::memory_stream make_stream(const std::string& str) {
+	return netkit::stream::memory_stream(to_bytes(str));
+}
+
+TEST_CASE("Chunked body decoding", "[chunked]") {
+	std::string input =
+		"4\r\nWiki\r\n"
+		"5\r\npedia\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[1024];
+	std::string output;
+
+	while (true) {
+		auto result = body.read(buffer, sizeof(buffer));
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		REQUIRE(result.get_status() == netkit::body::read_status::ok);
+		output.append(buffer, result.get_bytes_read());
+	}
+
+	REQUIRE(output == "Wikipedia");
+}
+
+TEST_CASE("Chunked body with small reads", "[chunked]") {
+	std::string input =
+		"5\r\nHello\r\n"
+		"6\r\n World\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[3];
+	std::string output;
+
+	while (true) {
+		auto result = body.read(buffer, sizeof(buffer));
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		REQUIRE(result.get_status() == netkit::body::read_status::ok);
+		output.append(buffer, result.get_bytes_read());
+	}
+
+	REQUIRE(output == "Hello World");
+}
+
+
+TEST_CASE("Chunked body empty payload", "[chunked]") {
+	std::string input =
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[64];
+
+	auto result = body.read(buffer, sizeof(buffer));
+
+	REQUIRE(result.get_status() == netkit::body::read_status::eof);
+	REQUIRE(result.get_bytes_read() == 0);
+}
+
+
+TEST_CASE("Chunked body multiple chunks", "[chunked]") {
+	std::string input =
+		"1\r\na\r\n"
+		"1\r\nb\r\n"
+		"1\r\nc\r\n"
+		"1\r\nd\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[16];
+	std::string output;
+
+	while (true) {
+		auto result = body.read(buffer, sizeof(buffer));
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		REQUIRE(result.get_status() == netkit::body::read_status::ok);
+		output.append(buffer, result.get_bytes_read());
+	}
+
+	REQUIRE(output == "abcd");
+}
+
+
+TEST_CASE("Chunked body large chunk", "[chunked]") {
+	std::string payload(10000, 'A');
+
+	std::stringstream size;
+	size << std::hex << payload.size();
+
+	std::string input =
+		size.str() + "\r\n" +
+		payload + "\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[512];
+	std::string output;
+
+	while (true) {
+		auto result = body.read(buffer, sizeof(buffer));
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		REQUIRE(result.get_status() == netkit::body::read_status::ok);
+		output.append(buffer, result.get_bytes_read());
+	}
+
+	REQUIRE(output == payload);
+}
+
+
+TEST_CASE("Chunked body invalid chunk size", "[chunked]") {
+	std::string input =
+		"ZZZ\r\n"
+		"hello\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[64];
+
+	auto result = body.read(buffer, sizeof(buffer));
+
+	REQUIRE(result.get_status() == netkit::body::read_status::error);
+}
+
+
+TEST_CASE("Chunked body missing chunk terminator", "[chunked]") {
+	std::string input =
+		"5\r\n"
+		"hello"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[64];
+
+	auto result = body.read(buffer, sizeof(buffer));
+
+	REQUIRE(result.get_status() == netkit::body::read_status::ok);
+
+	result = body.read(buffer, sizeof(buffer));
+
+	REQUIRE(result.get_status() == netkit::body::read_status::error);
+}
+
+
+TEST_CASE("Chunked body chunk extensions", "[chunked]") {
+	std::string input =
+		"4;name=value\r\n"
+		"Wiki\r\n"
+		"0\r\n\r\n";
+
+	auto stream = make_stream(input);
+	netkit::body::chunked_body body(stream);
+
+	char buffer[64];
+	std::string output;
+
+	while (true) {
+		auto result = body.read(buffer, sizeof(buffer));
+
+		if (result.get_status() == netkit::body::read_status::eof)
+			break;
+
+		REQUIRE(result.get_status() == netkit::body::read_status::ok);
+		output.append(buffer, result.get_bytes_read());
+	}
+
+	REQUIRE(output == "Wiki");
+}
