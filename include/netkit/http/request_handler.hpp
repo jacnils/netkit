@@ -140,9 +140,8 @@ namespace netkit::http::server {
     		return line;
     	}
 
-    	mutable std::string overflow_bytes{};
-    	std::string read_until(const std::unique_ptr<tcp::tcp_stream>& client_sock, const std::string& delimiter) const {
-        	std::string ret;
+        static std::pair<std::string, std::string> read_until(const std::unique_ptr<tcp::tcp_stream>& client_sock, const std::string& delimiter) {
+        	std::pair<std::string, std::string> ret;
         	char buffer[4096];
 
         	while (true) {
@@ -152,14 +151,15 @@ namespace netkit::http::server {
         			throw socket_error{"error occurred"};
         		}
 
-        		ret.append(buffer, bytes);
+        		ret.second.append(buffer, bytes);
 
-        		int pos = ret.find(delimiter);
-        		if (pos != std::string::npos) {
-        			overflow_bytes = ret.substr(pos);
-        			ret = ret.substr(0, pos);
-        			break;
-        		}
+        	    auto pos = ret.second.find(delimiter);
+
+        	    if (pos != std::string::npos) {
+        	        ret.first = ret.second.substr(pos + delimiter.size());
+        	        ret.second = ret.second.substr(0, pos);
+        	        break;
+        	    }
 
         		if (status == stream::stream_status::eof) {
         			break;
@@ -168,9 +168,9 @@ namespace netkit::http::server {
 
         	return ret;
         }
-        netkit::io::task<std::string>
+        netkit::io::task<std::pair<std::string, std::string>>
         read_until(const std::unique_ptr<tcp::async_tcp_stream>& client_sock, const std::string& delimiter) const {
-    	    std::string ret;
+    	    std::pair<std::string, std::string> ret;
     	    char buffer[4096];
 
     	    while (true) {
@@ -180,12 +180,12 @@ namespace netkit::http::server {
     	            throw socket_error{"error occurred"};
     	        }
 
-    	        ret.append(buffer, bytes);
+    	        ret.second.append(buffer, bytes);
 
-    	        int pos = ret.find(delimiter);
+    	        auto pos = ret.second.find(delimiter);
     	        if (pos != std::string::npos) {
-    	            overflow_bytes = ret.substr(pos);
-    	            ret = ret.substr(0, pos);
+    	            ret.first = ret.second.substr(pos + delimiter.size());
+    	            ret.second = ret.second.substr(0, pos);
     	            break;
     	        }
 
@@ -214,7 +214,7 @@ namespace netkit::http::server {
                 }
 
                 async_request req{};
-                std::string headers = co_await read_until(client_sock, "\r\n\r\n");
+                auto [overflow, headers] = co_await read_until(client_sock, "\r\n\r\n");
                 const auto headers_vec = get_headers(headers);
                 if (headers.empty()) {
                     co_return;
@@ -260,21 +260,16 @@ namespace netkit::http::server {
                     }
                 }
 
-            	  // TODO: implement streaming for chunked
+                // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                    std::string chunked = overflow_bytes;
-                	overflow_bytes.clear();
-                	chunked = co_await read_until(client_sock, "0\r\n\r\n");
+                	auto [_overflow, data] = co_await read_until(client_sock, "0\r\n\r\n");
 
-                    std::string decoded = netkit::utility::decode_chunked(chunked);
+                    std::string decoded = overflow + netkit::utility::decode_chunked(data);
                     req.headers = get_headers(headers);
                 	req.body = std::make_unique<netkit::body::async_buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
-                    std::string initial = overflow_bytes;
-                	overflow_bytes.clear();
-
                 	req.headers = get_headers(headers);
-                	req.body = std::make_unique<netkit::body::async_stream_body>(*client_sock, content_length, std::move(initial));
+                	req.body = std::make_unique<netkit::body::async_stream_body>(*client_sock, content_length, std::move(overflow));
                 } else {
                     req.headers = get_headers(headers);
                 }
@@ -524,7 +519,8 @@ namespace netkit::http::server {
 
             			break;
             		}
-            		}
+                    default: break;
+                    }
             	}
             }
 
@@ -547,7 +543,7 @@ namespace netkit::http::server {
                 }
 
                 request req{};
-                std::string headers = read_until(client_sock, "\r\n\r\n");
+                auto [overflow, headers] = read_until(client_sock, "\r\n\r\n");
                 const auto headers_vec = get_headers(headers);
                 if (headers.empty()) {
                     return;
@@ -595,19 +591,14 @@ namespace netkit::http::server {
 
             	  // TODO: implement streaming for chunked
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                    std::string chunked = overflow_bytes;
-                	overflow_bytes.clear();
-                	chunked = read_until(client_sock, "0\r\n\r\n");
+                	auto [_overflow, data] = read_until(client_sock, "0\r\n\r\n");
 
-                    std::string decoded = netkit::utility::decode_chunked(chunked);
+                    std::string decoded = overflow + netkit::utility::decode_chunked(data);
                     req.headers = get_headers(headers);
                 	req.body = std::make_unique<netkit::body::buffer_body>(decoded);
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
-                    std::string initial = overflow_bytes;
-                	overflow_bytes.clear();
-
                 	req.headers = get_headers(headers);
-                	req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(initial));
+                	req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(overflow));
                 } else {
                     req.headers = get_headers(headers);
                 }

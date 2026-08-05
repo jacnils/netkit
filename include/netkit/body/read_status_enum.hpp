@@ -59,23 +59,24 @@ namespace netkit::body {
 		if (size)
 			result.reserve(*size);
 
-		while (true) {
+		while (!size || result.size() < *size) {
 			char buffer[8192];
+
 			auto res = reader.read(buffer, sizeof(buffer));
 
-			if (res.get_status() == netkit::body::read_status::eof)
-				break;
-
-			if (res.get_status() == netkit::body::read_status::error)
+			if (res.get_status() == read_status::error)
 				throw std::runtime_error("read failed");
 
-			if (res.get_status() == netkit::body::read_status::timeout)
+			if (res.get_status() == read_status::timeout)
 				continue;
+
+			if (res.get_status() == read_status::eof)
+				break;
 
 			auto bytes = res.get_bytes_read();
 
-			if (bytes > sizeof(buffer))
-				throw std::runtime_error("invalid read size");
+			if (size && result.size() + bytes > *size)
+				bytes = *size - result.size();
 
 			result.append(buffer, bytes);
 		}
@@ -89,23 +90,24 @@ namespace netkit::body {
 		if (size)
 			result.reserve(*size);
 
-		while (true) {
+		while (!size || result.size() < *size) {
 			char buffer[8192];
+
 			auto res = co_await reader.read(buffer, sizeof(buffer));
 
-			if (res.get_status() == netkit::body::read_status::eof)
-				break;
-
-			if (res.get_status() == netkit::body::read_status::error)
+			if (res.get_status() == read_status::error)
 				throw std::runtime_error("read failed");
 
-			if (res.get_status() == netkit::body::read_status::timeout)
+			if (res.get_status() == read_status::timeout)
 				continue;
+
+			if (res.get_status() == read_status::eof)
+				break;
 
 			auto bytes = res.get_bytes_read();
 
-			if (bytes > sizeof(buffer))
-				throw std::runtime_error("invalid read size");
+			if (size && result.size() + bytes > *size)
+				bytes = *size - result.size();
 
 			result.append(buffer, bytes);
 		}
