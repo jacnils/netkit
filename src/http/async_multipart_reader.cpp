@@ -45,44 +45,55 @@ void netkit::http::utility::async_multipart_reader::parse_part_headers(std::stri
 		if (!line.empty() && line.back() == '\r')
 			line.pop_back();
 
-		if (line.starts_with("Content-Disposition:")) {
-			auto name_pos = line.find("name=\"");
+		auto colon = line.find(':');
 
-			if (name_pos != std::string::npos) {
-				name_pos += 6;
+		if (colon == std::string::npos)
+			continue;
 
-				auto end_pos = line.find('"', name_pos);
+		std::string key = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
 
-				if (end_pos != std::string::npos) {
-					part.name = line.substr(
-						name_pos,
-						end_pos - name_pos
-					);
-				}
-			}
+		auto trim = [](std::string& str) {
+			while (!str.empty() && std::isspace(
+				static_cast<unsigned char>(str.front())
+			))
+				str.erase(str.begin());
 
-			auto file_pos = line.find("filename=\"");
+			while (!str.empty() && std::isspace(
+				static_cast<unsigned char>(str.back())
+			))
+				str.pop_back();
+		};
 
-			if (file_pos != std::string::npos) {
-				file_pos += 10;
+		auto lowercase = [](std::string& str) {
+			std::ranges::transform(str, str.begin(), [](unsigned char c) { return std::tolower(c); });
+		};
 
-				auto end_pos = line.find('"', file_pos);
+		trim(key);
+		trim(value);
+		lowercase(key);
 
-				if (end_pos != std::string::npos) {
-					part.filename = line.substr(
-						file_pos,
-						end_pos - file_pos
-					);
-				}
-			}
-		} else if (line.starts_with("Content-Type:")) {
-			constexpr std::string_view prefix = "Content-Type:";
+		if (key == "content-disposition") {
+			auto parse_parameter = [&](std::string_view name) -> std::string {
+				auto pos = value.find(name);
 
-			auto value = std::string_view(line).substr(prefix.size());
+				if (pos == std::string::npos)
+					return {};
 
-			while (!value.empty() && value.front() == ' ')
-				value.remove_prefix(1);
+				pos += name.size();
 
+				auto end = value.find('"', pos);
+
+				if (end == std::string::npos)
+					return {};
+
+				return value.substr(pos, end - pos);
+			};
+
+			part.name = parse_parameter("name=\"");
+			part.filename = parse_parameter("filename=\"");
+		}
+		else if (key == "content-type") {
 			part.content_type = value;
 		}
 	}
