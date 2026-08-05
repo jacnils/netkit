@@ -100,27 +100,60 @@ namespace netkit::http::server {
 	    	file.close();
 	    }
 
-    	[[nodiscard]] static std::unordered_map<std::string, std::string> get_headers(const std::string& header_part) {
-	    	std::unordered_map<std::string, std::string> headers_map;
-	    	std::istringstream hs(header_part);
-	    	std::string l{};
-	    	while (std::getline(hs, l) && l != "\r") {
-	    		if (l.back() == '\r') l.pop_back();
-	    		auto cpos = l.find(':');
-	    		if (cpos != std::string::npos) {
-	    			auto key = l.substr(0, cpos);
-	    			auto value = l.substr(cpos + 1);
-	    			auto trim = [](std::string& s) {
-	    				s.erase(0, s.find_first_not_of(" \t"));
-	    				s.erase(s.find_last_not_of(" \t") + 1);
-	    			};
-	    			trim(key);
-	    			trim(value);
-	    			headers_map[key] = value;
-	    		}
-	    	}
+        [[nodiscard]] static std::unordered_map<std::string, std::string>
+        get_headers(const std::string& header_part) {
+	        std::unordered_map<std::string, std::string> headers_map;
 
-	    	return headers_map;
+	        auto trim = [](std::string& s) {
+	            auto start = s.find_first_not_of(" \t");
+
+	            if (start == std::string::npos) {
+	                s.clear();
+	                return;
+	            }
+
+	            auto end = s.find_last_not_of(" \t");
+
+	            s = s.substr(start, end - start + 1);
+	        };
+
+	        auto lowercase = [](std::string& s) {
+	            std::ranges::transform(
+                    s,
+                    s.begin(),
+                    [](unsigned char c) {
+                        return static_cast<char>(std::tolower(c));
+                    }
+                );
+	        };
+
+	        std::istringstream hs(header_part);
+	        std::string line;
+
+	        while (std::getline(hs, line)) {
+	            if (!line.empty() && line.back() == '\r')
+	                line.pop_back();
+
+	            if (line.empty())
+	                break;
+
+	            auto colon = line.find(':');
+
+	            if (colon == std::string::npos)
+	                continue;
+
+	            auto key = line.substr(0, colon);
+	            auto value = line.substr(colon + 1);
+
+	            trim(key);
+	            trim(value);
+
+	            lowercase(key);
+
+	            headers_map[key] = value;
+	        }
+
+	        return headers_map;
 	    }
 
     	struct status_line {
@@ -216,10 +249,11 @@ namespace netkit::http::server {
 
                 async_request req{};
                 auto [overflow, headers] = co_await read_until(client_sock, "\r\n\r\n");
-                const auto headers_vec = get_headers(headers);
                 if (headers.empty()) {
                     co_return;
                 }
+
+                const auto header_map = get_headers(headers);
 
                 bool is_chunked = false;
                 std::size_t content_length = 0;
@@ -227,20 +261,31 @@ namespace netkit::http::server {
                 auto status_line = get_status_line(headers);
                 req.method = status_line.method;
 
-                std::istringstream header_stream(headers);
-                std::string line;
-                while (std::getline(header_stream, line) && line != "\r") {
-                    if (line.starts_with("Transfer-Encoding:") && line.find("chunked") != std::string::npos) {
+                if (header_map.contains("transfer-encoding")) {
+                    auto encoding = header_map.at("transfer-encoding");
+
+                    if (encoding.find("chunked") != std::string::npos)
                         is_chunked = true;
-                    } else if (line.starts_with("Content-Length:")) {
-                        try {
-                            content_length = std::stoul(line.substr(15));
-                        } catch (...) {
-                            break;
-                        }
-                    } else if (line.starts_with("Expect:") && line.find("100-continue") != std::string::npos) {
+                }
+
+                if (header_map.contains("content-length")) {
+                    try {
+                        content_length = std::stoull(header_map.at("content-length"));
+                    }
+                    catch (...) {
+                        throw parsing_error("invalid Content-Length");
+                    }
+                }
+
+                if (header_map.contains("connection")) {
+                    if (header_map.at("connection").find("close") != std::string::npos)
+                        close = true;
+                }
+
+                if (header_map.contains("expect")) {
+                    if (header_map.at("expect").find("100-continue") != std::string::npos)
                         co_await client_sock->write_all("HTTP/1.1 100 Continue\r\n\r\n");
-                    } else if (line.starts_with("Expect:") && line.find("100-continue") == std::string::npos) {
+                    else {
                         std::string response = "HTTP/1.1 417 Expectation Failed\r\n"
                             "Content-Length: 0\r\n"
                             "Connection: close\r\n"
@@ -248,32 +293,22 @@ namespace netkit::http::server {
 
                         co_await client_sock->write_all(response);
                         co_return;
-                    } else if (line.starts_with("Upgrade:") && line.find("websocket") != std::string::npos) {
-                        std::string response = "HTTP/1.1 426 Upgrade Required\r\n"
-                            "Content-Length: 0\r\n"
-                            "Connection: close\r\n"
-                            "\r\n";
-
-                        co_await client_sock->write_all(response);
-                        co_return;
-                    } else if (line.starts_with("Connection:") && line.find("close") != std::string::npos) {
-                        close = true;
                     }
                 }
 
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                    req.headers = get_headers(headers);
+                    req.headers = header_map;
                     req.body = std::make_unique<netkit::body::async_chunked_body>(*client_sock, std::move(overflow));
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
-                	req.headers = get_headers(headers);
+                	req.headers = header_map;
                 	req.body = std::make_unique<netkit::body::async_stream_body>(*client_sock, content_length, std::move(overflow));
                 } else {
-                    req.headers = get_headers(headers);
+                    req.headers = header_map;
                 }
 
                 req.ip_address = [&]() -> std::string {
                     if (settings.trust_x_forwarded_for) {
-                        for (const auto& it : headers_vec) {
+                        for (const auto& it : header_map) {
                             if (it.first == "X-Forwarded-For") {
                                 auto ips = netkit::utility::split(it.second, ",");
                                 for (const auto& ip : ips) {
@@ -299,15 +334,8 @@ namespace netkit::http::server {
                     co_return;
                 }
 
-                req.version = [&]() {
-                    if (status_line.http_version == "HTTP/1.0") {
-                        return 10;
-                    } else if (status_line.http_version == "HTTP/1.1") {
-                        return 11;
-                    } else {
-                        throw parsing_error("unsupported HTTP version: " + status_line.http_version);
-                    }
-                }();
+                req.version = status_line.http_version == "HTTP/1.0" ? 10 : 11;
+
                 auto full_path = status_line.path;
                 if (full_path.empty() || full_path[0] != '/') {
                     throw parsing_error("invalid path: " + full_path);
@@ -321,12 +349,12 @@ namespace netkit::http::server {
                     req.endpoint = full_path;
                 }
 
-            	  for (const auto& it : headers_vec) {
-                    if (it.first == "Content-Type") {
+            	  for (const auto& it : header_map) {
+                    if (it.first == "content-type") {
                         req.content_type = it.second;
-                    } else if (it.first == "User-Agent") {
+                    } else if (it.first == "user-agent") {
                         req.user_agent = it.second;
-                    } else if (it.first == "Cookie") {
+                    } else if (it.first == "cookie") {
                         req.cookies = get_cookies_from_request(it.second);
                     }
                 }
@@ -541,10 +569,11 @@ namespace netkit::http::server {
 
                 request req{};
                 auto [overflow, headers] = read_until(client_sock, "\r\n\r\n");
-                const auto headers_vec = get_headers(headers);
                 if (headers.empty()) {
                     return;
                 }
+
+                const auto header_map = get_headers(headers);
 
                 bool is_chunked = false;
                 std::size_t content_length = 0;
@@ -552,53 +581,55 @@ namespace netkit::http::server {
                 auto status_line = get_status_line(headers);
                 req.method = status_line.method;
 
-                std::istringstream header_stream(headers);
-                std::string line;
-                while (std::getline(header_stream, line) && line != "\r") {
-                    if (line.starts_with("Transfer-Encoding:") && line.find("chunked") != std::string::npos) {
+                if (header_map.contains("transfer-encoding")) {
+                    auto encoding = header_map.at("transfer-encoding");
+
+                    if (encoding.find("chunked") != std::string::npos)
                         is_chunked = true;
-                    } else if (line.starts_with("Content-Length:")) {
-                        try {
-                            content_length = std::stoul(line.substr(15));
-                        } catch (...) {
-                            break;
-                        }
-                    } else if (line.starts_with("Expect:") && line.find("100-continue") != std::string::npos) {
+                }
+
+                if (header_map.contains("content-length")) {
+                    try {
+                        content_length = std::stoull(header_map.at("content-length"));
+                    }
+                    catch (...) {
+                        throw parsing_error("invalid Content-Length");
+                    }
+                }
+
+                if (header_map.contains("connection")) {
+                    if (header_map.at("connection").find("close") != std::string::npos)
+                        close = true;
+                }
+
+                if (header_map.contains("expect")) {
+                    if (header_map.at("expect").find("100-continue") != std::string::npos)
                         client_sock->write_all("HTTP/1.1 100 Continue\r\n\r\n");
-                    } else if (line.starts_with("Expect:") && line.find("100-continue") == std::string::npos) {
+                    else {
                         std::string response = "HTTP/1.1 417 Expectation Failed\r\n"
                             "Content-Length: 0\r\n"
                             "Connection: close\r\n"
                             "\r\n";
 
                         client_sock->write_all(response);
-                        return;
-                    } else if (line.starts_with("Upgrade:") && line.find("websocket") != std::string::npos) {
-                        std::string response = "HTTP/1.1 426 Upgrade Required\r\n"
-                            "Content-Length: 0\r\n"
-                            "Connection: close\r\n"
-                            "\r\n";
-
-                        client_sock->write_all(response);
-                        return;
-                    } else if (line.starts_with("Connection:") && line.find("close") != std::string::npos) {
                         close = true;
+                        break;
                     }
                 }
 
                 if (is_chunked && (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE")) {
-                    req.headers = get_headers(headers);
+                    req.headers = header_map;
                     req.body = std::make_unique<netkit::body::chunked_body>(*client_sock, std::move(overflow));
                 } else if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
-                	req.headers = get_headers(headers);
+                	req.headers = header_map;
                 	req.body = std::make_unique<netkit::body::stream_body>(*client_sock, content_length, std::move(overflow));
                 } else {
-                    req.headers = get_headers(headers);
+                    req.headers = header_map;
                 }
 
                 req.ip_address = [&]() -> std::string {
                     if (settings.trust_x_forwarded_for) {
-                        for (const auto& it : headers_vec) {
+                        for (const auto& it : header_map) {
                             if (it.first == "X-Forwarded-For") {
                                 auto ips = netkit::utility::split(it.second, ",");
                                 for (const auto& ip : ips) {
@@ -624,15 +655,8 @@ namespace netkit::http::server {
                     return;
                 }
 
-                req.version = [&]() {
-                    if (status_line.http_version == "HTTP/1.0") {
-                        return 10;
-                    } else if (status_line.http_version == "HTTP/1.1") {
-                        return 11;
-                    } else {
-                        throw parsing_error("unsupported HTTP version: " + status_line.http_version);
-                    }
-                }();
+                req.version = status_line.http_version == "HTTP/1.0" ? 10 : 11;
+
                 auto full_path = status_line.path;
                 if (full_path.empty() || full_path[0] != '/') {
                     throw parsing_error("invalid path: " + full_path);
@@ -646,12 +670,12 @@ namespace netkit::http::server {
                     req.endpoint = full_path;
                 }
 
-            	  for (const auto& it : headers_vec) {
-                    if (it.first == "Content-Type") {
+            	  for (const auto& it : header_map) {
+                    if (it.first == "content-type") {
                         req.content_type = it.second;
-                    } else if (it.first == "User-Agent") {
+                    } else if (it.first == "user-agent") {
                         req.user_agent = it.second;
-                    } else if (it.first == "Cookie") {
+                    } else if (it.first == "cookie") {
                         req.cookies = get_cookies_from_request(it.second);
                     }
                 }
@@ -799,7 +823,7 @@ namespace netkit::http::server {
             	header_section << "Content-Length: " << response.body->size().value_or(0) << "\r\n";
                 header_section << "\r\n";
 
-            	client_sock->write_all(header_section.str());
+                client_sock->write_all(header_section.str());
 
             	char buf[4096];
 
@@ -824,7 +848,10 @@ namespace netkit::http::server {
 
             				while (total_sent < bytes) {
             					auto [sent, write_status] =
-									client_sock->write_all(buf + total_sent, bytes - total_sent);
+            					    client_sock->write_all(std::span<const std::byte>(
+                                        reinterpret_cast<const std::byte*>(buf + total_sent),
+                                    bytes - total_sent
+                                    ));
 
             					if (write_status == netkit::stream::stream_status::error)
             						throw std::runtime_error("Socket write error");
@@ -838,7 +865,8 @@ namespace netkit::http::server {
 
             			break;
             		}
-            		}
+                    default: break;
+                    }
             	}
             }
 
