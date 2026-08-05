@@ -37,6 +37,12 @@ namespace netkit::body {
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
 
+	template <typename T, typename... Args>
+	requires std::derived_from<T, basic_async_body> && std::constructible_from<T, Args...>
+	std::unique_ptr<basic_async_body> make_body(Args&&... args) {
+		return std::make_unique<T>(std::forward<Args>(args)...);
+	}
+
 	template <typename T>
 	concept Readable = requires(T& obj, char* buffer, std::size_t size) {
 		{ obj.read(buffer, size) } -> std::same_as<read_result>;

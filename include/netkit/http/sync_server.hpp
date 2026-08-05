@@ -70,7 +70,7 @@ namespace netkit::http::server {
                              callback = this->callback]() mutable {
                     try {
                         T handler{};
-                        handler.handle(client_sock, settings, callback);
+                        handler.handle(std::move(client_sock), settings, callback);
                     } catch (const std::exception& e) {
                         throw socket_error(e.what());
                     }

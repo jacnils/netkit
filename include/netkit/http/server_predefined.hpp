@@ -100,5 +100,41 @@ namespace netkit::http::server {
         std::vector<header> headers{};
     };
 
+    /**
+ * @brief  Struct that contains the request data.
+ */
+    struct async_request {
+        std::string endpoint{};
+        std::unordered_map<std::string, std::string> query{};
+        std::string content_type{};
+        std::unique_ptr<netkit::body::basic_async_body> body;
+        std::unordered_map<std::string, std::string> headers{};
+        std::string method{};
+        std::string ip_address{};
+        std::string user_agent{};
+        unsigned int version{};
+        std::vector<cookie> cookies{};
+        std::unordered_map<std::string, std::string> session{};
+        std::string session_id{};
+    };
+
+    /**
+     * @brief  Struct that contains the response data.
+     */
+    struct async_response {
+        int http_status{200};
+        std::unique_ptr<body::basic_async_body> body;
+        std::string content_type{"application/json"};
+        std::string allow_origin{"*"};
+        bool stop{false};
+        std::vector<cookie> cookies{};
+        std::vector<std::string> delete_cookies{};
+        std::unordered_map<std::string, std::string> session{};
+        std::string location{};
+        redirect_type redirection{redirect_type::temporary};
+        std::vector<header> headers{};
+    };
+
     using request_callback = std::function<response(const request&)>;
+    using async_request_callback = std::function<io::task<async_response>(const async_request&)>;
 }

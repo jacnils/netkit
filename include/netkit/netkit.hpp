@@ -61,6 +61,8 @@
 #include <netkit/http/server_predefined.hpp>
 #include <netkit/http/sync_client.hpp>
 #include <netkit/http/sync_server.hpp>
+#include <netkit/http/basic_async_server.hpp>
+#include <netkit/http/async_server.hpp>
 
 // bodies
 #include <netkit/body/basic_body.hpp>
@@ -73,6 +75,9 @@
 #include <netkit/body/async_stream_body.hpp>
 #include <netkit/body/read_status_enum.hpp>
 #include <netkit/body/async_multipart_part_body.hpp>
+#include <netkit/body/async_buffer_body.hpp>
+#include <netkit/body/async_file_body.hpp>
+#include <netkit/body/async_buffer_body_view.hpp>
 
 // io
 #include <netkit/io/linux/io_backend.hpp>

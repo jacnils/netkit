@@ -14,13 +14,19 @@
 #ifdef NETKIT_HTTP
 
 #include <netkit/tcp/tcp_stream.hpp>
+#include <netkit/tcp/async_tcp_stream.hpp>
 #include <netkit/http/server_predefined.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
     class basic_request_handler {
     public:
-        virtual void handle(std::unique_ptr<tcp::tcp_stream>&, server_settings&, const request_callback&) const = 0;
+        virtual void handle(std::unique_ptr<tcp::tcp_stream>, server_settings&, const request_callback&) const {
+            throw std::runtime_error("not implemented");
+        }
+        virtual io::task<void> handle(std::unique_ptr<tcp::async_tcp_stream>, server_settings&, const async_request_callback&) const {
+            throw std::runtime_error("not implemented");
+        }
         virtual ~basic_request_handler() = default;
     };
 }
