@@ -23,7 +23,7 @@ netkit::io::task<bool> netkit::http::utility::async_multipart_reader::fill_buffe
 	co_return true;
 }
 
-netkit::io::task<unsigned long> netkit::http::utility::async_multipart_reader::boundary_overlap() const {
+netkit::io::task<std::size_t> netkit::http::utility::async_multipart_reader::boundary_overlap() const {
 	const std::string delimiter = "\r\n--" + boundary_;
 
 	auto max = std::min(buffer_.size(), delimiter.size() - 1);
