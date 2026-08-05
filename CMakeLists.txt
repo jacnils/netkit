@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(netkit LANGUAGES CXX VERSION 0.3.0)
+project(netkit LANGUAGES CXX VERSION 0.4.0)
 
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
@@ -244,8 +244,8 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/netkitConfigVersion.cmake"
-        VERSION 0.1.0
-        COMPATIBILITY SameMajorVersion
+        VERSION ${CMAKE_PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
 )
 
 configure_file(
