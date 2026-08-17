@@ -28,12 +28,15 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Generate documentation
-        run: doxygen docs/Doxyfile
+        run: |
+          cd docs/
+          doxygen .
+          cd ..
 
       - name: Upload documentation
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./html
+          path: ./docs/html
 
   deploy:
     runs-on: ubuntu-latest
