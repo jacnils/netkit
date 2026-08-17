@@ -30,7 +30,7 @@ jobs:
       - name: Generate documentation
         run: |
           cd docs/
-          doxygen .
+          doxygen Doxyfile
           cd ..
 
       - name: Upload documentation
