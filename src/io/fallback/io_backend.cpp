@@ -4,6 +4,8 @@
 
 #if !defined(NETKIT_LINUX) || !defined(NETKIT_EPOLL)
 #if !defined(NETKIT_WINDOWS) || !defined(NETKIT_WSAPOLL)
+#if !defined(NETKIT_BSD) || !defined(NETKIT_KQUEUE)
+#if !defined(NETKIT_MACOS) || !defined(NETKIT_KQUEUE)
 
 void netkit::io::io_backend::worker() {
 	while (running_) {
@@ -102,5 +104,7 @@ void netkit::io::io_backend::poll() {
 	poll(-1);
 }
 
+#endif
+#endif
 #endif
 #endif

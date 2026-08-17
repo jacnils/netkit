@@ -32,6 +32,12 @@
 #define NETKIT_LINUX 1
 #endif
 
+#if !defined(NETKIT_LINUX) && \
+	defined(NETKIT_UNIX) && !defined(NETKIT_DKP) && \
+	!defined(NETKIT_MACOS)
+#define NETKIT_BSD
+#endif
+
 #ifndef NETKIT_FALLBACK_IPV4_DNS_1
 #define NETKIT_FALLBACK_IPV4_DNS_1 "8.8.8.8"
 #endif
