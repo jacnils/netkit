@@ -5,6 +5,8 @@
 
 #if !defined(NETKIT_LINUX) || !defined(NETKIT_EPOLL)
 #if !defined(NETKIT_WINDOWS) || !defined(NETKIT_WSAPOLL)
+#if !defined(NETKIT_BSD) || !defined(NETKIT_KQUEUE)
+#if !defined(NETKIT_MACOS) || !defined(NETKIT_KQUEUE)
 
 #include <atomic>
 #include <condition_variable>
@@ -54,5 +56,7 @@ private:
 
 } // namespace netkit::io
 
+#endif
+#endif
 #endif
 #endif

@@ -8,6 +8,7 @@ option(NETKIT_ENABLE_FALLBACK_CA "Enable fallback CA certficate (required for De
 option(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER "Enable using netkit's DNS resolver instead of the system resolver" OFF)
 option(NETKIT_ENABLE_EPOLL "Enable using epoll backend (Linux only)" ON)
 option(NETKIT_ENABLE_WSAPOLL "Enable using wsapoll backend (Windows only)" ON)
+option(NETKIT_ENABLE_KQUEUE "Enable using kqueue backend (macOS, BSD only)" ON)
 option(NETKIT_ENABLE_HTTP "Enable netkit's HTTP abstractions" ON)
 option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
@@ -75,6 +76,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/body/multipart_part_body.cpp
         src/io/io_awaitable.cpp
         src/io/linux/io_backend.cpp
+        src/io/bsd/io_backend.cpp
         src/socket/native/native_async_socket.cpp
         src/socket/native/native_sync_listener.cpp
         src/socket/native/native_async_listener.cpp
@@ -213,6 +215,10 @@ endif()
 
 if (NETKIT_ENABLE_WSAPOLL)
     target_compile_definitions(netkit PUBLIC NETKIT_WSAPOLL)
+endif()
+
+if (NETKIT_ENABLE_KQUEUE)
+    target_compile_definitions(netkit PUBLIC NETKIT_KQUEUE)
 endif()
 
 if (WIN32)
