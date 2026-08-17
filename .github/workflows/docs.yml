@@ -33,7 +33,7 @@ jobs:
       - name: Upload documentation
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./docs/html
+          path: ./html
 
   deploy:
     runs-on: ubuntu-latest
