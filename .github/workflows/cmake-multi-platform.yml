@@ -3,8 +3,18 @@ name: CMake on Linux, macOS, and Windows
 on:
   push:
     branches: [ "master" ]
+    paths:
+     - 'src/**'
+     - 'include/**'
+     - 'CMakeLists.txt'
+     - '.github/workflows/**'
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ]    
+    paths:
+     - 'src/**'
+     - 'include/**'
+     - 'CMakeLists.txt'
+     - '.github/workflows/**'
 
 permissions:
   contents: read
