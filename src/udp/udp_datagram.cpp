@@ -2,7 +2,7 @@
 #include <netkit/udp/udp_datagram.hpp>
 
 netkit::udp::udp_datagram::udp_datagram(sock::addr addr)
-: addr_(addr), sock_(std::make_unique<sock::native::native_sync_sock>(addr, sock::type::udp))
+: addr_(addr), sock_(std::make_unique<sock::native::native_sync_sock>(addr, sock::type::udp, sock::opt::reuse_addr | sock::opt::blocking))
 {}
 
 void netkit::udp::udp_datagram::bind() const {

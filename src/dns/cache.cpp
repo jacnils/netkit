@@ -9,9 +9,9 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the standard DNS cache class.
  */
-#include <fstream>
 #include <algorithm>
-
+#include <fstream>
+#include <iostream>
 #include <netkit/definitions.hpp>
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/record_type.hpp>
@@ -19,6 +19,9 @@
 
 #ifndef NETKIT_DKP
 [[nodiscard]] std::vector<netkit::dns::record> netkit::dns::standard_cache::lookup(const std::string& hostname) const {
+#ifdef NETKIT_DEBUG
+	return {};
+#endif
     std::ifstream is(utility::get_standard_cache_location(), std::ios::binary);
     if (!is) {
         return {};

@@ -42,22 +42,15 @@
 
 /* solely for use internally */
 #ifndef NETKIT_DKP
-#if defined(NETKIT_ENABLE_SOCK_CUSTOM_RESOLVER) && defined(NETKIT_DNS)
-[[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
+#if defined(NETKIT_DNS)
+[[nodiscard]] static netkit::network::ip_list netkit_get_a_aaaa_from_hostname(const std::string& hostname, bool tls) {
     if (hostname == "localhost") {
         return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
     }
 
     auto nameservers = netkit::dns::get_nameservers();
 
-    if (nameservers.contains_ipv4() == false && nameservers.contains_ipv6() == false) {
-        nameservers = {
-            {NETKIT_FALLBACK_IPV4_DNS_1, NETKIT_FALLBACK_IPV4_DNS_2},
-            {NETKIT_FALLBACK_IPV6_DNS_1, NETKIT_FALLBACK_IPV6_DNS_2},
-        };
-    }
-
-    netkit::dns::sync_resolver resolver(nameservers);
+    netkit::dns::sync_resolver resolver(nameservers, tls);
 
     auto records = resolver.query_records(hostname, netkit::dns::record_type::A);
     auto records_v6 = resolver.query_records(hostname, netkit::dns::record_type::AAAA);
@@ -84,7 +77,8 @@
 
     return {v4, v6};
 }
-#else
+#endif
+
 [[nodiscard]] static netkit::network::ip_list get_a_aaaa_from_hostname(const std::string& hostname) {
 	if (hostname == "localhost") {
 		return {NETKIT_LOCALHOST_IPV4, NETKIT_LOCALHOST_IPV6};
@@ -131,10 +125,10 @@
 
 	return {v4, v6};
 }
-#endif
+
 #endif
 
-netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
+netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, resolve_method method) :
     hostname(hostname), port(port), type(t) {
 
 #ifdef NETKIT_DKP
@@ -164,8 +158,25 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t) :
 #endif
 
 #ifndef NETKIT_DKP
-    const auto resolve_host = [](const std::string& h, bool t) -> std::string {
-    	auto ip_list = get_a_aaaa_from_hostname(h);
+    const auto resolve_host = [&method](const std::string& h, bool t) -> std::string {
+		network::ip_list ip_list;
+
+#if defined(NETKIT_DNS) && !defined(NETKIT_DKP)
+    	if (method == netkit::sock::resolve_method::os) {
+    		ip_list = get_a_aaaa_from_hostname(h);
+    	} else if (method == netkit::sock::resolve_method::netkit) {
+    		ip_list = netkit_get_a_aaaa_from_hostname(h, false);
+    	} else {
+    		ip_list = netkit_get_a_aaaa_from_hostname(h, true);
+    	}
+#else
+    	if (method != netkit::sock::resolve_method::os) {
+    		throw netkit::dns_error{"cannot use this resolve method on this platform/build configuration"};
+    	}
+
+    	ip_list = get_a_aaaa_from_hostname(h);
+#endif
+
     	auto ip = t ? ip_list.get_ipv6() : ip_list.get_ipv4();
 
     	return ip;

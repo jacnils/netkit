@@ -29,10 +29,26 @@
 #endif
 
 namespace netkit::dns {
+	static void add_fallbacks(nameserver_list& list) {
+		list.push_back_v4(NETKIT_FALLBACK_IPV4_DNS_1, NETKIT_FALLBACK_IPV4_DNS_SNI_1);
+		list.push_back_v4(NETKIT_FALLBACK_IPV4_DNS_2, NETKIT_FALLBACK_IPV4_DNS_SNI_2);
+		list.push_back_v6(NETKIT_FALLBACK_IPV6_DNS_1, NETKIT_FALLBACK_IPV6_DNS_SNI_1);
+		list.push_back_v6(NETKIT_FALLBACK_IPV6_DNS_2, NETKIT_FALLBACK_IPV6_DNS_SNI_2);
+	}
+	static constexpr nameserver_list get_fallbacks() {
+		nameserver_list list;
+
+		list.push_back_v4(NETKIT_FALLBACK_IPV4_DNS_1, NETKIT_FALLBACK_IPV4_DNS_SNI_1);
+		list.push_back_v4(NETKIT_FALLBACK_IPV4_DNS_2, NETKIT_FALLBACK_IPV4_DNS_SNI_2);
+		list.push_back_v6(NETKIT_FALLBACK_IPV6_DNS_1, NETKIT_FALLBACK_IPV6_DNS_SNI_1);
+		list.push_back_v6(NETKIT_FALLBACK_IPV6_DNS_2, NETKIT_FALLBACK_IPV6_DNS_SNI_2);
+
+		return list;
+	}
 #if defined(NETKIT_UNIX) && !defined(NETKIT_MACOS)
     nameserver_list get_nameservers() {
         if (!std::filesystem::exists("/etc/resolv.conf")) {
-            throw parsing_error("nameserver(): /etc/resolv.conf does not exist");
+			return get_fallbacks();
         }
         std::ifstream file("/etc/resolv.conf");
         if (!file.is_open()) {
@@ -66,20 +82,19 @@ namespace netkit::dns {
             }
         }
 
-        return {std::move(ipv4_addrs), std::move(ipv6_addrs)};
+        nameserver_list list = {
+	        std::move(ipv4_addrs),
+        	std::move(ipv6_addrs)
+        };
+
+		add_fallbacks(list);
+
+		return list;
     }
 #endif
 #ifdef NETKIT_MACOS
     nameserver_list get_nameservers() {
-    	return nameserver_list{
-    		{
-    			NETKIT_FALLBACK_IPV4_DNS_1, NETKIT_FALLBACK_IPV4_DNS_2,
-    			"8.8.8.8", "8.8.4.4"
-    			},
-    		{NETKIT_FALLBACK_IPV6_DNS_1, NETKIT_FALLBACK_IPV6_DNS_2,
-    			"2001:4860:4860::8888", "2001:4860:4860::8844"
-				},
-    	};
+		return get_fallbacks();
     }
 #endif
 #ifdef NETKIT_WINDOWS
@@ -168,10 +183,14 @@ namespace netkit::dns {
 			}
 		}
 
-		nameserver_list list;
-		list.ipv4 = std::move(ipv4_addrs);
-		list.ipv6 = std::move(ipv6_addrs);
-		return list;
+		nameserver_list list = {
+			ipv4_addrs,
+			ipv6_addrs
+		};
+
+		add_fallbacks(list);
+
+    	return list;
 	}
 #endif
 }

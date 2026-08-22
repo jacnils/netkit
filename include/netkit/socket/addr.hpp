@@ -29,6 +29,12 @@
 namespace netkit::sock {
 	using sockaddr_len = int;
 
+	enum class resolve_method {
+		os, /* use OS APIs to resolve hostnames */
+		netkit, /* use netkit's custom resolver to resolve hostnames */
+		dot, /* use netkit's custom resolver to resolve hostnames over TLS */
+	};
+
     class NETKIT_API addr final {
         std::filesystem::path path{};
         std::string hostname{};
@@ -47,8 +53,9 @@ namespace netkit::sock {
          * @param hostname The hostname or IP address to resolve.
          * @param port The port to use.
          * @param t The address type (ipv4, ipv6, hostname_ipv4, hostname_ipv6).
-         */
-        addr(const std::string& hostname, int port, addr_type t);
+         * @param method The method to use to resolve hostnames (see resolve_method class)
+    	 */
+        addr(const std::string& hostname, int port, addr_type t, resolve_method method = resolve_method::os);
 #ifndef NETKIT_DKP
         /**
          * @brief Constructs a sock_addr object for a file path.

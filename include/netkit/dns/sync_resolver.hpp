@@ -23,6 +23,7 @@
 #include <netkit/socket/addr_type.hpp>
 #include <netkit/udp/udp_datagram.hpp>
 #include <netkit/tcp/tcp_stream.hpp>
+#include <netkit/stream/tls_stream.hpp>
 
 #ifdef NETKIT_UNIX
 #include <arpa/inet.h>
@@ -42,6 +43,7 @@ namespace netkit::dns {
 	template <typename T = standard_cache>
 	class sync_resolver : public basic_sync_resolver<T> {
         nameserver_list list{};
+		bool tls{};
 
         void throw_if_invalid() const {
             if (list.contains_ipv4() || list.contains_ipv6()) {
@@ -50,10 +52,10 @@ namespace netkit::dns {
             throw parsing_error("sync_dns_resolver(): at least one IP address must be provided");
         }
     public:
-        explicit sync_resolver(nameserver_list list) : list(std::move(list)) {
+        explicit sync_resolver(nameserver_list list, bool use_dot = false) : list(std::move(list)), tls(use_dot) {
             throw_if_invalid();
         }
-        sync_resolver() : list(get_nameservers()) {
+        sync_resolver(bool use_dot = false) : list(get_nameservers()), tls(use_dot) {
             throw_if_invalid();
         }
 
@@ -116,7 +118,6 @@ namespace netkit::dns {
 				);
         	};
 
-
         	auto send_tcp = [&query](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
         		netkit::sock::addr addr(server, 53, family);
         		netkit::tcp::tcp_stream sock(addr);
@@ -176,18 +177,98 @@ namespace netkit::dns {
 				);
         	};
 
-			auto try_server = [&](const std::string& server, netkit::sock::addr_type family) -> bool {
-				auto udp_resp = send_udp(server, family);
+#ifdef NETKIT_TLS_STREAM
+        	auto send_tls = [&query](const std::string& server, const std::string& sni, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::sock::addr addr(server, 853, family);
+        		std::unique_ptr<netkit::tcp::tcp_stream> _sock = std::make_unique<tcp::tcp_stream>(addr);
+
+        		_sock->connect();
+
+        		netkit::stream::tls_stream sock(std::move(_sock),
+					netkit::stream::version::TLS_1_2,
+					netkit::stream::verification::none,
+					{},
+					sni
+				);
+
+        		sock.perform_handshake();
+
+        		std::array<std::byte, 2> lenbuf{
+        			std::byte(query.size() >> 8),
+					std::byte(query.size() & 0xFF)
+				};
+
+        		if (sock.write(lenbuf).status != stream::stream_status::success)
+        			return std::nullopt;
+
+        		if (sock.write(std::as_bytes(std::span(query))).status != stream::stream_status::success)
+        			return std::nullopt;
+
+        		std::array<std::byte, 2> resp_len_buf{};
+        		std::size_t total = 0;
+
+        		while (total < 2) {
+        			auto res = sock.read(
+						std::span(resp_len_buf).subspan(total)
+					);
+
+        			if (res.status != stream::stream_status::success || res.bytes == 0)
+        				return std::nullopt;
+
+        			total += res.bytes;
+        		}
+
+        		uint16_t resp_len =
+					(static_cast<uint16_t>(std::to_integer<uint8_t>(resp_len_buf[0])) << 8) |
+					std::to_integer<uint8_t>(resp_len_buf[1]);
+
+        		if (resp_len == 0)
+        			return std::nullopt;
+
+        		std::vector<std::byte> resp(resp_len);
+
+        		total = 0;
+
+        		while (total < resp_len) {
+        			auto res = sock.read(
+						std::span(resp).subspan(total)
+					);
+
+        			if (res.status != stream::stream_status::success || res.bytes == 0)
+        				return std::nullopt;
+
+        			total += res.bytes;
+        		}
+
+        		return std::vector<uint8_t>(
+					reinterpret_cast<uint8_t*>(resp.data()),
+					reinterpret_cast<uint8_t*>(resp.data()) + resp.size()
+				);
+        	};
+#else
+        	if (tls) {
+        		throw netkit::dns_error{"TLS not enabled in netkit"};
+        	}
+#endif
+
+			auto try_server = [&](const nameserver& server, netkit::sock::addr_type family) -> bool {
 				std::optional<std::vector<uint8_t>> final_resp;
 
-				if (udp_resp.has_value()) {
-					final_resp = udp_resp;
-				} else {
-					auto tcp_resp = send_tcp(server, family);
-					if (!tcp_resp.has_value())
-						return false;
+#ifdef NETKIT_TLS_STREAM
+				if (tls) {
+					final_resp = send_tls(server.ip, server.sni, family);
+				}
+#endif
 
-					final_resp = tcp_resp;
+				if (!final_resp.has_value()) {
+					final_resp = send_udp(server.ip, family);
+				}
+
+				if (!final_resp.has_value()) {
+					final_resp = send_tcp(server.ip, family);
+
+					if (!final_resp.has_value())
+						return false;
 				}
 
 				response_parser parser(*final_resp);
@@ -202,6 +283,10 @@ namespace netkit::dns {
 
 			if (network::usable_ipv6_address_exists() && list.contains_ipv6()) {
 				for (const auto& s : list.get_ipv6()) {
+					if (s.sni.empty() && tls) {
+						continue;
+					}
+
 					if (try_server(s, netkit::sock::addr_type::ipv6)) {
 						success = true;
 						break;
@@ -211,6 +296,10 @@ namespace netkit::dns {
 
 			if (!success && list.contains_ipv4()) {
 				for (const auto& s : list.get_ipv4()) {
+					if (s.sni.empty() && tls) {
+						continue;
+					}
+
 					if (try_server(s, netkit::sock::addr_type::ipv4)) {
 						success = true;
 						break;

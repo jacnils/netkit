@@ -12,7 +12,8 @@
 #include <netkit/crypto/fallback_ca.hpp>
 #include <netkit/stream/wolfssl/tls_stream.hpp>
 
-netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, version ver, verification verif, const std::string& ca_cert)
+netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, version ver,
+	verification verif, const std::string& ca_cert, const std::string& sni)
 : stream_(std::move(stream)), version_(ver), verification_(verif), ca_cert_(ca_cert) {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
@@ -171,7 +172,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 
 	std::string hostname;
 	if (this->stream_ && this->stream_->get_addr().has_value()) {
-		hostname = this->stream_->get_addr()->get_hostname();
+		hostname = sni.empty() ? this->stream_->get_addr()->get_hostname() : sni;
 		wolfSSL_UseSNI(ssl_, WOLFSSL_SNI_HOST_NAME, hostname.data(), hostname.length());
 		wolfSSL_check_domain_name(ssl_, hostname.c_str());
 	}
