@@ -5,6 +5,7 @@
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/io/cancellation.hpp>
+#include <netkit/io/timeout.hpp>
 #include <utility>
 
 namespace netkit::io {
@@ -46,7 +47,7 @@ public:
 	 * @throws cancelled_error if the token is cancelled
 	 */
 	io_awaitable wait_readable(io_handle_t fd, std::shared_ptr<cancellation_token> token = nullptr) {
-		return io_awaitable{backend_, fd, io_event::read, std::move(token)};
+		return io_awaitable{backend_, fd, io_event::read, token ? std::move(token) : get_current_cancellation_token()};
 	}
 
 	/**
@@ -57,7 +58,7 @@ public:
 	 * @throws cancelled_error if the token is cancelled
 	 */
 	io_awaitable wait_writable(io_handle_t fd, std::shared_ptr<cancellation_token> token = nullptr) {
-		return io_awaitable{backend_, fd, io_event::write, token};
+		return io_awaitable{backend_, fd, io_event::write, token ? std::move(token) : get_current_cancellation_token()};
 	}
 
 	void spawn(task<void>&& t) {

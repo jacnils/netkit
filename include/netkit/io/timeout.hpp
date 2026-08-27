@@ -17,28 +17,16 @@ public:
 };
 
 /**
- * @brief Thread-local storage for the current cancellation token.
- * @internal
- */
-namespace detail {
-	inline thread_local std::shared_ptr<cancellation_token> tls_cancellation_token;
-}
-
-/**
  * @brief Set the cancellation token for the current coroutine context.
  * @internal Used by timeout() to make the token available to nested operations.
  */
-inline void set_current_cancellation_token(std::shared_ptr<cancellation_token> token) noexcept {
-	detail::tls_cancellation_token = token;
-}
+void set_current_cancellation_token(std::shared_ptr<cancellation_token> token) noexcept;
 
 /**
  * @brief Get the cancellation token for the current coroutine context.
  * @return The cancellation token if set, nullptr otherwise.
  */
-[[nodiscard]] inline std::shared_ptr<cancellation_token> get_current_cancellation_token() noexcept {
-	return detail::tls_cancellation_token;
-}
+[[nodiscard]] std::shared_ptr<cancellation_token> get_current_cancellation_token() noexcept;
 
 /**
  * @brief Check if cancellation has been requested for the current context.
@@ -55,12 +43,7 @@ inline void set_current_cancellation_token(std::shared_ptr<cancellation_token> t
  *     }
  * }
  */
-inline void check_cancellation() {
-	auto token = get_current_cancellation_token();
-	if (token && token->is_cancelled()) {
-		throw cancelled_error();
-	}
-}
+void check_cancellation();
 
 /**
  * @brief An awaitable that yields control for a specified duration.

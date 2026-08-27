@@ -102,6 +102,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/http/async_multipart_reader.cpp
         src/body/async_chunked_body.cpp
         src/body/chunked_body.cpp
+        src/io/timeout.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)
