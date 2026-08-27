@@ -5,6 +5,7 @@
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/io/cancellation.hpp>
+#include <utility>
 
 namespace netkit::io {
 
@@ -38,32 +39,14 @@ public:
 	}
 
 	/**
-	 * @brief Wait for a file descriptor to become readable.
-	 * @param fd The file descriptor to wait on
-	 * @return An awaitable that suspends until the fd is readable
-	 */
-	io_awaitable wait_readable(io_handle_t fd) {
-		return io_awaitable{backend_, fd, io_event::read};
-	}
-
-	/**
 	 * @brief Wait for a file descriptor to become readable with cancellation support.
 	 * @param fd The file descriptor to wait on
 	 * @param token The cancellation token to check during the wait
 	 * @return An awaitable that suspends until the fd is readable or is cancelled
 	 * @throws cancelled_error if the token is cancelled
 	 */
-	io_awaitable wait_readable(io_handle_t fd, std::shared_ptr<cancellation_token> token) {
-		return io_awaitable{backend_, fd, io_event::read, token};
-	}
-
-	/**
-	 * @brief Wait for a file descriptor to become writable.
-	 * @param fd The file descriptor to wait on
-	 * @return An awaitable that suspends until the fd is writable
-	 */
-	io_awaitable wait_writable(io_handle_t fd) {
-		return io_awaitable{backend_, fd, io_event::write};
+	io_awaitable wait_readable(io_handle_t fd, std::shared_ptr<cancellation_token> token = nullptr) {
+		return io_awaitable{backend_, fd, io_event::read, std::move(token)};
 	}
 
 	/**
@@ -73,7 +56,7 @@ public:
 	 * @return An awaitable that suspends until the fd is writable or is cancelled
 	 * @throws cancelled_error if the token is cancelled
 	 */
-	io_awaitable wait_writable(io_handle_t fd, std::shared_ptr<cancellation_token> token) {
+	io_awaitable wait_writable(io_handle_t fd, std::shared_ptr<cancellation_token> token = nullptr) {
 		return io_awaitable{backend_, fd, io_event::write, token};
 	}
 

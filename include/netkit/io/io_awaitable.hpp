@@ -23,17 +23,15 @@ namespace netkit::io {
 			: ctx(ctx), fd(fd), ev(ev), token(token) {}
 
 		[[nodiscard]] bool await_ready() const noexcept {
-			// Check if cancellation was requested before even suspending
 			if (token && token->is_cancelled()) {
-				return true;  // Return ready to let await_resume throw
+				return true;
 			}
 			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> h) {
-			// Check again before registering with the backend
 			if (token && token->is_cancelled()) {
-				h.resume();  // Resume immediately to allow cancellation to be handled
+				h.resume();
 				return;
 			}
 			ctx.register_waiter(fd, ev, h);

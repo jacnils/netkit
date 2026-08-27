@@ -90,6 +90,8 @@
 #include <netkit/io/io_awaitable.hpp>
 #include <netkit/io/io_context.hpp>
 #include <netkit/io/task.hpp>
+#include <netkit/io/cancellation.hpp>
+#include <netkit/io/timeout.hpp>
 
 // streams
 #include <netkit/stream/stream_enum.hpp>

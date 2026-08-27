@@ -87,7 +87,6 @@ struct sleep_awaitable {
 			return;
 		}
 
-		// Spawn a timer thread that will resume the coroutine after the duration
 		timer_thread = std::thread([this, h]() {
 			std::this_thread::sleep_for(duration);
 			if (!(token && token->is_cancelled())) {
@@ -128,10 +127,7 @@ struct sleep_awaitable {
  * );
  */
 template<typename Rep, typename Period>
-task<void> async_sleep(
-	std::chrono::duration<Rep, Period> duration,
-	std::shared_ptr<cancellation_token> token = nullptr
-) {
+task<> async_sleep(std::chrono::duration<Rep, Period> duration, std::shared_ptr<cancellation_token> token = nullptr) {
 	if (!token) {
 		token = get_current_cancellation_token();
 	}
@@ -142,7 +138,7 @@ task<void> async_sleep(
  * @brief Wraps a task with a timeout.
  * 
  * If the task does not complete within the specified duration, it will be:
- * 1. Marked as cancelled (for cooperative tasks)
+ * 1. Marked as cancelled
  * 2. Forcefully destroyed if it doesn't respond to cancellation
  * 3. A timeout_error will be thrown
  * 
@@ -164,45 +160,35 @@ task<void> async_sleep(
  * 
  * // For non-cooperative tasks, forceful termination will occur after timeout:
  * auto result = co_await io::timeout(
- *     blocking_operation(),  // Will be destroyed after 5 seconds
+ *     blocking_operation(),
  *     std::chrono::seconds(5)
  * );
  */
 template<typename T, typename Rep, typename Period>
 task<T> timeout(task<T> t, std::chrono::duration<Rep, Period> duration) {
-	// Create a cancellation source for this timeout
 	cancellation_source source;
 	t.set_cancellation_token(source.get_token());
 
-	// Store the task handle for potential forceful termination
 	auto handle = t.get_handle_if_available();
 
-	// Spawn a timer thread that will cancel after the specified duration
-	std::thread timer_thread([source, handle, duration]() {
+	std::thread timer_thread([&source, handle, duration]() {
 		std::this_thread::sleep_for(duration);
 		source.cancel();
 
-		// If the task is still running after cancellation grace period,
-		// forcefully destroy it (non-cooperative termination)
 		if (handle && !handle.done()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			if (!handle.done()) {
-				// Task didn't respond to cancellation, destroy it forcefully
 				handle.destroy();
 			}
 		}
 	});
 	timer_thread.detach();
 
-	// Set the thread-local token so nested operations can access it
 	set_current_cancellation_token(source.get_token());
 
 	try {
-		// Await the task - if it completes before timeout, great
-		// If timeout fires, the task will throw cancelled_error
 		co_return co_await std::move(t);
 	} catch (const cancelled_error&) {
-		// Re-throw as timeout_error for clarity
 		throw timeout_error();
 	}
 }
