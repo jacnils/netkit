@@ -6,6 +6,8 @@
 #include <utility>
 #include <type_traits>
 #include <optional>
+#include <memory>
+#include <netkit/io/cancellation.hpp>
 
 namespace netkit::io {
 
@@ -33,6 +35,7 @@ public:
 	struct promise_type : promise_return<T> {
 		std::exception_ptr exception;
 		std::coroutine_handle<> continuation{};
+		std::shared_ptr<cancellation_token> cancellation_token_{};
 
 		task get_return_object() {
 			return task{
@@ -112,6 +115,46 @@ public:
 		return awaiter{
 			std::exchange(handle_, {})
 		};
+	}
+
+	/**
+	 * @brief Set the cancellation token for this task.
+	 * @param token The cancellation token to use.
+	 */
+	void set_cancellation_token(std::shared_ptr<cancellation_token> token) noexcept {
+		if (handle_) {
+			handle_.promise().cancellation_token_ = token;
+		}
+	}
+
+	/**
+	 * @brief Get the cancellation token associated with this task.
+	 * @return The cancellation token, or nullptr if not set.
+	 */
+	[[nodiscard]] std::shared_ptr<cancellation_token> get_cancellation_token() const noexcept {
+		if (handle_) {
+			return handle_.promise().cancellation_token_;
+		}
+		return nullptr;
+	}
+
+	/**
+	 * @brief Check if cancellation has been requested for this task.
+	 * @return true if cancellation was requested, false otherwise.
+	 */
+	[[nodiscard]] bool is_cancelled() const noexcept {
+		auto token = get_cancellation_token();
+		return token && token->is_cancelled();
+	}
+
+	/**
+	 * @brief Request cancellation of this task.
+	 */
+	void cancel() noexcept {
+		auto token = get_cancellation_token();
+		if (token) {
+			token->cancel();
+		}
 	}
 
 	void resume() {
