@@ -157,6 +157,15 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Get the underlying coroutine handle if available.
+	 * @return A generic coroutine handle, or an empty handle if not set.
+	 * @internal Used for timeout implementation to enable forceful termination.
+	 */
+	[[nodiscard]] std::coroutine_handle<> get_handle_if_available() const noexcept {
+		return handle_;
+	}
+
 	void resume() {
 		if (handle_ && !handle_.done()) {
 			handle_.resume();
