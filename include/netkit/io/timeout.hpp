@@ -1,10 +1,11 @@
 #pragma once
 
 #include <chrono>
-#include <thread>
+#include <functional>
 #include <memory>
-#include <netkit/io/task.hpp>
 #include <netkit/io/cancellation.hpp>
+#include <netkit/io/task.hpp>
+#include <thread>
 
 namespace netkit::io {
 
@@ -148,13 +149,13 @@ task<> async_sleep(std::chrono::duration<Rep, Period> duration, std::shared_ptr<
  * );
  */
 template<typename T, typename Rep, typename Period>
-task<T> timeout(task<T> t, std::chrono::duration<Rep, Period> duration) {
+task<T> timeout(task<T> t, std::chrono::duration<Rep, Period> duration, std::function<void()> handler = std::function<void()>()) {
 	cancellation_source source;
 	t.set_cancellation_token(source.get_token());
 
 	auto handle = t.get_handle_if_available();
 
-	std::thread timer_thread([&source, handle, duration]() {
+	std::thread timer_thread([&source, handle, duration, handler]() {
 		std::this_thread::sleep_for(duration);
 		source.cancel();
 
@@ -162,9 +163,13 @@ task<T> timeout(task<T> t, std::chrono::duration<Rep, Period> duration) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			if (!handle.done()) {
 				handle.destroy();
+
+				if (handler)
+					handler();
 			}
 		}
 	});
+
 	timer_thread.detach();
 
 	set_current_cancellation_token(source.get_token());
@@ -172,7 +177,7 @@ task<T> timeout(task<T> t, std::chrono::duration<Rep, Period> duration) {
 	try {
 		co_return co_await std::move(t);
 	} catch (const cancelled_error&) {
-		throw timeout_error();
+		handler();
 	}
 }
 
