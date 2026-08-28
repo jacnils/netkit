@@ -56,7 +56,9 @@ std::vector<netkit::http::utility::multipart_part> netkit::http::utility::parse_
 		if (std::search(cur, end, end_boundary.begin(), end_boundary.end()) == cur)
 			break;
 
-		const char* header_end = std::search(cur, end, "\r\n\r\n", "\r\n\r\n" + 4);
+		constexpr std::string_view delimiter = "\r\n\r\n";
+		const char* header_end = std::search(cur, end, delimiter.begin(), delimiter.end());
+
 		if (header_end == end)
 			break;
 
