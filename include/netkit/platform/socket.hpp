@@ -124,46 +124,46 @@ inline void set_sock_opts(socket_t sockfd, socket::opt opts) {
 		}
 	}
 #elifdef NETKIT_WINDOWS
-	if (opts & netkit::sock::opt::reuse_addr) {
+	if (opts & netkit::socket::opt::reuse_addr) {
 		BOOL optval = TRUE;
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to set SO_REUSEADDR");
 		}
-	} else if (opts & netkit::sock::opt::no_reuse_addr) {
+	} else if (opts & netkit::socket::opt::no_reuse_addr) {
 		BOOL optval = FALSE;
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to clear SO_REUSEADDR");
 		}
 	}
-	if ((opts & netkit::sock::opt::no_delay)) {
+	if ((opts & netkit::socket::opt::no_delay)) {
 		BOOL optval = TRUE;
 		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to set TCP_NODELAY");
 		}
 	}
-	if (opts & netkit::sock::opt::keep_alive) {
+	if (opts & netkit::socket::opt::keep_alive) {
 		BOOL optval = TRUE;
 		if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to set SO_KEEPALIVE");
 		}
-	} else if (opts & netkit::sock::opt::no_keep_alive) {
+	} else if (opts & netkit::socket::opt::no_keep_alive) {
 		BOOL optval = FALSE;
 		if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&optval), sizeof(optval)) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to clear SO_KEEPALIVE");
 		}
 	}
-	if (opts & netkit::sock::opt::no_blocking) {
+	if (opts & netkit::socket::opt::no_blocking) {
 		u_long mode = 1;
 		if (ioctlsocket(sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
 			closesocket(sockfd);
 			throw socket_error("failed to set socket to non-blocking mode");
 		}
-	} else if (opts & netkit::sock::opt::blocking) {
+	} else if (opts & netkit::socket::opt::blocking) {
 		u_long mode = 0;
 		if (ioctlsocket(sockfd, FIONBIO, &mode) == SOCKET_ERROR) {
 			closesocket(sockfd);
@@ -266,16 +266,16 @@ inline socket_result recv(socket_t sock, void* buffer, std::size_t length, int f
 
 // some nasty devkitpro hacks incoming
 #ifdef NETKIT_DKP
-inline std::unordered_map<socket_t, sock::addr>& peer_cache() {
-	static std::unordered_map<socket_t, sock::addr> cache;
+inline std::unordered_map<socket_t, socket::addr>& peer_cache() {
+	static std::unordered_map<socket_t, socket::addr> cache;
 	return cache;
 }
 
-inline void cache_peer(socket_t fd, sock::addr peer) {
+inline void cache_peer(socket_t fd, socket::addr peer) {
 	peer_cache().emplace(fd, std::move(peer));
 }
 
-inline std::optional<sock::addr> take_cached_peer(socket_t fd) {
+inline std::optional<socket::addr> take_cached_peer(socket_t fd) {
 	auto& cache = peer_cache();
 
 	auto it = cache.find(fd);
@@ -310,10 +310,10 @@ inline socket_t accept(socket_t sock, sockaddr* addr, socket_length_t* length) {
 		sizeof(ip_str)
 	);
 
-	auto peer = sock::addr(
+	auto peer = socket::addr(
 		ip_str,
 		ntohs(addr_in->sin_port),
-		sock::addr_type::ipv4
+		socket::addr_type::ipv4
 	);
 
 	platform::cache_peer(
