@@ -8,13 +8,13 @@
 #include <thread>
 
 TEST_CASE("Ensure addr works", "[sock_addr]") {
-	netkit::sock::addr addr("google.com", 443, netkit::sock::addr_type::hostname);
+	netkit::socket::addr addr("google.com", 443, netkit::socket::addr_type::hostname);
 	REQUIRE(addr.get_hostname() == "google.com");
 	REQUIRE(addr.get_ip().empty() == false);
 	REQUIRE(addr.get_port() == 443);
 	REQUIRE(addr.is_file_path() == false);
 
-	netkit::sock::addr addr2("/tmp/socket");
+	netkit::socket::addr addr2("/tmp/socket");
 	REQUIRE(addr2.get_path().string() == "/tmp/socket");
 	REQUIRE(addr2.is_file_path() == true);
 }

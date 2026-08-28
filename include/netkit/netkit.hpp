@@ -40,11 +40,9 @@
 // Socket headers
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
-#include <netkit/socket/native/native_sync_sock.hpp>
-#include <netkit/socket/native/basic_native_async_sock.hpp>
-#include <netkit/socket/native/native_async_sock.hpp>
-#include <netkit/socket/sync_sock.hpp>
-#include <netkit/socket/async_sock.hpp>
+#include <netkit/socket/native/native_sync_socket.hpp>
+#include <netkit/socket/native/basic_native_async_socket.hpp>
+#include <netkit/socket/native/native_async_socket.hpp>
 #include <netkit/socket/native/peer_helper.hpp>
 
 // HTTP headers
@@ -59,7 +57,6 @@
 #include <netkit/http/request_handler.hpp>
 #include <netkit/http/response.hpp>
 #include <netkit/http/server_predefined.hpp>
-#include <netkit/http/sync_client.hpp>
 #include <netkit/http/sync_server.hpp>
 #include <netkit/http/basic_async_server.hpp>
 #include <netkit/http/async_server.hpp>

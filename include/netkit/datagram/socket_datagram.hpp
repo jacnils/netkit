@@ -2,7 +2,7 @@
 
 #include <netkit/platform/socket.hpp>
 #include <netkit/datagram/basic_datagram.hpp>
-#include <netkit/socket/native/basic_native_sync_sock.hpp>
+#include <netkit/socket/native/basic_native_sync_socket.hpp>
 
 namespace netkit::datagram {
 
