@@ -1,6 +1,6 @@
 #include <netkit/stream/async_socket_stream.hpp>
 #include <netkit/io/task.hpp>
-#include <netkit/socket/async_sock.hpp>
+#include <netkit/socket/native/native_async_socket.hpp>
 
 netkit::io::task<void>
 netkit::stream::async_socket_stream::connect() const {
@@ -31,6 +31,6 @@ void netkit::stream::async_socket_stream::close() noexcept {
 	}
 }
 
-netkit::sock::addr netkit::stream::async_socket_stream::peer() const {
+netkit::socket::addr netkit::stream::async_socket_stream::peer() const {
 	return socket_->get_peer();
 }

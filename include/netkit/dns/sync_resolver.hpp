@@ -88,8 +88,8 @@ namespace netkit::dns {
 
 			std::vector<dns::record> all_records;
 
-        	auto send_udp = [&query](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
-        		netkit::sock::addr addr(server, 53, family);
+        	auto send_udp = [&query](const std::string& server, netkit::socket::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::socket::addr addr(server, 53, family);
 
         		netkit::udp::udp_datagram sock(addr);
 
@@ -118,8 +118,8 @@ namespace netkit::dns {
 				);
         	};
 
-        	auto send_tcp = [&query](const std::string& server, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
-        		netkit::sock::addr addr(server, 53, family);
+        	auto send_tcp = [&query](const std::string& server, netkit::socket::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::socket::addr addr(server, 53, family);
         		netkit::tcp::tcp_stream sock(addr);
 
         		sock.connect();
@@ -178,8 +178,8 @@ namespace netkit::dns {
         	};
 
 #ifdef NETKIT_TLS_STREAM
-        	auto send_tls = [&query](const std::string& server, const std::string& sni, netkit::sock::addr_type family) -> std::optional<std::vector<uint8_t>> {
-        		netkit::sock::addr addr(server, 853, family);
+        	auto send_tls = [&query](const std::string& server, const std::string& sni, netkit::socket::addr_type family) -> std::optional<std::vector<uint8_t>> {
+        		netkit::socket::addr addr(server, 853, family);
         		std::unique_ptr<netkit::tcp::tcp_stream> _sock = std::make_unique<tcp::tcp_stream>(addr);
 
         		_sock->connect();
@@ -251,7 +251,7 @@ namespace netkit::dns {
         	}
 #endif
 
-			auto try_server = [&](const nameserver& server, netkit::sock::addr_type family) -> bool {
+			auto try_server = [&](const nameserver& server, netkit::socket::addr_type family) -> bool {
 				std::optional<std::vector<uint8_t>> final_resp;
 
 #ifdef NETKIT_TLS_STREAM
@@ -287,7 +287,7 @@ namespace netkit::dns {
 						continue;
 					}
 
-					if (try_server(s, netkit::sock::addr_type::ipv6)) {
+					if (try_server(s, netkit::socket::addr_type::ipv6)) {
 						success = true;
 						break;
 					}
@@ -300,7 +300,7 @@ namespace netkit::dns {
 						continue;
 					}
 
-					if (try_server(s, netkit::sock::addr_type::ipv4)) {
+					if (try_server(s, netkit::socket::addr_type::ipv4)) {
 						success = true;
 						break;
 					}

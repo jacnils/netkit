@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstring>
 #include <netkit/body/basic_body.hpp>
-#include <netkit/socket/native/basic_native_sync_sock.hpp>
+#include <netkit/socket/native/basic_native_sync_socket.hpp>
 #include <optional>
 #include <string>
 

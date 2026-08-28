@@ -87,22 +87,22 @@ inline void close_socket(socket_t s) noexcept {
 #endif
 }
 
-inline void set_sock_opts(socket_t sockfd, sock::opt opts) {
+inline void set_sock_opts(socket_t sockfd, socket::opt opts) {
 #ifdef NETKIT_UNIX
-	if (opts & netkit::sock::opt::reuse_addr) {
+	if (opts & netkit::socket::opt::reuse_addr) {
 		::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts));
-	} else if (opts & netkit::sock::opt::no_reuse_addr) {
+	} else if (opts & netkit::socket::opt::no_reuse_addr) {
 		::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, nullptr, 0);
 	}
-	if (opts & netkit::sock::opt::no_delay) {
+	if (opts & netkit::socket::opt::no_delay) {
 		::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opts, sizeof(opts));
 	}
-	if (opts & netkit::sock::opt::keep_alive) {
+	if (opts & netkit::socket::opt::keep_alive) {
 		::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
-	} else if (opts & netkit::sock::opt::no_keep_alive) {
+	} else if (opts & netkit::socket::opt::no_keep_alive) {
 		::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, nullptr, 0);
 	}
-	if (opts & netkit::sock::opt::no_blocking) {
+	if (opts & netkit::socket::opt::no_blocking) {
 		int flags = fcntl(sockfd, F_GETFL, 0);
 		if (flags < 0) {
 			::close(sockfd);
@@ -112,7 +112,7 @@ inline void set_sock_opts(socket_t sockfd, sock::opt opts) {
 			::close(sockfd);
 			throw socket_error("failed to set socket to non-blocking mode");
 		}
-	} else if (opts & netkit::sock::opt::blocking) {
+	} else if (opts & netkit::socket::opt::blocking) {
 		int flags = fcntl(sockfd, F_GETFL, 0);
 		if (flags < 0) {
 			::close(sockfd);

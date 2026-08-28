@@ -12,7 +12,7 @@ class uds_stream;
 
 class uds_server {
 public:
-	uds_server(sock::addr addr);
+	uds_server(socket::addr addr);
 
 	~uds_server();
 
@@ -24,10 +24,10 @@ public:
 
 	void close() noexcept;
 
-	const sock::addr& get_local_endpoint() const noexcept;
+	const socket::addr& get_local_endpoint() const noexcept;
 private:
-	sock::addr addr_;
-	std::unique_ptr<sock::native::basic_native_sync_listener> listener_;
+	socket::addr addr_;
+	std::unique_ptr<socket::native::basic_native_sync_listener> listener_;
 };
 
 }

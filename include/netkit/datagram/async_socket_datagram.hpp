@@ -8,15 +8,15 @@ namespace netkit::datagram {
 
 class async_socket_datagram : public basic_async_datagram {
 public:
-	explicit async_socket_datagram(std::unique_ptr<sock::native::basic_native_async_sock> socket)
+	explicit async_socket_datagram(std::unique_ptr<socket::native::basic_native_async_socket> socket)
 		: sock_(std::move(socket)) {}
 
 	io::task<std::size_t>
-	send_to(std::span<const std::byte> buffer, const sock::addr& to) override {
+	send_to(std::span<const std::byte> buffer, const socket::addr& to) override {
 		co_return co_await sock_->sendto(buffer.data(), buffer.size(), to);
 	}
 
-	io::task<std::pair<std::size_t, sock::addr>>
+	io::task<std::pair<std::size_t, socket::addr>>
 	recv_from(std::span<std::byte> buffer) override {
 		co_return co_await sock_->recvfrom(buffer.data(), buffer.size());
 	}
@@ -30,7 +30,7 @@ public:
 	}
 
 private:
-	std::unique_ptr<sock::native::basic_native_async_sock> sock_;
+	std::unique_ptr<socket::native::basic_native_async_socket> sock_;
 };
 
 }

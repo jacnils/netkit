@@ -2,6 +2,6 @@
 
 #include <netkit/socket/addr.hpp>
 
-namespace netkit::sock::native {
-	[[nodiscard]] netkit::sock::addr get_peer(fd_t fd);
+namespace netkit::socket::native {
+	[[nodiscard]] netkit::socket::addr get_peer(fd_t fd);
 }

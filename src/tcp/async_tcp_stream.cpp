@@ -22,7 +22,7 @@ void netkit::tcp::async_tcp_stream::close() noexcept {
 	stream_.close();
 }
 
-netkit::sock::addr netkit::tcp::async_tcp_stream::peer() const {
+netkit::socket::addr netkit::tcp::async_tcp_stream::peer() const {
 	return stream_.peer();
 }
 

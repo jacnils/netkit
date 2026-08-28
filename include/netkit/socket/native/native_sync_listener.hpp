@@ -10,7 +10,7 @@
 
 #include <netkit/socket/native/basic_native_sync_listener.hpp>
 
-namespace netkit::sock::native {
+namespace netkit::socket::native {
 class NETKIT_API native_sync_listener : public basic_native_sync_listener {
 public:
 	void set_sock_opts(opt opts) const;
@@ -24,7 +24,7 @@ public:
 	void listen(int backlog) override;
 	void listen() override;
 
-	std::unique_ptr<basic_native_sync_sock> accept() override;
+	std::unique_ptr<basic_native_sync_socket> accept() override;
 
 	void close() noexcept override;
 

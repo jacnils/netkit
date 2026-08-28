@@ -10,7 +10,7 @@ class tcp_stream;
 
 class tcp_server {
 public:
-	tcp_server(sock::addr addr);
+	tcp_server(socket::addr addr);
 
 	~tcp_server();
 
@@ -22,10 +22,10 @@ public:
 
 	void close() noexcept;
 
-	const sock::addr& get_local_endpoint() const noexcept;
+	const socket::addr& get_local_endpoint() const noexcept;
 private:
-	sock::addr addr_;
-	std::unique_ptr<sock::native::basic_native_sync_listener> listener_;
+	socket::addr addr_;
+	std::unique_ptr<socket::native::basic_native_sync_listener> listener_;
 };
 
 }

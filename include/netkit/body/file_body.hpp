@@ -29,7 +29,7 @@ namespace netkit::body {
 			}
 
 			file_.read(buffer, static_cast<std::streamsize>(max_bytes));
-			std::size_t n = static_cast<std::size_t>(file_.gcount());
+			auto n = static_cast<std::size_t>(file_.gcount());
 
 			if (n > 0) {
 				return { read_status::ok, n };

@@ -128,7 +128,7 @@
 
 #endif
 
-netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, resolve_method method) :
+netkit::socket::addr::addr(const std::string& hostname, int port, addr_type t, resolve_method method) :
     hostname(hostname), port(port), type(t) {
 
 #ifdef NETKIT_DKP
@@ -162,9 +162,9 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, res
 		network::ip_list ip_list;
 
 #if defined(NETKIT_DNS) && !defined(NETKIT_DKP)
-    	if (method == netkit::sock::resolve_method::os) {
+    	if (method == netkit::socket::resolve_method::os) {
     		ip_list = get_a_aaaa_from_hostname(h);
-    	} else if (method == netkit::sock::resolve_method::netkit) {
+    	} else if (method == netkit::socket::resolve_method::netkit) {
     		ip_list = netkit_get_a_aaaa_from_hostname(h, false);
     	} else {
     		ip_list = netkit_get_a_aaaa_from_hostname(h, true);
@@ -197,7 +197,7 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, res
     	}
     } else if (type == addr_type::hostname_ipv4) {
         ip = resolve_host(hostname, false);
-        type = netkit::sock::addr_type::ipv4;
+        type = netkit::socket::addr_type::ipv4;
 #else
 	if (type == addr_type::hostname || type == addr_type::hostname_ipv4) {
 		netkit::network::ip_list result;
@@ -228,7 +228,7 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, res
 #ifndef NETKIT_DKP
     } else if (type == addr_type::hostname_ipv6) {
         ip = resolve_host(hostname, true);
-        type = netkit::sock::addr_type::ipv6;
+        type = netkit::socket::addr_type::ipv6;
 #endif
     } else if (type == addr_type::ipv4 || type == addr_type::ipv6) {
         ip = hostname;
@@ -252,24 +252,24 @@ netkit::sock::addr::addr(const std::string& hostname, int port, addr_type t, res
 }
 
 #ifndef NETKIT_DKP
-netkit::sock::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {
+netkit::socket::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {
 	prep_sa();
 }
 #endif
 
-bool netkit::sock::addr::is_ipv4() const noexcept {
+bool netkit::socket::addr::is_ipv4() const noexcept {
     return type == addr_type::ipv4;
 }
 
-bool netkit::sock::addr::is_ipv6() const noexcept {
+bool netkit::socket::addr::is_ipv6() const noexcept {
     return type == addr_type::ipv6;
 }
 
-bool netkit::sock::addr::is_file_path() const noexcept {
+bool netkit::socket::addr::is_file_path() const noexcept {
     return type == addr_type::filename;
 }
 
-std::string netkit::sock::addr::get_ip() const {
+std::string netkit::socket::addr::get_ip() const {
     if (type == addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get IP from a file path");
     }
@@ -277,14 +277,14 @@ std::string netkit::sock::addr::get_ip() const {
     return this->ip;
 }
 
-[[nodiscard]] std::filesystem::path netkit::sock::addr::get_path() const {
+[[nodiscard]] std::filesystem::path netkit::socket::addr::get_path() const {
     if (type != addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get path from an IP address or hostname");
     }
     return this->path;
 }
 
-std::string netkit::sock::addr::get_hostname() const {
+std::string netkit::socket::addr::get_hostname() const {
     if (hostname.empty()) {
         throw parsing_error("hostname is empty, use get_ip() instead");
     }
@@ -294,7 +294,7 @@ std::string netkit::sock::addr::get_hostname() const {
     return hostname;
 }
 
-int netkit::sock::addr::get_port() const {
+int netkit::socket::addr::get_port() const {
     if (type == addr_type::filename) {
         throw parsing_error("sock_addr(): cannot get port from a file path");
     }
@@ -302,15 +302,15 @@ int netkit::sock::addr::get_port() const {
     return port;
 }
 
-netkit::sock::addr_type netkit::sock::addr::get_type() const {
+netkit::socket::addr_type netkit::socket::addr::get_type() const {
 	return type;
 }
 
-const sockaddr* netkit::sock::addr::get_sa() const noexcept {
+const sockaddr* netkit::socket::addr::get_sa() const noexcept {
 	return reinterpret_cast<const sockaddr*>(&sa_storage_);
 }
 
-netkit::sock::sockaddr_len netkit::sock::addr::get_sa_len() const noexcept {
+netkit::socket::sockaddr_len netkit::socket::addr::get_sa_len() const noexcept {
 	if (this->is_ipv4()) return sizeof(sockaddr_in);
 	if (this->is_ipv6()) return sizeof(sockaddr_in6);
 #ifndef NETKIT_DKP
@@ -323,7 +323,7 @@ netkit::sock::sockaddr_len netkit::sock::addr::get_sa_len() const noexcept {
 	return 0;
 }
 
-void netkit::sock::addr::prep_sa() {
+void netkit::socket::addr::prep_sa() {
 	memset(&sa_storage_, 0, sizeof(sa_storage_));
 
 	if (this->is_ipv4()) {
@@ -370,7 +370,7 @@ void netkit::sock::addr::prep_sa() {
 	}
 }
 
-netkit::sock::addr::addr(const sockaddr* sa, sockaddr_len len) {
+netkit::socket::addr::addr(const sockaddr* sa, sockaddr_len len) {
 	switch (sa->sa_family) {
 	case AF_INET: {
 		auto* sa4 = reinterpret_cast<const sockaddr_in*>(sa);

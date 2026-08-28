@@ -17,7 +17,7 @@
 #include <netkit/platform/socket.hpp>
 #endif
 
-netkit::sock::addr netkit::sock::native::get_peer(fd_t sockfd) {
+netkit::socket::addr netkit::socket::native::get_peer(fd_t sockfd) {
 #ifdef NETKIT_DKP
 	if (auto peer = netkit::platform::take_cached_peer(sockfd)) {
 		return std::move(*peer);
@@ -47,10 +47,10 @@ netkit::sock::addr netkit::sock::native::get_peer(fd_t sockfd) {
 		throw netkit::ip_error("unsupported address family");
 	}
 
-	return netkit::sock::addr{
+	return netkit::socket::addr{
 		ip_str,
 		port,
-		(addr_storage.ss_family == AF_INET) ? sock::addr_type::ipv4 : sock::addr_type::ipv6
+		(addr_storage.ss_family == AF_INET) ? socket::addr_type::ipv4 : socket::addr_type::ipv6
 	};
 #endif
 }

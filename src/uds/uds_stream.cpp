@@ -22,7 +22,7 @@ void netkit::uds::uds_stream::close() noexcept {
 	stream_.close();
 }
 
-netkit::sock::addr netkit::uds::uds_stream::peer() const {
+netkit::socket::addr netkit::uds::uds_stream::peer() const {
 	return stream_.peer();
 }
 

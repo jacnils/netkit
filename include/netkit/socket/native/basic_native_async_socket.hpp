@@ -16,15 +16,15 @@
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
-namespace netkit::sock::native {
+namespace netkit::socket::native {
 	/**
 	* @brief A class that represents an asynchronous socket.
 	* @note This class is an abstract base class and should not be instantiated directly.
 	* @note Use the async_sock class instead.
 	*/
-    class NETKIT_API basic_native_async_sock {
+    class NETKIT_API basic_native_async_socket {
     public:
-        virtual ~basic_native_async_sock() = default;
+        virtual ~basic_native_async_socket() = default;
         virtual netkit::io::task<void> connect() = 0;
     	virtual netkit::io::task<std::size_t> send(const void* buf, std::size_t len) = 0;
     	[[nodiscard]] virtual netkit::io::task<std::size_t> recv(void* buf, std::size_t len) = 0;

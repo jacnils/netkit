@@ -68,7 +68,6 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/socket/native/native_sync_socket.cpp
         src/dns/cache.cpp
         src/http/predefined.cpp
-        src/http/sync_client.cpp
         src/crypto/windows/certs.cpp
         src/body/stream_body.cpp
         src/http/multipart.cpp

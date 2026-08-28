@@ -65,7 +65,7 @@ void netkit::stream::socket_stream::close() noexcept {
 	}
 }
 
-netkit::sock::addr netkit::stream::socket_stream::peer() const {
+netkit::socket::addr netkit::stream::socket_stream::peer() const {
 	if (!socket_)
 		throw std::logic_error("socket closed");
 

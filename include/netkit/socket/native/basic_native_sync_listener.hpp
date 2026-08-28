@@ -1,12 +1,12 @@
 #pragma once
 
-#include <netkit/socket/native/basic_native_sync_sock.hpp>
+#include <netkit/socket/native/basic_native_sync_socket.hpp>
 
 #include <memory>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
-namespace netkit::sock::native {
+namespace netkit::socket::native {
     class NETKIT_API basic_native_sync_listener {
     public:
         virtual ~basic_native_sync_listener() = default;
@@ -18,7 +18,7 @@ namespace netkit::sock::native {
         virtual void listen(int backlog) = 0;
         virtual void listen() = 0;
 
-        [[nodiscard]] virtual std::unique_ptr<basic_native_sync_sock> accept() = 0;
+        [[nodiscard]] virtual std::unique_ptr<basic_native_sync_socket> accept() = 0;
 
         [[nodiscard]] virtual const addr& get_local_endpoint() const {
 	        throw std::logic_error{"socket does not have an addr object"};

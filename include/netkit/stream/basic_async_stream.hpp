@@ -94,7 +94,7 @@ public:
 
 	virtual void close() noexcept = 0;
 
-	virtual std::optional<sock::addr> get_addr() {
+	virtual std::optional<socket::addr> get_addr() {
 		return {};
 	}
 };

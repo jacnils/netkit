@@ -22,12 +22,12 @@
 #include <sys/socket.h>
 #endif
 
-#include <netkit/socket/native/basic_native_sync_sock.hpp>
+#include <netkit/socket/native/basic_native_sync_socket.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
-namespace netkit::sock::native {
-    class NETKIT_API native_sync_sock : public basic_native_sync_sock {
+namespace netkit::socket::native {
+    class NETKIT_API native_sync_socket : public basic_native_sync_socket {
         addr addr_;
         type type_{};
         fd_t sockfd{};
@@ -41,7 +41,7 @@ namespace netkit::sock::native {
          * @param t The socket type (tcp, udp, unix).
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
-        native_sync_sock(const sock::addr& addr, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
+        native_sync_socket(const socket::addr& addr, socket::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
         /**
          * @brief Constructs a sync_sock object from an existing file descriptor.
          * @param existing_fd The existing file descriptor.
@@ -49,10 +49,10 @@ namespace netkit::sock::native {
          * @param t The socket type (tcp, udp, unix).
          * @param opts The socket options (reuse_addr, no_reuse_addr).
          */
-        native_sync_sock(fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
-        ~native_sync_sock() override;
-        sock::addr& get_addr() override;
-        [[nodiscard]] const sock::addr& get_addr() const override;
+        native_sync_socket(fd_t existing_fd, const socket::addr& peer, socket::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::blocking);
+        ~native_sync_socket() override;
+        socket::addr& get_addr() override;
+        [[nodiscard]] const socket::addr& get_addr() const override;
     	void connect() override;
         /**
          * @brief Send data to the server.

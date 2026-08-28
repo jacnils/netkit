@@ -4,8 +4,8 @@
 
 #ifndef NETKIT_DKP
 
-netkit::uds::async_uds_server::async_uds_server(io::io_context& ctx, netkit::sock::addr addr)
-	: addr_(std::move(addr)), listener_(std::make_unique<sock::native::native_async_listener>(ctx, addr_, sock::type::uds)) {}
+netkit::uds::async_uds_server::async_uds_server(io::io_context& ctx, netkit::socket::addr addr)
+	: addr_(std::move(addr)), listener_(std::make_unique<socket::native::native_async_listener>(ctx, addr_, socket::type::uds)) {}
 
 netkit::uds::async_uds_server::~async_uds_server() {
 	this->close();
@@ -34,7 +34,7 @@ void netkit::uds::async_uds_server::close() noexcept {
 		listener_->close();
 }
 
-const netkit::sock::addr& netkit::uds::async_uds_server::get_local_endpoint() const noexcept {
+const netkit::socket::addr& netkit::uds::async_uds_server::get_local_endpoint() const noexcept {
 	return listener_->get_local_endpoint();
 }
 

@@ -34,7 +34,7 @@ handle_client(netkit::io::io_context& ctx, std::unique_ptr<netkit::tcp::async_tc
 
 netkit::io::task<>
 request(netkit::io::io_context& ctx) {
-	netkit::sock::addr addr{"localhost", 1337, netkit::sock::addr_type::hostname};
+	netkit::socket::addr addr{"localhost", 1337, netkit::socket::addr_type::hostname};
 
 	netkit::tcp::async_tcp_server server{ctx, addr};
 

@@ -15,15 +15,15 @@
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
-namespace netkit::sock::native {
+namespace netkit::socket::native {
 	/**
 	* @brief A class that represents a synchronous socket.
 	* @note This class is an abstract base class and should not be instantiated directly.
 	* @note Use the sync_sock class instead.
 	*/
-    class NETKIT_API basic_native_sync_sock {
+    class NETKIT_API basic_native_sync_socket {
     public:
-        virtual ~basic_native_sync_sock() = default;
+        virtual ~basic_native_sync_socket() = default;
     	virtual void connect() = 0;
         virtual std::size_t send(const void* buf, std::size_t len) = 0;
         [[nodiscard]] virtual std::size_t recv(void* buf, std::size_t len) = 0;

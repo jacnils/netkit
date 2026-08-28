@@ -15,7 +15,7 @@ class async_uds_server {
 public:
 	async_uds_server(
 		io::io_context& ctx,
-		sock::addr addr
+		socket::addr addr
 	);
 
 	~async_uds_server();
@@ -29,10 +29,10 @@ public:
 
 	void close() noexcept;
 
-	[[nodiscard]] const sock::addr& get_local_endpoint() const noexcept;
+	[[nodiscard]] const socket::addr& get_local_endpoint() const noexcept;
 private:
-	sock::addr addr_;
-	std::unique_ptr<sock::native::basic_native_async_listener> listener_;
+	socket::addr addr_;
+	std::unique_ptr<socket::native::basic_native_async_listener> listener_;
 };
 
 }

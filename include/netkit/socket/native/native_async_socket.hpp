@@ -14,7 +14,7 @@
 #include <netkit/definitions.hpp>
 
 #include <memory>
-#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_socket.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
@@ -24,8 +24,8 @@
 #include <ws2tcpip.h>
 #endif
 
-namespace netkit::sock::native {
-    class NETKIT_API native_async_sock : public basic_native_async_sock {
+namespace netkit::socket::native {
+    class NETKIT_API native_async_socket : public basic_native_async_socket {
         addr addr_;
         type type_{};
         fd_t sockfd{};
@@ -34,11 +34,11 @@ namespace netkit::sock::native {
 
 		io::io_context& context_;
     public:
-        native_async_sock(io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
-        native_async_sock(io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
-    	~native_async_sock() override;
-        sock::addr& get_addr() override;
-        [[nodiscard]] const sock::addr& get_addr() const override;
+        native_async_socket(io::io_context& ctx, const socket::addr& addr, socket::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
+        native_async_socket(io::io_context& ctx, fd_t existing_fd, const socket::addr& peer, socket::type t, opt opts = opt::reuse_addr|opt::no_delay|opt::no_blocking);
+    	~native_async_socket() override;
+        socket::addr& get_addr() override;
+        [[nodiscard]] const socket::addr& get_addr() const override;
         netkit::io::task<void> connect() override;
 
     	void bind() override;
@@ -48,9 +48,9 @@ namespace netkit::sock::native {
         netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
     	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;
         void close() noexcept override;
-        [[nodiscard]] sock::addr get_peer() const override;
+        [[nodiscard]] socket::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
-		netkit::io::task<std::pair<std::size_t, netkit::sock::addr>> recvfrom(void*	buf, size_t size) override;
+		netkit::io::task<std::pair<std::size_t, netkit::socket::addr>> recvfrom(void*	buf, size_t size) override;
 		netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) override;
 
 		void set_sock_opts(opt opts) override;

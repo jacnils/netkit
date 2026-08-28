@@ -24,7 +24,7 @@ void netkit::uds::async_uds_stream::close() noexcept {
 	stream_.close();
 }
 
-netkit::sock::addr netkit::uds::async_uds_stream::peer() const {
+netkit::socket::addr netkit::uds::async_uds_stream::peer() const {
 	return stream_.peer();
 }
 

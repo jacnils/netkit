@@ -17,8 +17,8 @@ public:
 	using basic_stream::write;
 	using basic_stream::read;
 
-	uds_stream(const sock::addr& addr) : stream_(std::make_unique<sock::native::native_sync_sock>(addr, sock::type::uds)) {}
-	uds_stream(std::unique_ptr<sock::native::basic_native_sync_sock> socket) : stream_(std::move(socket)) {}
+	uds_stream(const socket::addr& addr) : stream_(std::make_unique<socket::native::native_sync_socket>(addr, socket::type::uds)) {}
+	uds_stream(std::unique_ptr<socket::native::basic_native_sync_socket> socket) : stream_(std::move(socket)) {}
 
 	~uds_stream() override;
 
@@ -29,8 +29,8 @@ public:
 
 	void close() noexcept override;
 
-	[[nodiscard]] sock::addr peer() const;
-	std::optional<sock::addr> get_addr() override {
+	[[nodiscard]] socket::addr peer() const;
+	std::optional<socket::addr> get_addr() override {
 		return stream_.get_addr();
 	}
 

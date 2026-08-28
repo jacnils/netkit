@@ -47,7 +47,7 @@ namespace netkit::http::server {
                 throw parsing_error("invalid port");
             }
 
-            sock::addr addr = {"localhost", settings.port, netkit::sock::addr_type::hostname};
+            socket::addr addr = {"localhost", settings.port, netkit::socket::addr_type::hostname};
             this->sock = std::make_unique<tcp::async_tcp_server>(ctx, addr);
 
             try {

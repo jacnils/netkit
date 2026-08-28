@@ -40,7 +40,7 @@ int main() {
 	}
 #endif
 
-	netkit::sock::addr addr{"google.com", 443, netkit::sock::addr_type::hostname};
+	netkit::socket::addr addr{"google.com", 443, netkit::socket::addr_type::hostname};
 	std::unique_ptr<netkit::tcp::tcp_stream> connector_ = std::make_unique<netkit::tcp::tcp_stream>(addr);
 
 	connector_->connect();

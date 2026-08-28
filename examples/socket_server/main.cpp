@@ -5,10 +5,10 @@
 #include <netkit/tcp/tcp_server.hpp>
 
 [[noreturn]] int main() {
-	netkit::sock::addr addr{
+	netkit::socket::addr addr{
 		"0.0.0.0", // or simply "localhost"
 		1337,
-		netkit::sock::addr_type::ipv4
+		netkit::socket::addr_type::ipv4
 	};
 
 	netkit::tcp::tcp_server server{addr};

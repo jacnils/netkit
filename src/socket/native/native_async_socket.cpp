@@ -11,7 +11,7 @@
  *  @brief Implementation of the asynchronous socket class.
  */
 
-#include <netkit/socket/native/native_async_sock.hpp>
+#include <netkit/socket/native/native_async_socket.hpp>
 #include <chrono>
 #include <netkit/except.hpp>
 
@@ -29,11 +29,11 @@
 #include <ws2tcpip.h>
 #endif
 
-void netkit::sock::native::native_async_sock::set_sock_opts(opt opts) {
+void netkit::socket::native::native_async_socket::set_sock_opts(opt opts) {
 	platform::set_sock_opts(this->sockfd, opts);
 }
 
-netkit::sock::native::native_async_sock::native_async_sock(netkit::io::io_context& ctx, const sock::addr& addr, sock::type t, opt opts)
+netkit::socket::native::native_async_socket::native_async_socket(netkit::io::io_context& ctx, const socket::addr& addr, socket::type t, opt opts)
 	: addr_(addr), type_(t), context_(ctx) {
 
 	if (!addr.is_file_path()) {
@@ -56,33 +56,33 @@ netkit::sock::native::native_async_sock::native_async_sock(netkit::io::io_contex
 		throw socket_error{"failed to create socket"};
 	}
 
-    this->native_async_sock::set_sock_opts(opts);
+    this->native_async_socket::set_sock_opts(opts);
 }
 
-netkit::sock::native::native_async_sock::native_async_sock(netkit::io::io_context& ctx, fd_t existing_fd, const sock::addr& peer, sock::type t, opt opts)
+netkit::socket::native::native_async_socket::native_async_socket(netkit::io::io_context& ctx, fd_t existing_fd, const socket::addr& peer, socket::type t, opt opts)
     : addr_(peer), type_(t), sockfd(existing_fd), context_(ctx) {
 
 	if (!platform::valid_socket(sockfd)) {
 		throw socket_error{"invalid fd"};
 	}
 
-	this->native_async_sock::set_sock_opts(opts);
+	this->native_async_socket::set_sock_opts(opts);
 }
 
-netkit::sock::native::native_async_sock::~native_async_sock() {
-	this->native_async_sock::close();
+netkit::socket::native::native_async_socket::~native_async_socket() {
+	this->native_async_socket::close();
 }
 
-netkit::sock::addr& netkit::sock::native::native_async_sock::get_addr() {
+netkit::socket::addr& netkit::socket::native::native_async_socket::get_addr() {
     return this->addr_;
 }
 
-const netkit::sock::addr& netkit::sock::native::native_async_sock::get_addr() const {
+const netkit::socket::addr& netkit::socket::native::native_async_socket::get_addr() const {
     return this->addr_;
 }
 
 netkit::io::task<void>
-netkit::sock::native::native_async_sock::connect() {
+netkit::socket::native::native_async_socket::connect() {
 	int ret = platform::connect(this->sockfd, addr_.get_sa(), addr_.get_sa_len());
 
 	if (ret == 0) {
@@ -110,7 +110,7 @@ netkit::sock::native::native_async_sock::connect() {
 	co_return;
 }
 
-netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::send(const void* buf, size_t len) {
+netkit::io::task<std::size_t> netkit::socket::native::native_async_socket::send(const void* buf, size_t len) {
 	size_t total_sent = 0;
 	const char* data = static_cast<const char*>(buf);
 
@@ -149,7 +149,7 @@ netkit::io::task<std::size_t> netkit::sock::native::native_async_sock::send(cons
 }
 
 netkit::io::task<std::size_t>
-netkit::sock::native::native_async_sock::recv(void* buf, size_t size) {
+netkit::socket::native::native_async_socket::recv(void* buf, size_t size) {
 	for (;;) {
 		auto n = platform::recv(this->sockfd, static_cast<char*>(buf), size, 0);
 
@@ -176,7 +176,7 @@ netkit::sock::native::native_async_sock::recv(void* buf, size_t size) {
 	}
 }
 
-void netkit::sock::native::native_async_sock::close() noexcept {
+void netkit::socket::native::native_async_socket::close() noexcept {
 	if (platform::valid_socket(this->sockfd)) {
 		platform::close_socket(this->sockfd);
 		this->sockfd = platform::invalid_socket;
@@ -184,16 +184,16 @@ void netkit::sock::native::native_async_sock::close() noexcept {
 	}
 }
 
-[[nodiscard]] netkit::sock::addr netkit::sock::native::native_async_sock::get_peer() const {
+[[nodiscard]] netkit::socket::addr netkit::socket::native::native_async_socket::get_peer() const {
     return native::get_peer(this->sockfd);
 }
 
-netkit::sock::fd_t netkit::sock::native::native_async_sock::native_handle() const {
+netkit::socket::fd_t netkit::socket::native::native_async_socket::native_handle() const {
 	return this->sockfd;
 }
 
-netkit::io::task<std::pair<std::size_t, netkit::sock::addr>>
-netkit::sock::native::native_async_sock::recvfrom(void* buf, size_t size) {
+netkit::io::task<std::pair<std::size_t, netkit::socket::addr>>
+netkit::socket::native::native_async_socket::recvfrom(void* buf, size_t size) {
 	for (;;) {
 		sockaddr_storage sa{};
 		socklen_t sa_len = sizeof(sa);
@@ -234,7 +234,7 @@ netkit::sock::native::native_async_sock::recvfrom(void* buf, size_t size) {
 }
 
 netkit::io::task<std::size_t>
-netkit::sock::native::native_async_sock::sendto(const void* buf, std::size_t len, const addr& dest) {
+netkit::socket::native::native_async_socket::sendto(const void* buf, std::size_t len, const addr& dest) {
 	while (true) {
 		co_await context_.wait_writable(sockfd);
 
@@ -260,7 +260,7 @@ netkit::sock::native::native_async_sock::sendto(const void* buf, std::size_t len
 	}
 }
 
-void netkit::sock::native::native_async_sock::bind() {
+void netkit::socket::native::native_async_socket::bind() {
 	if (platform::bind(sockfd, addr_.get_sa(), addr_.get_sa_len()) < 0) {
 		throw socket_error("bind failed");
 	}
@@ -268,7 +268,7 @@ void netkit::sock::native::native_async_sock::bind() {
 	bound = true;
 }
 
-void netkit::sock::native::native_async_sock::bind(const addr& addr) {
+void netkit::socket::native::native_async_socket::bind(const addr& addr) {
 	if (bound) {
 		throw socket_error{"bind failed"};
 	}
@@ -281,6 +281,6 @@ void netkit::sock::native::native_async_sock::bind(const addr& addr) {
 	bound = true;
 }
 
-void netkit::sock::native::native_async_sock::unbind() noexcept {
+void netkit::socket::native::native_async_socket::unbind() noexcept {
 	this->close();
 }

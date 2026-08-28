@@ -3,7 +3,7 @@
 #include <cstring>
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_async_listener.hpp>
-#include <netkit/socket/native/native_async_sock.hpp>
+#include <netkit/socket/native/native_async_socket.hpp>
 #include <netkit/socket/native/peer_helper.hpp>
 
 #ifdef NETKIT_WINDOWS
@@ -22,11 +22,11 @@
 #include <network.h>
 #endif
 
-void netkit::sock::native::native_async_listener::set_sock_opts(opt opts) const {
+void netkit::socket::native::native_async_listener::set_sock_opts(opt opts) const {
 	platform::set_sock_opts(this->sockfd_, opts);
 }
 
-netkit::sock::native::native_async_listener::native_async_listener(io::io_context& ctx, const addr& address, type t, opt opts) : context_(ctx), addr_(address), type_(t), opts_(opts) {
+netkit::socket::native::native_async_listener::native_async_listener(io::io_context& ctx, const addr& address, type t, opt opts) : context_(ctx), addr_(address), type_(t), opts_(opts) {
 #ifndef NETKIT_DKP
 	if (this->type_ == type::uds) {
 		sockfd_ = platform::socket(AF_UNIX, SOCK_STREAM, 0);
@@ -43,11 +43,11 @@ netkit::sock::native::native_async_listener::native_async_listener(io::io_contex
 	set_sock_opts(opts_);
 }
 
-netkit::sock::native::native_async_listener::~native_async_listener() {
+netkit::socket::native::native_async_listener::~native_async_listener() {
 	this->native_async_listener::close();
 }
 
-void netkit::sock::native::native_async_listener::bind() {
+void netkit::socket::native::native_async_listener::bind() {
 	if (platform::bind(sockfd_, addr_.get_sa(), addr_.get_sa_len()) < 0) {
 		throw socket_error("bind failed");
 	}
@@ -55,7 +55,7 @@ void netkit::sock::native::native_async_listener::bind() {
 	bound_ = true;
 }
 
-void netkit::sock::native::native_async_listener::bind(const addr& addr) {
+void netkit::socket::native::native_async_listener::bind(const addr& addr) {
 	if (bound_) {
 		throw socket_error{"bind failed"};
 	}
@@ -68,11 +68,11 @@ void netkit::sock::native::native_async_listener::bind(const addr& addr) {
 	bound_ = true;
 }
 
-void netkit::sock::native::native_async_listener::unbind() {
+void netkit::socket::native::native_async_listener::unbind() {
 	this->close();
 }
 
-void netkit::sock::native::native_async_listener::listen(int backlog) {
+void netkit::socket::native::native_async_listener::listen(int backlog) {
 	if (!bound_) throw socket_error("listener not bound");
 
 	if (platform::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
@@ -82,12 +82,12 @@ void netkit::sock::native::native_async_listener::listen(int backlog) {
 	listening_ = true;
 }
 
-void netkit::sock::native::native_async_listener::listen() {
+void netkit::socket::native::native_async_listener::listen() {
 	this->listen(-1);
 }
 
-netkit::io::task<std::unique_ptr<netkit::sock::native::basic_native_async_sock>>
-netkit::sock::native::native_async_listener::accept() {
+netkit::io::task<std::unique_ptr<netkit::socket::native::basic_native_async_socket>>
+netkit::socket::native::native_async_listener::accept() {
 	while (true) {
 		sockaddr_storage client_addr{};
 		socklen_t addr_len = sizeof(client_addr);
@@ -101,10 +101,10 @@ netkit::sock::native::native_async_listener::accept() {
 		if (platform::valid_socket(client_sockfd)) {
 #ifndef NETKIT_DKP
 			if (this->type_ == type::uds) {
-				co_return std::make_unique<native_async_sock>(
+				co_return std::make_unique<native_async_socket>(
 					this->context_,
 					client_sockfd,
-					sock::addr(
+					socket::addr(
 						reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path
 					),
 					this->type_
@@ -112,9 +112,9 @@ netkit::sock::native::native_async_listener::accept() {
 			}
 #endif
 
-			auto peer = sock::native::get_peer(client_sockfd);
+			auto peer = socket::native::get_peer(client_sockfd);
 
-			co_return std::make_unique<native_async_sock>(
+			co_return std::make_unique<native_async_socket>(
 				this->context_,
 				client_sockfd,
 				peer,
@@ -131,18 +131,18 @@ netkit::sock::native::native_async_listener::accept() {
 	}
 }
 
-void netkit::sock::native::native_async_listener::close() noexcept {
+void netkit::socket::native::native_async_listener::close() noexcept {
 	if (platform::valid_socket(sockfd_)) {
 		platform::close_socket(sockfd_);
 		this->bound_ = this->listening_ = false;
 	}
 }
 
-netkit::sock::fd_t netkit::sock::native::native_async_listener::native_handle() const {
+netkit::socket::fd_t netkit::socket::native::native_async_listener::native_handle() const {
 	return sockfd_;
 }
 
-const netkit::sock::addr& netkit::sock::native::native_async_listener::get_local_endpoint() const {
+const netkit::socket::addr& netkit::socket::native::native_async_listener::get_local_endpoint() const {
 	return addr_;
 }
 

@@ -26,6 +26,14 @@ namespace netkit::body {
 			return std::nullopt;
 		}
 
+		[[nodiscard]] bool empty() const {
+			auto sz = size();
+			if (sz.has_value()) {
+				return sz.value() == 0;
+			}
+			return false;
+		}
+
 		virtual bool rewind() {
 			return false;
 		}

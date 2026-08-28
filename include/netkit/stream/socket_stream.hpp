@@ -1,7 +1,7 @@
 #pragma once
 
 #include <netkit/stream/basic_stream.hpp>
-#include <netkit/socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/native_sync_socket.hpp>
 
 namespace netkit::stream {
 
@@ -10,7 +10,7 @@ public:
 	using basic_stream::write;
 	using basic_stream::read;
 
-	explicit socket_stream(std::unique_ptr<sock::native::basic_native_sync_sock> socket)
+	explicit socket_stream(std::unique_ptr<socket::native::basic_native_sync_socket> socket)
 	: socket_(std::move(socket)) {}
 
 	void connect();
@@ -20,13 +20,13 @@ public:
 
 	void close() noexcept override;
 
-	[[nodiscard]] sock::addr peer() const;
+	[[nodiscard]] socket::addr peer() const;
 
-	std::optional<sock::addr> get_addr() override {
+	std::optional<socket::addr> get_addr() override {
 		return socket_->get_addr();
 	}
 private:
-	std::unique_ptr<sock::native::basic_native_sync_sock> socket_;
+	std::unique_ptr<socket::native::basic_native_sync_socket> socket_;
 };
 
 }

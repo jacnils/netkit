@@ -4,7 +4,7 @@
 
 #include <memory>
 #include <netkit/io/task.hpp>
-#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_socket.hpp>
 
 namespace netkit::udp {
 
@@ -12,7 +12,7 @@ class async_udp_datagram : public datagram::basic_async_datagram {
 public:
 	async_udp_datagram(
 		io::io_context& ctx,
-		sock::addr addr
+		socket::addr addr
 	);
 
 	void bind() const;
@@ -20,10 +20,10 @@ public:
 	io::task<std::size_t>
 	send_to(
 		std::span<const std::byte> buffer,
-		const sock::addr& dest
+		const socket::addr& dest
 	);
 
-	io::task<std::pair<std::size_t, sock::addr>>
+	io::task<std::pair<std::size_t, socket::addr>>
 	recv_from(
 		std::span<std::byte> buffer
 	);
@@ -31,8 +31,8 @@ public:
 	void close() noexcept;
 
 private:
-	sock::addr addr_;
-	std::unique_ptr<sock::native::basic_native_async_sock> sock_;
+	socket::addr addr_;
+	std::unique_ptr<socket::native::basic_native_async_socket> sock_;
 };
 
 }

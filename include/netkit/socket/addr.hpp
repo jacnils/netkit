@@ -26,7 +26,7 @@
 #include <network.h>
 #endif
 
-namespace netkit::sock {
+namespace netkit::socket {
 	using sockaddr_len = int;
 
 	enum class resolve_method {

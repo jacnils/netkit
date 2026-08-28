@@ -1,6 +1,6 @@
 #pragma once
 
-#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_socket.hpp>
 #include <netkit/stream/basic_async_stream.hpp>
 #include <netkit/socket/addr.hpp>
 #include <memory>
@@ -12,7 +12,7 @@ public:
 	using basic_async_stream::write;
 	using basic_async_stream::read;
 
-	explicit async_socket_stream(std::unique_ptr<sock::native::basic_native_async_sock> socket) : socket_(std::move(socket)) {}
+	explicit async_socket_stream(std::unique_ptr<socket::native::basic_native_async_socket> socket) : socket_(std::move(socket)) {}
 
 	[[nodiscard]] io::task<> connect() const;
 	[[nodiscard]] io::task<stream_result> read(std::span<std::byte> buffer) override;
@@ -20,13 +20,13 @@ public:
 
 	void close() noexcept override;
 
-	[[nodiscard]] sock::addr peer() const;
+	[[nodiscard]] socket::addr peer() const;
 
-	std::optional<sock::addr> get_addr() override {
+	std::optional<socket::addr> get_addr() override {
 		return socket_->get_addr();
 	}
 private:
-	std::unique_ptr<sock::native::basic_native_async_sock> socket_;
+	std::unique_ptr<socket::native::basic_native_async_socket> socket_;
 };
 
 }

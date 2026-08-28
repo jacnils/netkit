@@ -4,7 +4,7 @@
 #include <memory>
 #include <netkit/except.hpp>
 #include <netkit/socket/native/native_sync_listener.hpp>
-#include <netkit/socket/native/native_sync_sock.hpp>
+#include <netkit/socket/native/native_sync_socket.hpp>
 #include <netkit/socket/native/peer_helper.hpp>
 
 #if defined(NETKIT_UNIX) && !defined(NETKIT_DKP)
@@ -20,11 +20,11 @@
 // nothing
 #endif
 
-void netkit::sock::native::native_sync_listener::set_sock_opts(opt opts) const {
+void netkit::socket::native::native_sync_listener::set_sock_opts(opt opts) const {
 	netkit::platform::set_sock_opts(this->sockfd_, opts);
 }
 
-netkit::sock::native::native_sync_listener::native_sync_listener(const addr& address, type t, opt opts)
+netkit::socket::native::native_sync_listener::native_sync_listener(const addr& address, type t, opt opts)
 : addr_(address), type_(t), opts_(opts) {
 #ifndef NETKIT_DKP
 	if (this->type_ == type::uds) {
@@ -42,7 +42,7 @@ netkit::sock::native::native_sync_listener::native_sync_listener(const addr& add
 	set_sock_opts(opts_);
 }
 
-void netkit::sock::native::native_sync_listener::bind() {
+void netkit::socket::native::native_sync_listener::bind() {
 	if (platform::bind(sockfd_, addr_.get_sa(), addr_.get_sa_len()) < 0) {
 		throw socket_error("bind failed: " + platform::last_error_message());
 	}
@@ -50,11 +50,11 @@ void netkit::sock::native::native_sync_listener::bind() {
 	bound_ = true;
 }
 
-void netkit::sock::native::native_sync_listener::unbind() {
+void netkit::socket::native::native_sync_listener::unbind() {
 	this->close();
 }
 
-void netkit::sock::native::native_sync_listener::bind(const addr& addr) {
+void netkit::socket::native::native_sync_listener::bind(const addr& addr) {
 	if (bound_) {
 		throw socket_error{"bind failed"};
 	}
@@ -67,7 +67,7 @@ void netkit::sock::native::native_sync_listener::bind(const addr& addr) {
 	bound_ = true;
 }
 
-void netkit::sock::native::native_sync_listener::listen(int backlog) {
+void netkit::socket::native::native_sync_listener::listen(int backlog) {
 	if (!bound_) throw socket_error("listener not bound");
 
 	if (platform::listen(this->sockfd_, backlog == -1 ? SOMAXCONN : backlog) < 0) {
@@ -77,12 +77,12 @@ void netkit::sock::native::native_sync_listener::listen(int backlog) {
 	listening_ = true;
 }
 
-void netkit::sock::native::native_sync_listener::listen() {
+void netkit::socket::native::native_sync_listener::listen() {
 	this->listen(-1);
 }
 
-std::unique_ptr<netkit::sock::native::basic_native_sync_sock>
-netkit::sock::native::native_sync_listener::accept() {
+std::unique_ptr<netkit::socket::native::basic_native_sync_socket>
+netkit::socket::native::native_sync_listener::accept() {
 	sockaddr_storage client_addr{};
 	socklen_t addr_len = sizeof(client_addr);
 
@@ -93,26 +93,26 @@ netkit::sock::native::native_sync_listener::accept() {
 
 #ifndef NETKIT_DKP
 	if (this->type_ == type::uds) {
-		return std::make_unique<native_sync_sock>(client_sockfd, sock::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
+		return std::make_unique<native_sync_socket>(client_sockfd, socket::addr(reinterpret_cast<const sockaddr_un*>(&client_addr)->sun_path), this->type_);
 	}
 #endif
 
 	auto peer = native::get_peer(client_sockfd);
-	return std::make_unique<native_sync_sock>(client_sockfd, peer, this->type_);
+	return std::make_unique<native_sync_socket>(client_sockfd, peer, this->type_);
 }
 
-void netkit::sock::native::native_sync_listener::close() noexcept {
+void netkit::socket::native::native_sync_listener::close() noexcept {
 	if (platform::valid_socket(sockfd_)) {
 		platform::close_socket(sockfd_);
 		this->bound_ = this->listening_ = false;
 	}
 }
 
-netkit::sock::fd_t netkit::sock::native::native_sync_listener::native_handle() const{
+netkit::socket::fd_t netkit::socket::native::native_sync_listener::native_handle() const{
 	return sockfd_;
 }
 
-const netkit::sock::addr& netkit::sock::native::native_sync_listener::get_local_endpoint() const {
+const netkit::socket::addr& netkit::socket::native::native_sync_listener::get_local_endpoint() const {
 	return addr_;
 }
 

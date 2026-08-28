@@ -18,7 +18,7 @@
 #include <winsock2.h>
 #endif
 
-namespace netkit::sock {
+namespace netkit::socket {
     /**
      * @brief Socket file descriptor type.
      * @note This is a typedef for int, but can be changed to a different type if needed.

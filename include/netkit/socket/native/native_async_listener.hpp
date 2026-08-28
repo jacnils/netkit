@@ -13,9 +13,9 @@
 #include <netkit/io/io_context.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/socket/native/basic_native_async_listener.hpp>
-#include <netkit/socket/native/basic_native_async_sock.hpp>
+#include <netkit/socket/native/basic_native_async_socket.hpp>
 
-namespace netkit::sock::native {
+namespace netkit::socket::native {
 
 class NETKIT_API native_async_listener  : public basic_native_async_listener {
 public:
@@ -29,7 +29,7 @@ public:
 	void listen(int backlog) override;
 	void listen() override;
 
-	[[nodiscard]] io::task<std::unique_ptr<basic_native_async_sock>> accept() override;
+	[[nodiscard]] io::task<std::unique_ptr<basic_native_async_socket>> accept() override;
 
 	void close() noexcept override;
 
