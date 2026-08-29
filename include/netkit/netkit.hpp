@@ -60,6 +60,8 @@
 #include <netkit/http/sync_server.hpp>
 #include <netkit/http/basic_async_server.hpp>
 #include <netkit/http/async_server.hpp>
+#include <netkit/http/client.hpp>
+#include <netkit/http/header.hpp>
 
 // bodies
 #include <netkit/body/basic_body.hpp>
