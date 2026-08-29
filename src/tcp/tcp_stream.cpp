@@ -20,6 +20,10 @@ void netkit::tcp::tcp_stream::close() noexcept {
 	stream_.close();
 }
 
+bool netkit::tcp::tcp_stream::is_open() const noexcept {
+	return stream_.is_open();
+}
+
 netkit::socket::addr netkit::tcp::tcp_stream::peer() const {
 	return stream_.peer();
 }

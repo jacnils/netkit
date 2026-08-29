@@ -8,13 +8,16 @@
 #include <iostream>
 #endif
 
+#ifdef NETKIT_WINDOWS
 #include <netkit/crypto/windows/certs.hpp>
+#endif
 #include <netkit/crypto/fallback_ca.hpp>
 #include <netkit/stream/wolfssl/tls_stream.hpp>
+#include <utility>
 
 netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, version ver,
-	verification verif, const std::string& ca_cert, const std::string& sni)
-: stream_(std::move(stream)), version_(ver), verification_(verif), ca_cert_(ca_cert) {
+	verification verif, std::string ca_cert, const std::string& sni)
+: stream_(std::move(stream)), version_(ver), verification_(verif), ca_cert_(std::move(ca_cert)) {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
 		wolfSSL_Init();
@@ -222,6 +225,13 @@ void netkit::stream::tls_stream::close() noexcept {
 		wolfSSL_shutdown(ssl_);
 
 	stream_->close();
+}
+
+bool netkit::stream::tls_stream::is_open() const noexcept {
+	if (stream_)
+		return stream_->is_open();
+
+	return false;
 }
 
 netkit::stream::tls_stream::~tls_stream() {

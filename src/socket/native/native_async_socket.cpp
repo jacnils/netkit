@@ -284,3 +284,7 @@ void netkit::socket::native::native_async_socket::bind(const addr& addr) {
 void netkit::socket::native::native_async_socket::unbind() noexcept {
 	this->close();
 }
+
+bool netkit::socket::native::native_async_socket::is_open() const noexcept {
+	return platform::valid_socket(this->sockfd);
+}

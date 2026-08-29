@@ -10,6 +10,8 @@
 #include <cstddef>
 #include <optional>
 
+#include "netkit/body/basic_body.hpp"
+
 namespace netkit::stream {
 
 class basic_stream {
@@ -102,6 +104,8 @@ public:
 	}
 
 	virtual void close() noexcept = 0;
+
+	[[nodiscard]] virtual bool is_open() const noexcept = 0;
 
 	virtual std::optional<socket::addr> get_addr() {
 		return {};

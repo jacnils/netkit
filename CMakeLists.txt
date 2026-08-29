@@ -30,7 +30,8 @@ endif()
 
 # we can only have static builds with devkitpro
 if (NETKIT_DKP)
-    set(NETKIT_LIB_TYPE STATIC)
+    set(NETKIT_LIB_TYPE STATIC
+            include/netkit/http/client.hpp)
 endif()
 
 # for gcc

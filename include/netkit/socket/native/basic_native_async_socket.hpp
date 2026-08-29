@@ -31,6 +31,7 @@ namespace netkit::socket::native {
     	virtual netkit::io::task<std::pair<std::size_t, addr>> recvfrom(void* buf, std::size_t len) = 0;
     	virtual netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) = 0;
     	virtual void close() noexcept = 0;
+    	[[nodiscard]] virtual bool is_open() const noexcept = 0;
 
     	virtual void bind() = 0;
     	virtual void bind(const addr& addr) = 0;

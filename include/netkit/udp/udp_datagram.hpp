@@ -9,8 +9,7 @@ namespace netkit::udp {
 
 class udp_datagram : public datagram::basic_datagram {
 public:
-	explicit udp_datagram(socket::addr addr);
-	udp_datagram();
+	explicit udp_datagram(const socket::addr& addr);
 
 	void bind() const;
 
@@ -20,6 +19,7 @@ public:
 
 	void close() noexcept override;
 
+	[[nodiscard]] bool is_open() const noexcept override;
 private:
 	socket::addr addr_;
 	std::unique_ptr<socket::native::basic_native_sync_socket> sock_;

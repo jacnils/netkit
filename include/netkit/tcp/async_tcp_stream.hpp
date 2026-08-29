@@ -14,6 +14,7 @@ class NETKIT_API async_tcp_stream : public stream::basic_async_stream {
 public:
 	using basic_async_stream::write;
 	using basic_async_stream::read;
+
 	async_tcp_stream(io::io_context& ctx, const socket::addr& addr) : stream_(std::make_unique<socket::native::native_async_socket>(ctx, addr, socket::type::tcp)) {}
 	async_tcp_stream(std::unique_ptr<socket::native::basic_native_async_socket> socket) : stream_(std::move(socket)) {}
 	~async_tcp_stream() override;
@@ -23,6 +24,9 @@ public:
 	netkit::io::task<stream::stream_result> write(std::span<const std::byte> buffer) override;
 
 	void close() noexcept override;
+
+	[[nodiscard]] bool is_open() const noexcept override;
+
 	[[nodiscard]] socket::addr peer() const;
 
 	stream::async_socket_stream& stream();

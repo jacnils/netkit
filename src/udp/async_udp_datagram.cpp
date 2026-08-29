@@ -1,7 +1,7 @@
 #include <netkit/socket/native/native_async_socket.hpp>
 #include <netkit/udp/async_udp_datagram.hpp>
 
-netkit::udp::async_udp_datagram::async_udp_datagram(netkit::io::io_context& ctx, socket::addr addr)
+netkit::udp::async_udp_datagram::async_udp_datagram(netkit::io::io_context& ctx, const socket::addr& addr)
 : addr_(addr), sock_(std::make_unique<socket::native::native_async_socket>(ctx, addr, socket::type::udp))
 {}
 
@@ -27,4 +27,11 @@ netkit::udp::async_udp_datagram::recv_from(std::span<std::byte> buffer) {
 
 void netkit::udp::async_udp_datagram::close() noexcept {
 	sock_->close();
+}
+
+bool netkit::udp::async_udp_datagram::is_open() const noexcept {
+	if (sock_)
+		return sock_->is_open();
+
+	return false;
 }

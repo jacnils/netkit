@@ -31,6 +31,16 @@ void netkit::stream::async_socket_stream::close() noexcept {
 	}
 }
 
+bool netkit::stream::async_socket_stream::is_open() const noexcept {
+	if (socket_)
+		return socket_->is_open();
+
+	return false;
+}
+
 netkit::socket::addr netkit::stream::async_socket_stream::peer() const {
-	return socket_->get_peer();
+	if (socket_)
+		return socket_->get_peer();
+
+	throw std::runtime_error{"peer(): socket_ not initialized"};
 }

@@ -20,6 +20,8 @@ public:
 
 	void close() noexcept override;
 
+	[[nodiscard]] bool is_open() const noexcept override;
+
 	[[nodiscard]] socket::addr peer() const;
 
 	std::optional<socket::addr> get_addr() override {

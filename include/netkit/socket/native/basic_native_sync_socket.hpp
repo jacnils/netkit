@@ -32,6 +32,7 @@ namespace netkit::socket::native {
     	virtual void bind() = 0;
     	virtual void bind(const addr& addr) = 0;
     	virtual void unbind() noexcept = 0;
+    	[[nodiscard]] virtual bool is_open() const noexcept = 0;
         virtual addr& get_addr() {
 	        throw std::logic_error{"socket does not have an addr object"};
         }

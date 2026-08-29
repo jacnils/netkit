@@ -61,6 +61,10 @@ public:
 		closed_ = true;
 	}
 
+	[[nodiscard]] bool is_open() const noexcept override {
+		return !closed_;
+	}
+
 	[[nodiscard]] std::span<const std::byte> data() const noexcept {
 		return buffer_;
 	}

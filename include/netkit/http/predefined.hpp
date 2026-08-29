@@ -31,7 +31,15 @@ namespace netkit::http {
      */
     enum class method {
         GET,
+        HEAD,
         POST,
+        PUT,
+        DELETE,
+        CONNECT,
+        OPTIONS,
+        TRACE,
+        PATCH,
+        undefined,
     };
 
     /**

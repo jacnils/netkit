@@ -15,7 +15,7 @@ public:
 
 	explicit tls_stream(std::unique_ptr<tcp::tcp_stream> stream,
 		version ver = version::TLS_1_2, verification verif = verification::peer,
-		const std::string& ca_cert = {}, const std::string& sni = {});
+		std::string  ca_cert = {}, const std::string& sni = {});
 
 	~tls_stream() override;
 
@@ -25,6 +25,8 @@ public:
 	netkit::stream::stream_result write(std::span<const std::byte> buffer) override;
 
 	void close() noexcept override;
+
+	[[nodiscard]] bool is_open() const noexcept override;
 
 private:
 	std::unique_ptr<tcp::tcp_stream> stream_;

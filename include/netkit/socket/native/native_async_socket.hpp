@@ -44,6 +44,7 @@ namespace netkit::socket::native {
     	void bind() override;
     	void bind(const addr& addr) override;
     	void unbind() noexcept override;
+    	[[nodiscard]] bool is_open() const noexcept override;
 
         netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
     	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;

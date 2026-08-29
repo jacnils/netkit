@@ -25,6 +25,8 @@ public:
 	netkit::io::task<stream::stream_result> write(std::span<const std::byte> buffer) override;
 
 	void close() noexcept override;
+
+	[[nodiscard]] bool is_open() const noexcept override;
 	[[nodiscard]] socket::addr peer() const;
 
 	stream::async_socket_stream& stream();

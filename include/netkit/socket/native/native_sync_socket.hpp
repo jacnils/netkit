@@ -69,6 +69,8 @@ namespace netkit::socket::native {
     	void bind(const addr& addr) override;
     	void unbind() noexcept override;
 
+    	[[nodiscard]] bool is_open() const noexcept override;
+
         /**
          * @brief Close the socket.
          */

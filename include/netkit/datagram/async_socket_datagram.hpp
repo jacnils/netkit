@@ -25,8 +25,12 @@ public:
 		sock_->close();
 	}
 
-	platform::socket_t native_handle() const noexcept {
+	[[nodiscard]] platform::socket_t native_handle() const noexcept {
 		return sock_->native_handle();
+	}
+
+	[[nodiscard]] bool is_open() const noexcept override {
+		return sock_->is_open();
 	}
 
 private:

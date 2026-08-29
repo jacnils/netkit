@@ -15,6 +15,7 @@ public:
 	virtual std::pair<std::size_t, socket::addr> recv_from(std::span<std::byte> buffer) = 0;
 
 	virtual void close() noexcept = 0;
+	[[nodiscard]] virtual bool is_open() const noexcept = 0;
 };
 
 }
