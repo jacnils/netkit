@@ -8,12 +8,13 @@
 #include <iostream>
 #endif
 
-#ifdef NETKIT_WINDOWS
-#include <netkit/crypto/windows/certs.hpp>
-#endif
 #include <netkit/crypto/fallback_ca.hpp>
 #include <netkit/stream/wolfssl/tls_stream.hpp>
 #include <utility>
+
+#ifdef NETKIT_WINDOWS
+#include <netkit/crypto/windows/certs.hpp>
+#endif
 
 netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, version ver,
 	verification verif, std::string ca_cert, const std::string& sni)
