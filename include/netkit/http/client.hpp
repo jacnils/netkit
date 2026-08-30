@@ -67,33 +67,6 @@ namespace netkit::http {
             }
         }
 
-        static std::string get_method_string(method method) {
-            std::stringstream ss;
-            switch (method) {
-            case method::GET:
-                ss << "GET"; break;
-            case method::HEAD:
-                ss << "HEAD"; break;
-            case method::POST:
-                ss << "POST"; break;
-            case method::PUT:
-                ss << "PUT"; break;
-            case method::DELETE:
-                ss << "DELETE"; break;
-            case method::CONNECT:
-                ss << "CONNECT"; break;
-            case method::OPTIONS:
-                ss << "OPTIONS"; break;
-            case method::TRACE:
-                ss << "TRACE"; break;
-            case method::PATCH:
-                ss << "PATCH"; break;
-            case method::undefined:
-                throw std::logic_error("undefined method");
-            }
-            return ss.str();
-        }
-
         void set_headers(netkit::http::headers& h, const std::unique_ptr<body::basic_body>& body) const {
             try {
                 if (addr.get_port() != 80 && addr.get_port() != 443)

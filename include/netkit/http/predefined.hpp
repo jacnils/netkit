@@ -143,4 +143,11 @@ namespace netkit::http {
         std::string path;
         std::string version;
     };
+
+    /**
+     * @brief Get the string representation for an HTTP method enum
+     * @param method Input method
+     * @return std::string representation
+     */
+    NETKIT_API std::string get_method_string(netkit::http::method method);
 }
