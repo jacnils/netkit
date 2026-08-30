@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <optional>
 
-#include "netkit/body/basic_body.hpp"
+#include <netkit/body/basic_body.hpp>
 
 namespace netkit::stream {
 
@@ -59,6 +59,35 @@ public:
 
 	stream_result write_all(const void* data, std::size_t size) {
 		return write_all(std::span(static_cast<const std::byte*>(data), size));
+	}
+
+	stream_result write_all(body::basic_body& body) {
+		char buf[4096];
+		size_t bytes_read = 0;
+
+		while (true) {
+			auto res = body.read(buf, sizeof(buf));
+
+			if (res.get_status() == body::read_status::error)
+				return {bytes_read, stream_status::error};
+
+			if (res.get_bytes_read() > 0) {
+				auto write_res = this->write_all(buf, res.get_bytes_read());
+
+				if (write_res.status != stream_status::success)
+					return {bytes_read, write_res.status};
+
+				bytes_read += res.get_bytes_read();
+			}
+
+			if (res.get_status() == body::read_status::eof)
+				break;
+		}
+
+		return {
+			bytes_read,
+			stream_status::success
+		};
 	}
 
 	std::vector<std::byte> read_all(std::size_t max_bytes = 16 * 1024 * 1024) {

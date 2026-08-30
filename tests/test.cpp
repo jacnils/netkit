@@ -4,8 +4,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch_test_macros.hpp>
 #include <set>
-#include <unordered_set>
-#include <thread>
 
 TEST_CASE("Ensure addr works", "[sock_addr]") {
 	netkit::socket::addr addr("google.com", 443, netkit::socket::addr_type::hostname);
@@ -139,6 +137,27 @@ std::vector<std::byte> to_bytes(const std::string& s) {
 
 auto make_stream(const std::string& str) {
 	return netkit::stream::memory_stream{to_bytes(str)};
+}
+
+TEST_CASE("Writing to a stream from a body") {
+	auto stream = make_stream("");
+
+	netkit::body::buffer_body body("test string");
+
+	stream.write_all(body);
+
+	auto string = stream.read_all_string();
+
+	REQUIRE(string == "test string");
+
+	body.set("test string 2");
+
+	REQUIRE(stream.read_all_string() != "test string 2");
+
+	stream.write_all(body);
+
+	REQUIRE(stream.read_all_string() == "test string 2");
+	REQUIRE(stream.read_all_string().empty());
 }
 
 TEST_CASE("Chunked body decoding", "[chunked]") {

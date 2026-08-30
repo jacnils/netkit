@@ -14,6 +14,7 @@
 #include <netkit/body/chunked_body.hpp>
 #include <netkit/except.hpp>
 #include <netkit/http/header.hpp>
+#include <netkit/stream/utility.hpp>
 
 #ifdef NETKIT_SSL
 #include <netkit/tcp/tcp_stream.hpp>
@@ -44,39 +45,6 @@ namespace netkit::http {
             std::string content_type = "application/octet-stream";
             bool close = false;
         } settings;
-
-        static std::pair<std::string, std::string> read_until(
-            const std::unique_ptr<stream::basic_stream>& client_sock,
-            const std::string& delimiter)
-        {
-            std::pair<std::string, std::string> ret;
-            char buffer[4096];
-
-            while (true) {
-                const auto [bytes, status] =
-                    client_sock->read(buffer, sizeof(buffer));
-
-                if (status == stream::stream_status::error) {
-                    throw socket_error{"error occurred"};
-                }
-
-                ret.second.append(buffer, bytes);
-
-                const auto pos = ret.second.find(delimiter);
-
-                if (pos != std::string::npos) {
-                    ret.first = ret.second.substr(0, pos);
-                    ret.second = ret.second.substr(pos + delimiter.size());
-                    break;
-                }
-
-                if (status == stream::stream_status::eof) {
-                    break;
-                }
-            }
-
-            return ret;
-        }
 
         void connect() {
             if (!stream || !stream->is_open()) {
@@ -194,33 +162,10 @@ namespace netkit::http {
             stream->write_all(ss.str());
 
             if (body && !body->empty()) {
-                char buf[4096];
-                size_t bytes_read = 0;
-
-                while (bytes_read < body->size()) {
-                    const size_t remaining = *body->size() - bytes_read;
-                    const size_t to_read = std::min(sizeof(buf), remaining);
-
-                    auto res = stream->read(buf, to_read);
-
-                    if (res.status != stream::stream_status::success &&
-                        res.status != stream::stream_status::eof) {
-                        throw std::logic_error("cannot read from stream");
-                        }
-
-                    if (res.bytes == 0)
-                        break;
-
-                    stream->write_all(buf, res.bytes);
-                    bytes_read += res.bytes;
-                }
-
-                if (bytes_read != body->size()) {
-                    throw std::logic_error("unexpected end of stream");
-                }
+                stream->write_all(*body);
             }
 
-            auto [header_data, overflow] = read_until(stream, "\r\n\r\n");
+            auto [header_data, overflow] = netkit::stream::read_until(*stream, "\r\n\r\n");
 
             const auto line_end = header_data.find_first_of("\r\n");
 
@@ -238,9 +183,12 @@ namespace netkit::http {
             };
 
             response resp;
+
             resp.headers = parse_headers(headers_data.data());
             resp.status_code = parse_status_code(status_line);
 
+            // TODO: parse transfer-encoding properly
+            // TODO 2: gzip_body
             if (resp.headers.contains("transfer-encoding") && resp.headers.value("transfer-encoding") == "chunked") {
                 resp.body = std::make_unique<netkit::body::chunked_body>(*stream, std::move(overflow));
             } else if (resp.headers.contains("content-length")) {
@@ -249,6 +197,8 @@ namespace netkit::http {
                 if (content_length > 0) {
                     resp.body = std::make_unique<netkit::body::stream_body>(*stream, content_length, std::move(overflow));
                 }
+            } else {
+                resp.body = std::make_unique<netkit::body::stream_body>(*stream, std::nullopt, std::move(overflow));
             }
 
             return resp;

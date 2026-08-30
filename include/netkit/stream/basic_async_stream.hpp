@@ -4,6 +4,8 @@
 #include <netkit/io/task.hpp>
 #include <netkit/socket/addr.hpp>
 
+#include <netkit/body/basic_async_body.hpp>
+
 #include <span>
 #include <stdexcept>
 #include <vector>
@@ -53,6 +55,39 @@ public:
 
 	io::task<stream_result> write_all(std::string_view data) {
 		co_return co_await this->write_all(std::as_bytes(std::span(data.data(), data.size())));
+	}
+
+	io::task<stream_result> write_all(const void* data, std::size_t size) {
+		co_return co_await write_all(std::span(static_cast<const std::byte*>(data), size));
+	}
+
+	io::task<stream_result> write_all(body::basic_async_body& body) {
+		char buf[4096];
+		size_t bytes_read = 0;
+
+		while (true) {
+			auto res = co_await body.read(buf, sizeof(buf));
+
+			if (res.get_status() == body::read_status::error)
+				co_return stream_result{bytes_read, stream_status::error};
+
+			if (res.get_bytes_read() > 0) {
+				auto write_res = co_await this->write_all(buf, res.get_bytes_read());
+
+				if (write_res.status != stream_status::success)
+					co_return stream_result{bytes_read, write_res.status};
+
+				bytes_read += res.get_bytes_read();
+			}
+
+			if (res.get_status() == body::read_status::eof)
+				break;
+		}
+
+		co_return stream_result{
+			bytes_read,
+			stream_status::success
+		};
 	}
 
 	io::task<std::vector<std::byte>> read_all(std::size_t max_bytes = 16 * 1024 * 1024) {

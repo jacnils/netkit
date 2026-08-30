@@ -27,6 +27,7 @@
 #include <netkit/body/async_stream_body.hpp>
 #include <netkit/body/async_chunked_body.hpp>
 #include <netkit/body/chunked_body.hpp>
+#include <netkit/stream/utility.hpp>
 
 namespace netkit::http::server {
     template <typename S = server_settings>
@@ -173,63 +174,6 @@ namespace netkit::http::server {
     		}
     		return line;
     	}
-
-        static std::pair<std::string, std::string> read_until(const std::unique_ptr<tcp::tcp_stream>& client_sock, const std::string& delimiter) {
-        	std::pair<std::string, std::string> ret;
-        	char buffer[4096];
-
-        	while (true) {
-        		const auto [bytes, status] = client_sock->read(buffer, sizeof(buffer));
-
-        		if (status == stream::stream_status::error) {
-        			throw socket_error{"error occurred"};
-        		}
-
-        		ret.second.append(buffer, bytes);
-
-        	    auto pos = ret.second.find(delimiter);
-
-        	    if (pos != std::string::npos) {
-        	        ret.first = ret.second.substr(pos + delimiter.size());
-        	        ret.second = ret.second.substr(0, pos);
-        	        break;
-        	    }
-
-        		if (status == stream::stream_status::eof) {
-        			break;
-        		}
-        	}
-
-        	return ret;
-        }
-        netkit::io::task<std::pair<std::string, std::string>>
-        read_until(const std::unique_ptr<tcp::async_tcp_stream>& client_sock, const std::string& delimiter) const {
-    	    std::pair<std::string, std::string> ret;
-    	    char buffer[4096];
-
-    	    while (true) {
-    	        const auto [bytes, status] = co_await client_sock->read(buffer, sizeof(buffer));
-
-    	        if (status == stream::stream_status::error) {
-    	            throw socket_error{"error occurred"};
-    	        }
-
-    	        ret.second.append(buffer, bytes);
-
-    	        auto pos = ret.second.find(delimiter);
-    	        if (pos != std::string::npos) {
-    	            ret.first = ret.second.substr(pos + delimiter.size());
-    	            ret.second = ret.second.substr(0, pos);
-    	            break;
-    	        }
-
-    	        if (status == stream::stream_status::eof) {
-    	            break;
-    	        }
-    	    }
-
-    	    co_return ret;
-    	}
     public:
         netkit::io::task<void>
         handle(std::unique_ptr<tcp::async_tcp_stream> client_sock, server_settings& settings, const async_request_callback& callback) const override {
@@ -248,7 +192,7 @@ namespace netkit::http::server {
                 }
 
                 async_request req{};
-                auto [overflow, headers] = co_await read_until(client_sock, "\r\n\r\n");
+                auto [headers, overflow] = co_await stream::read_until(*client_sock, "\r\n\r\n");
                 if (headers.empty()) {
                     co_return;
                 }
@@ -568,7 +512,7 @@ namespace netkit::http::server {
                 }
 
                 request req{};
-                auto [overflow, headers] = read_until(client_sock, "\r\n\r\n");
+                auto [headers, overflow] = netkit::stream::read_until(*client_sock, "\r\n\r\n");
                 if (headers.empty()) {
                     return;
                 }
