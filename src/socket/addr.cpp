@@ -223,7 +223,7 @@ netkit::socket::addr::addr(const std::string& hostname, int port, addr_type t, r
 		}
 
 		ip = result.get_ipv4();
-		type = netkit::sock::addr_type::ipv4;
+		type = netkit::socket::addr_type::ipv4;
 #endif
 #ifndef NETKIT_DKP
     } else if (type == addr_type::hostname_ipv6) {
