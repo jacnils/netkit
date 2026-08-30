@@ -192,6 +192,10 @@ netkit::socket::fd_t netkit::socket::native::native_async_socket::native_handle(
 	return this->sockfd;
 }
 
+netkit::io::io_context& netkit::socket::native::native_async_socket::native_io_context() {
+	return this->context_;
+}
+
 netkit::io::task<std::pair<std::size_t, netkit::socket::addr>>
 netkit::socket::native::native_async_socket::recvfrom(void* buf, size_t size) {
 	for (;;) {

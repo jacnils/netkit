@@ -52,5 +52,8 @@ namespace netkit::socket::native {
     	[[nodiscard]] virtual fd_t native_handle() const {
     		throw std::logic_error{"socket does not have a native handle"};
     	}
+    	[[nodiscard]] virtual io::io_context& native_io_context() {
+    		throw std::logic_error{"socket does not have an io context"};
+    	}
     };
 }

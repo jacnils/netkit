@@ -2,28 +2,26 @@
 
 #include <algorithm>
 #include <string>
-#include <vector>
 
 #include <netkit/http/predefined.hpp>
-#include <netkit/body/basic_body.hpp>
 #include <netkit/socket/addr.hpp>
-#include <netkit/stream/basic_stream.hpp>
 
-#include <netkit/stream/wolfssl/tls_stream.hpp>
-#include <netkit/body/stream_body.hpp>
-#include <netkit/body/chunked_body.hpp>
+#include <netkit/stream/wolfssl/async_tls_stream.hpp>
 #include <netkit/http/header.hpp>
 #include <netkit/stream/utility.hpp>
+#include <netkit/body/async_chunked_body.hpp>
+#include <netkit/body/async_stream_body.hpp>
 
 #ifdef NETKIT_SSL
-#include <netkit/tcp/tcp_stream.hpp>
+#include <netkit/tcp/async_tcp_stream.hpp>
 #endif
 
 namespace netkit::http {
-    class client {
+    class async_client {
         socket::addr addr;
+        netkit::io::io_context& ctx;
         scheme scheme_;
-        std::unique_ptr<stream::basic_stream> stream;
+        std::unique_ptr<stream::basic_async_stream> stream;
 
         struct settings {
             std::string user_agent = "netkit/0.1";
@@ -32,25 +30,32 @@ namespace netkit::http {
             bool close = false;
         } settings;
 
-        void connect() {
-            if (!stream || !stream->is_open()) {
+        netkit::io::task<void> connect() {
+            if (stream && stream->is_open())
+                co_return;
+
+            auto sockstream =
+                std::make_unique<tcp::async_tcp_stream>(ctx, addr);
+
+            co_await sockstream->connect();
+
 #ifdef NETKIT_SSL
-                if (scheme_ == scheme::https) {
-                    auto sockstream = std::make_unique<tcp::tcp_stream>(addr);
-                    sockstream->connect();
+            if (scheme_ == scheme::https) {
+                auto tls =
+                    std::make_unique<stream::async_tls_stream>(
+                        std::move(sockstream),
+                        stream::version::TLS_1_3,
+                        stream::verification::none
+                    );
 
-                    auto tls_sockstream = std::make_unique<stream::tls_stream>(std::move(sockstream));
-                    tls_sockstream->perform_handshake();
+                co_await tls->perform_handshake();
 
-                    stream = std::move(tls_sockstream);
-
-                    return;
-                }
-#endif
-                auto sockstream = std::make_unique<tcp::tcp_stream>(addr);
-                sockstream->connect();
-                stream = std::move(sockstream);
+                stream = std::move(tls);
+                co_return;
             }
+#endif
+
+            stream = std::move(sockstream);
         }
 
         void set_headers(netkit::http::headers& h, std::optional<size_t> size = std::nullopt) const {
@@ -83,7 +88,7 @@ namespace netkit::http {
             }
         }
     public:
-        explicit client(const socket::addr& addr, const scheme scheme) : addr(addr), scheme_(scheme) {}
+        explicit async_client(netkit::io::io_context& ctx, const socket::addr& addr, const scheme scheme) : addr(addr), ctx(ctx), scheme_(scheme) {}
 
         void set_user_agent(const std::string& user_agent) {
             settings.user_agent = user_agent;
@@ -101,7 +106,7 @@ namespace netkit::http {
             settings.close = close;
         }
 
-        response request(const std::string& method, const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
+        netkit::io::task<async_response> request(const std::string& method, const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
             std::stringstream ss;
 
             ss << method;
@@ -126,20 +131,20 @@ namespace netkit::http {
 
             ss << "\r\n";
 
-            this->connect();
+            co_await this->connect();
 
-            stream->write_all(ss.str());
+            co_await stream->write_all(ss.str());
 
             if (body && !body->empty()) {
-                stream->write_all(*body);
+                co_await stream->write_all(*body);
             }
 
-            auto [header_data, overflow] = netkit::stream::read_until(*stream, "\r\n\r\n");
+            auto [header_data, overflow] = co_await netkit::stream::read_until(*stream, "\r\n\r\n");
 
             const auto line_end = header_data.find_first_of("\r\n");
 
             if (line_end == std::string::npos)
-                throw std::logic_error{"invalid HTTP response"};
+                throw std::logic_error{"invalid HTTP async_response"};
 
             const auto status_line = std::string_view{
                 header_data.data(),
@@ -151,7 +156,8 @@ namespace netkit::http {
                 header_data.size() - line_end - 2
             };
 
-            response resp;
+
+            async_response resp;
 
             resp.headers = parse_headers(headers_data.data());
             resp.status_code = parse_status_code(status_line);
@@ -159,38 +165,38 @@ namespace netkit::http {
             // TODO: parse transfer-encoding properly
             // TODO 2: gzip_body
             if (resp.headers.contains("transfer-encoding") && resp.headers.value("transfer-encoding") == "chunked") {
-                resp.body = std::make_unique<netkit::body::chunked_body>(*stream, std::move(overflow));
+                resp.body = std::make_unique<netkit::body::async_chunked_body>(*stream, std::move(overflow));
             } else if (resp.headers.contains("content-length")) {
                 const auto content_length = std::stoull(resp.headers.value("content-length"));
 
                 if (content_length > 0) {
-                    resp.body = std::make_unique<netkit::body::stream_body>(*stream, content_length, std::move(overflow));
+                    resp.body = std::make_unique<netkit::body::async_stream_body>(*stream, content_length, std::move(overflow));
                 }
             } else {
-                resp.body = std::make_unique<netkit::body::stream_body>(*stream, std::nullopt, std::move(overflow));
+                resp.body = std::make_unique<netkit::body::async_stream_body>(*stream, std::nullopt, std::move(overflow));
             }
 
-            return resp;
+            co_return resp;
         }
 
-        response request(method method, const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(get_method_string(method), path, body, headers);
+        io::task<async_response> request(method method, const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
+            co_return co_await request(get_method_string(method), path, body, headers);
         }
 
-        response get(const std::string& path, const headers& headers = {}) {
-            return request(method::GET, path, nullptr, headers);
+        io::task<async_response> get(const std::string& path, const headers& headers = {}) {
+            co_return co_await request(method::GET, path, nullptr, headers);
         }
 
-        response post(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::POST, path, body, headers);
+        io::task<async_response> post(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
+            co_return co_await request(method::POST, path, body, headers);
         }
 
-        response put(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::PUT, path, body, headers);
+        io::task<async_response> put(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
+            co_return co_await request(method::PUT, path, body, headers);
         }
 
-        response patch(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::PATCH, path, body, headers);
+        io::task<async_response> patch(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
+            co_return co_await request(method::PATCH, path, body, headers);
         }
     };
 }

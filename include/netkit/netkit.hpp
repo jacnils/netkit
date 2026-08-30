@@ -60,6 +60,7 @@
 #include <netkit/http/async_server.hpp>
 #include <netkit/http/client.hpp>
 #include <netkit/http/header.hpp>
+#include <netkit/http/async_client.hpp>
 
 // bodies
 #include <netkit/body/basic_body.hpp>
@@ -101,6 +102,8 @@
 #include <netkit/stream/tls_stream.hpp>
 #include <netkit/stream/tls_stream_enum.hpp>
 #include <netkit/stream/utility.hpp>
+#include <netkit/stream/wolfssl/async_tls_stream.hpp>
+#include <netkit/stream/async_tls_stream.hpp>
 
 // tcp
 #include <netkit/tcp/async_tcp_server.hpp>

@@ -27,6 +27,14 @@ public:
 	std::optional<socket::addr> get_addr() override {
 		return socket_->get_addr();
 	}
+
+	netkit::socket::fd_t native_handle() const {
+		return socket_->native_handle();
+	}
+
+	netkit::io::io_context& native_io_context() {
+		return socket_->native_io_context();
+	}
 private:
 	std::unique_ptr<socket::native::basic_native_async_socket> socket_;
 };

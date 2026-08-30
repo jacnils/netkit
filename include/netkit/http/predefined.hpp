@@ -15,8 +15,11 @@
 #include <array>
 #include <string>
 #include <string_view>
+#include <memory>
 
 #include <netkit/export.hpp>
+#include <netkit/http/header.hpp>
+#include <netkit/body/basic_body.hpp>
 
 namespace netkit::http {
     /**
@@ -40,6 +43,25 @@ namespace netkit::http {
         TRACE,
         PATCH,
         undefined,
+    };
+
+    struct response {
+        int status_code{};
+        netkit::http::headers headers;
+        std::unique_ptr<body::basic_body> body;
+    };
+
+    struct async_response {
+        int status_code{};
+        netkit::http::headers headers;
+        std::unique_ptr<body::basic_async_body> body;
+    };
+
+    enum class scheme {
+#ifdef NETKIT_SSL
+        https,
+#endif
+        http
     };
 
     /**

@@ -104,6 +104,7 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/body/chunked_body.cpp
         src/io/timeout.cpp
         src/stream/utility.cpp
+        src/stream/wolfssl/async_tls_stream.cpp
 )
 
 add_library(netkit::netkit ALIAS netkit)
