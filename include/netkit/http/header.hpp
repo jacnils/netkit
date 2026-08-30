@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <charconv>
 
 namespace netkit::http {
     class header_name {
