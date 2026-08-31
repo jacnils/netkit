@@ -2,6 +2,10 @@
 #include <fstream>
 #include <string>
 #include <netkit/netkit.hpp>
+#ifdef NETKIT_DKP
+#include <ogc/system.h>
+#include <gccore.h>
+#endif
 
 netkit::io::task<>
 request(netkit::io::io_context& ctx) {
@@ -42,24 +46,40 @@ request(netkit::io::io_context& ctx) {
 
 	sock.close();
 
-	std::ofstream file("response.txt");
-
-	if (!file)
-		throw std::runtime_error("failed to open file");
-
-	file << response;
-
-	std::cout << "Response written to response.txt\n";
+	std::cout << response;
 }
 
 int main() {
+#ifdef NETKIT_DKP
+	VIDEO_Init();
+	WII_Initialize();
+
+	const auto rmode = VIDEO_GetPreferredMode(nullptr);
+	const auto xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+
+	VIDEO_Configure(rmode);
+	VIDEO_SetNextFramebuffer(xfb);
+	VIDEO_SetBlack(FALSE);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+
+	if (rmode->viTVMode&VI_NON_INTERLACE) {
+		VIDEO_WaitVSync();
+	}
+#endif
+
 	netkit::io::io_context ctx;
 
-	ctx.spawn(netkit::io::timeout(request(ctx), std::chrono::seconds(5), []() {
-		std::cerr << "Request timeout.\n";
-		std::exit(EXIT_FAILURE);
-	}));
+	//ctx.spawn(netkit::io::timeout(request(ctx), std::chrono::seconds(5), []() {
+	//	std::cerr << "Request timeout.\n";
+	//	std::exit(EXIT_FAILURE);
+	//}));
+	ctx.spawn(request(ctx));
 	ctx.run_until_idle();
+
+	while (true) {}
 
 	return 0;
 }
