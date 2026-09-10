@@ -81,9 +81,9 @@ public:
 			return handle_.done();
 		}
 
-		void await_suspend(std::coroutine_handle<> caller) {
+		std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) noexcept {
 			handle_.promise().continuation = caller;
-			handle_.resume();
+			return handle_;
 		}
 
 		auto await_resume() {
