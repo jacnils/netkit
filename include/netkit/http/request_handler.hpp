@@ -183,7 +183,17 @@ namespace netkit::http::server {
 
             bool close = false;
 
+			// fix for potential stack overflow when you're compiling with no compiler optimizations
+			// only seems to happen on windows?
+			// TODO: move to server_settings?
+            constexpr std::size_t MAX_REQUESTS_PER_CONNECTION = 100;
+            std::size_t requests_served = 0;
+
             while (!close) {
+                if (++requests_served >= MAX_REQUESTS_PER_CONNECTION) {
+                    close = true;
+                }
+
                 if (settings.read_from_session_file == nullptr) {
                     settings.read_from_session_file = default_read_from_session_file;
                 }
