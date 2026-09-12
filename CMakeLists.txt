@@ -168,6 +168,10 @@ if (NETKIT_ENABLE_WOLFSSL)
                 GIT_TAG v5.9.2-stable
         )
 
+        set_target_properties(wolfssl PROPERTIES
+                POSITION_INDEPENDENT_CODE ON
+        )
+
         FetchContent_MakeAvailable(wolfssl)
 
         set(WOLFSSL_TARGET wolfssl)
