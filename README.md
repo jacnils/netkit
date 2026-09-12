@@ -34,8 +34,16 @@ netkit's CMakeLists.txt offers multiple options:
 - NETKIT_ENABLE_TESTS: Enable Catch2 tests for the main C++ library
 - NETKIT_ENABLE_WINDOWS_CERTSTORE: Enable getting CA certificates from the Windows store
 - NETKIT_ENABLE_FALLBACK_CA: Enable fallback hardcoded CA certificate (required for DevkitPro with TLS enabled)
-- NETKIT_WOLFSSL_DEBUG: Enable debugging for WolfSSL and netkit WolfSSL functions
-- NETKIT_BUILD_SHARED: Build a shared library version of netkit (If disabled, netkit will be static)
+- NETKIT_ENABLE_EPOLL: Enable epoll io_backend for Linux systems
+- NETKIT_ENABLE_WSAPOLL: Enable wsapoll io_backend for Windows systems
+- NETKIT_ENABLE_KQUEUE: Enable kqueue io_backend for BSD systems and macOS
+- NETKIT_ENABLE_HTTP: Enable HTTP abstractions in netkit
+- NETKIT_ENABLE_DNS: Enable DNS abstractions in netkit
+- NETKIT_WOLFSSL_DEBUG: Build WolfSSL with debugging features. Does nothing if used with NETKIT_USE_SYSTEM_WOLFSSL=ON
+- NETKIT_BUILD_SHARED: Build netkit as a shared (dynamic) library. This will cause it not to be built statically
+- NETKIT_USE_SYSTEM_WOLFSSL: Use the system's installed WolfSSL instead of building it
+- NETKIT_BUILD_EXAMPLES: Build netkit's examples
+- NETKIT_DEBUG: Enable debugging features in netkit
 
 ## Building
 
@@ -63,7 +71,9 @@ target_link_libraries(netkit-example PRIVATE
 	netkit::netkit
 )
 
-# if using windows and dynamic linking:
+# if using windows and dynamic/shared linking
+# call netkit_copy_dll(TARGET) to copy libnetkit.dll and its potential dependencies to the build directory.
+# if statically linking, or if not using windows, this is a nop.
 netkit_copy_dll(netkit-example)
 
 ...
