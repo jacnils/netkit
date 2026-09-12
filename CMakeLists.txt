@@ -297,10 +297,10 @@ function(netkit_copy_dll target)
             VERBATIM
     )
 
-    if (TARGET ${WOLFSSL_TARGET} AND NOT NETKIT_BUILD_SHARED_WOLFSSL)
+    if (TARGET wolfssl::wolfssl AND NOT NETKIT_BUILD_SHARED_WOLFSSL)
         add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:${WOLFSSL_TARGET}>"
+                "$<TARGET_FILE:wolfssl::wolfssl>"
                 "$<TARGET_FILE_DIR:${target}>"
                 VERBATIM
         )
