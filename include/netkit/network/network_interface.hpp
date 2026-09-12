@@ -27,7 +27,7 @@ namespace netkit::network {
         bool broadcast{false};
         bool point_to_point{false};
 
-        friend std::vector<network_interface> get_interfaces();
+        friend NETKIT_API std::vector<network_interface> get_interfaces();
     public:
         network_interface() = default;
 
