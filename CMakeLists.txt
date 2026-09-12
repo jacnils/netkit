@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(netkit LANGUAGES CXX VERSION 0.6.1)
+project(netkit LANGUAGES CXX VERSION 0.6.2)
 
 option(NETKIT_ENABLE_WOLFSSL "Enable WolfSSL support in netkit" ON)
 option(NETKIT_ENABLE_TESTS "Enable building tests" OFF)
@@ -110,10 +110,14 @@ add_library(netkit ${NETKIT_LIB_TYPE}
 
 add_library(netkit::netkit ALIAS netkit)
 
+target_compile_options(netkit PRIVATE
+        $<$<CONFIG:Release>:-O3>
+)
+
 set_target_properties(netkit PROPERTIES
         EXPORT_NAME netkit
         POSITION_INDEPENDENT_CODE ON
-        VERSION 0.1.0
+        VERSION ${CMAKE_PROJECT_VERSION}
         SOVERSION 1
 )
 
