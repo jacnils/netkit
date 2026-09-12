@@ -2,12 +2,10 @@
 
 include(CMakeFindDependencyMacro)
 
-if(@NETKIT_ENABLE_OPENSSL@)
-    find_dependency(OpenSSL REQUIRED)
-endif()
-
 if (@NETKIT_ENABLE_WOLFSSL@)
-    find_dependency(wolfSSL)
+    if (NOT @NETKIT_BUILD_SHARED@ OR NOT @NETKIT_BUILD_SHARED_WOLFSSL@)
+        find_dependency(wolfSSL)
+    endif()
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/config)

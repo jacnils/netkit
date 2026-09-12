@@ -41,6 +41,7 @@ netkit's CMakeLists.txt offers multiple options:
 - NETKIT_ENABLE_DNS: Enable DNS abstractions in netkit
 - NETKIT_WOLFSSL_DEBUG: Build WolfSSL with debugging features. Does nothing if used with NETKIT_USE_SYSTEM_WOLFSSL=ON
 - NETKIT_BUILD_SHARED: Build netkit as a shared (dynamic) library. This will cause it not to be built statically
+- NETKIT_BUILD_SHARED_WOLFSSL: Build WolfSSL as a shared (dynamic) library
 - NETKIT_USE_SYSTEM_WOLFSSL: Use the system's installed WolfSSL instead of building it
 - NETKIT_BUILD_EXAMPLES: Build netkit's examples
 - NETKIT_DEBUG: Enable debugging features in netkit

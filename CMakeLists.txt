@@ -12,6 +12,7 @@ option(NETKIT_ENABLE_HTTP "Enable netkit's HTTP abstractions" ON)
 option(NETKIT_ENABLE_DNS "Enable netkit's DNS features" ON)
 option(NETKIT_WOLFSSL_DEBUG "Enable WolfSSL debugging" OFF)
 option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
+option(NETKIT_BUILD_SHARED_WOLFSSL "Build WolfSSL as a shared library" OFF)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
 option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" OFF)
 option(NETKIT_DEBUG "Build netkit with debugging" OFF)
@@ -131,7 +132,7 @@ target_include_directories(netkit
 if (NETKIT_ENABLE_WOLFSSL)
     find_package(wolfSSL QUIET)
 
-    if (NOT NETKIT_BUILD_SHARED)
+    if (NOT NETKIT_BUILD_SHARED OR NOT NETKIT_BUILD_SHARED_WOLFSSL)
         set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     endif()
 
@@ -292,7 +293,7 @@ function(netkit_copy_dll target)
             VERBATIM
     )
 
-    if (TARGET ${WOLFSSL_TARGET})
+    if (TARGET ${WOLFSSL_TARGET} AND NOT NETKIT_BUILD_SHARED_WOLFSSL)
         add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "$<TARGET_FILE:${WOLFSSL_TARGET}>"
