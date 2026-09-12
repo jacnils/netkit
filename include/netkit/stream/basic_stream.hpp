@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <span>
@@ -14,7 +15,7 @@
 
 namespace netkit::stream {
 
-class basic_stream {
+class NETKIT_API basic_stream {
 public:
 	virtual ~basic_stream() = default;
 

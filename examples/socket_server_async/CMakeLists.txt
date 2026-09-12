@@ -13,4 +13,6 @@ endif()
 
 add_executable(socket_server_async main.cpp)
 
+netkit_copy_dll(socket_server_async)
+
 target_link_libraries(socket_server_async PRIVATE netkit::netkit)

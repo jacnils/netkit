@@ -1,12 +1,13 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/platform/socket.hpp>
 #include <netkit/datagram/basic_async_datagram.hpp>
 #include <netkit/socket/native/basic_native_async_socket.hpp>
 
 namespace netkit::datagram {
 
-class async_socket_datagram : public basic_async_datagram {
+class NETKIT_API async_socket_datagram : public basic_async_datagram {
 public:
 	explicit async_socket_datagram(std::unique_ptr<socket::native::basic_native_async_socket> socket)
 		: sock_(std::move(socket)) {}

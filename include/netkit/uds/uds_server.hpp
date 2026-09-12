@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/native/basic_native_sync_listener.hpp>
 
 #include <memory>
@@ -10,7 +11,7 @@ namespace netkit::uds {
 
 class uds_stream;
 
-class uds_server {
+class NETKIT_API uds_server {
 public:
 	uds_server(socket::addr addr);
 

@@ -31,25 +31,25 @@ const std::array<netkit::http::status_code, netkit::http::status_list.size()>& n
 std::string netkit::http::get_method_string(netkit::http::method method) {
     std::stringstream ss;
     switch (method) {
-    case method::GET:
+    case method::method_get:
         ss << "GET"; break;
-    case method::HEAD:
+    case method::method_head:
         ss << "HEAD"; break;
-    case method::POST:
+    case method::method_post:
         ss << "POST"; break;
-    case method::PUT:
+    case method::method_put:
         ss << "PUT"; break;
-    case method::DELETE:
+    case method::method_delete:
         ss << "DELETE"; break;
-    case method::CONNECT:
+    case method::method_connect:
         ss << "CONNECT"; break;
-    case method::OPTIONS:
+    case method::method_options:
         ss << "OPTIONS"; break;
-    case method::TRACE:
+    case method::method_trace:
         ss << "TRACE"; break;
-    case method::PATCH:
+    case method::method_patch:
         ss << "PATCH"; break;
-    case method::undefined:
+    case method::method_undefined:
         throw std::logic_error("undefined method");
     }
     return ss.str();

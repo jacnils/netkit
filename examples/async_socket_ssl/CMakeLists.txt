@@ -13,4 +13,6 @@ endif()
 
 add_executable(async-socket-ssl main.cpp)
 
+netkit_copy_dll(async-socket-ssl)
+
 target_link_libraries(async-socket-ssl PRIVATE netkit::netkit)

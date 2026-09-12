@@ -13,4 +13,6 @@ endif()
 
 add_executable(multipart_parsing main.cpp)
 
+netkit_copy_dll(multipart_parsing)
+
 target_link_libraries(multipart_parsing PRIVATE netkit::netkit)

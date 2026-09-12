@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/network/ip_list.hpp>
 #include <chrono>
 #include <string>
@@ -102,7 +103,7 @@ namespace netkit::dns {
     >;
 
 
-    struct record {
+    struct NETKIT_API record {
         std::string name{};
         record_type type{};
         uint16_t record_class{1};

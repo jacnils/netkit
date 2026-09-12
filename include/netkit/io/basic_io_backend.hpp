@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netkit/definitions.hpp>
+#include <netkit/export.hpp>
 
 #include <coroutine>
 #include <vector>
@@ -24,7 +25,7 @@ typedef SOCKET io_handle_t;
 typedef int io_handle_t;
 #endif
 
-class basic_io_backend {
+class NETKIT_API basic_io_backend {
 public:
 	virtual ~basic_io_backend() = default;
 	virtual void wake() = 0;

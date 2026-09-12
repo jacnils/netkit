@@ -1,12 +1,13 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/platform/socket.hpp>
 #include <netkit/datagram/basic_datagram.hpp>
 #include <netkit/socket/native/basic_native_sync_socket.hpp>
 
 namespace netkit::datagram {
 
-class socket_datagram : public basic_datagram {
+class NETKIT_API socket_datagram : public basic_datagram {
 public:
 	explicit socket_datagram(std::unique_ptr<socket::native::basic_native_sync_socket> socket)
 		: sock_(std::move(socket)) {}

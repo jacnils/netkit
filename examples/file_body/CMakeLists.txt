@@ -13,4 +13,6 @@ endif()
 
 add_executable(file_body main.cpp)
 
+netkit_copy_dll(file_body)
+
 target_link_libraries(file_body PRIVATE netkit::netkit)

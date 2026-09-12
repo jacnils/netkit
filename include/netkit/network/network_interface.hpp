@@ -52,5 +52,5 @@ namespace netkit::network {
      * @brief A function that gets the local network interfaces.
      * @return A vector of network_interface structs that contain the local network interfaces.
      */
-    std::vector<network_interface> get_interfaces();
+    NETKIT_API std::vector<network_interface> get_interfaces();
 }

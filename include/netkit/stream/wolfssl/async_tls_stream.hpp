@@ -2,13 +2,14 @@
 
 #ifdef NETKIT_WOLFSSL
 
+#include <netkit/export.hpp>
 #include <netkit/tcp/async_tcp_stream.hpp>
 #include <netkit/stream/tls_stream_enum.hpp>
 #include <wolfssl/options.h>
 #include <wolfssl/ssl.h>
 
 namespace netkit::stream {
-class async_tls_stream : public netkit::stream::basic_async_stream {
+class NETKIT_API async_tls_stream : public netkit::stream::basic_async_stream {
 public:
 	using basic_async_stream::write;
 	using basic_async_stream::read;

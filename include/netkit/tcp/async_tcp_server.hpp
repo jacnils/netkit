@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/native/basic_native_async_listener.hpp>
 #include <netkit/io/task.hpp>
 
@@ -9,7 +10,7 @@ namespace netkit::tcp {
 
 class async_tcp_stream;
 
-class async_tcp_server {
+class NETKIT_API async_tcp_server {
 public:
 	async_tcp_server(
 		io::io_context& ctx,

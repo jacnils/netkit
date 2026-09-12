@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <atomic>
 #include <memory>
 #include <coroutine>
@@ -9,7 +10,7 @@ namespace netkit::io {
 /**
  * @brief Exception thrown when a task is cancelled.
  */
-class cancelled_error : public std::runtime_error {
+class NETKIT_API cancelled_error : public std::runtime_error {
 public:
 	cancelled_error() : std::runtime_error("Task was cancelled") {}
 };
@@ -18,7 +19,7 @@ public:
  * @brief A shared cancellation token that can be used to cancel an operation.
  * @note Thread-safe for checking cancellation status.
  */
-class cancellation_token {
+class NETKIT_API cancellation_token {
 public:
 	cancellation_token() = default;
 
@@ -53,7 +54,7 @@ private:
  * @brief A cancellation source that owns a cancellation token.
  * @note Can be used to cancel operations from outside the coroutine.
  */
-class cancellation_source {
+class NETKIT_API cancellation_source {
 public:
 	cancellation_source() : token_(std::make_shared<cancellation_token>()) {}
 

@@ -13,4 +13,6 @@ endif()
 
 add_executable(http_server main.cpp)
 
+netkit_copy_dll(http_server)
+
 target_link_libraries(http_server PRIVATE netkit::netkit)

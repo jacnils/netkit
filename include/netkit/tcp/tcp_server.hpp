@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/native/basic_native_sync_listener.hpp>
 
 #include <memory>
@@ -8,7 +9,7 @@ namespace netkit::tcp {
 
 class tcp_stream;
 
-class tcp_server {
+class NETKIT_API tcp_server {
 public:
 	tcp_server(socket::addr addr);
 

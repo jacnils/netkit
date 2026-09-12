@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <algorithm>
 #include <netkit/stream/basic_stream.hpp>
 #include <span>
@@ -7,7 +8,7 @@
 
 namespace netkit::stream {
 
-class memory_stream : public basic_stream {
+class NETKIT_API memory_stream : public basic_stream {
 public:
 	using basic_stream::write;
 	using basic_stream::read;

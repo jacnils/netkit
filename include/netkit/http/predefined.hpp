@@ -33,16 +33,16 @@ namespace netkit::http {
      * @brief HTTP methods.
      */
     enum class method {
-        GET,
-        HEAD,
-        POST,
-        PUT,
-        DELETE,
-        CONNECT,
-        OPTIONS,
-        TRACE,
-        PATCH,
-        undefined,
+        method_get,
+        method_head,
+        method_post,
+        method_put,
+        method_delete,
+        method_connect,
+        method_options,
+        method_trace,
+        method_patch,
+        method_undefined,
     };
 
     struct response {

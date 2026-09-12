@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/native/native_sync_listener.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/stream/basic_stream.hpp>
@@ -12,7 +13,7 @@
 
 namespace netkit::uds {
 
-class uds_stream : public stream::basic_stream {
+class NETKIT_API uds_stream : public stream::basic_stream {
 public:
 	using basic_stream::write;
 	using basic_stream::read;

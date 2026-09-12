@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/socket/addr.hpp>
@@ -17,7 +18,7 @@
 
 namespace netkit::stream {
 
-class basic_async_stream {
+class NETKIT_API basic_async_stream {
 public:
 	virtual ~basic_async_stream() = default;
 

@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 
+#include <netkit/export.hpp>
 #include <netkit/except.hpp>
 
 namespace netkit::dns {
@@ -22,7 +23,7 @@ namespace netkit::dns {
 		std::string sni; /* only applicable for dns over tls */
 	};
 
-    class nameserver_list {
+    class NETKIT_API nameserver_list {
         std::vector<nameserver> ipv4{};
         std::vector<nameserver> ipv6{};
 
@@ -85,5 +86,5 @@ namespace netkit::dns {
         }
     };
 
-    nameserver_list get_nameservers();
+    NETKIT_API nameserver_list get_nameservers();
 }

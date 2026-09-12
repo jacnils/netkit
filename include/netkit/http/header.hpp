@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -8,7 +9,7 @@
 #include <charconv>
 
 namespace netkit::http {
-    class header_name {
+    class NETKIT_API header_name {
     public:
         header_name() = default;
 
@@ -90,7 +91,7 @@ namespace netkit::http {
         {}
     };
 
-    class headers {
+    class NETKIT_API headers {
     public:
         using value_type = header;
         using container_type = std::vector<header>;

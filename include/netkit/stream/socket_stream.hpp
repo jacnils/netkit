@@ -1,11 +1,12 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/stream/basic_stream.hpp>
 #include <netkit/socket/native/native_sync_socket.hpp>
 
 namespace netkit::stream {
 
-class socket_stream : public basic_stream {
+class NETKIT_API socket_stream : public basic_stream {
 public:
 	using basic_stream::write;
 	using basic_stream::read;

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include <netkit/export.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/body/basic_body.hpp>
 #include <netkit/socket/addr.hpp>
@@ -20,7 +21,7 @@
 #endif
 
 namespace netkit::http {
-    class client {
+    class NETKIT_API client {
         socket::addr addr;
         scheme scheme_;
         std::unique_ptr<stream::basic_stream> stream;
@@ -178,19 +179,19 @@ namespace netkit::http {
         }
 
         response get(const std::string& path, const headers& headers = {}) {
-            return request(method::GET, path, nullptr, headers);
+            return request(method::method_get, path, nullptr, headers);
         }
 
         response post(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::POST, path, body, headers);
+            return request(method::method_post, path, body, headers);
         }
 
         response put(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::PUT, path, body, headers);
+            return request(method::method_put, path, body, headers);
         }
 
         response patch(const std::string& path, const std::unique_ptr<body::basic_body>& body, const headers& headers = {}) {
-            return request(method::PATCH, path, body, headers);
+            return request(method::method_patch, path, body, headers);
         }
     };
 }

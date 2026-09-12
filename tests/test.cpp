@@ -389,7 +389,7 @@ public:
 		};
 	}
 
-	std::optional<std::size_t> size() const override {
+	[[nodiscard]] std::optional<std::size_t> size() const override {
 		return data_.size();
 	}
 
@@ -516,4 +516,210 @@ TEST_CASE("multipart binary data") {
 	REQUIRE(part.filename == "test.bin");
 	REQUIRE(part.content_type == "application/octet-stream");
 	REQUIRE(part.data->read_all() == binary);
+}
+TEST_CASE("HTTP header_name is case-insensitive") {
+	netkit::http::header_name a("Content-Type");
+	netkit::http::header_name b("content-type");
+	netkit::http::header_name c("Content-Length");
+
+	REQUIRE(a == b);
+	REQUIRE_FALSE(a == c);
+	REQUIRE(a == std::string_view{"CONTENT-TYPE"});
+	REQUIRE(a.value() == "content-type");
+	REQUIRE_FALSE(a.empty());
+	REQUIRE(netkit::http::header_name{}.empty());
+}
+
+TEST_CASE("HTTP headers container add/find/contains") {
+	netkit::http::headers h;
+
+	h.add("Content-Type", "text/plain");
+	h.add("X-Custom", "value1");
+
+	REQUIRE(h.size() == 2);
+	REQUIRE(h.contains("content-type"));
+	REQUIRE(h.contains("X-CUSTOM"));
+	REQUIRE_FALSE(h.contains("missing-header"));
+
+	REQUIRE(h.value("content-type") == "text/plain");
+	REQUIRE(h.value("missing-header").empty());
+
+	auto* found = h.find("x-custom");
+	REQUIRE(found != nullptr);
+	REQUIRE(found->value == "value1");
+
+	netkit::http::headers copy(h);
+	REQUIRE(copy.size() == h.size());
+	REQUIRE(copy.value("content-type") == "text/plain");
+}
+
+TEST_CASE("DNS record data equality operators") {
+	netkit::dns::cname_record_data a{"example.com"};
+	netkit::dns::cname_record_data b{"example.com"};
+	netkit::dns::cname_record_data c{"other.com"};
+
+	REQUIRE(a == b);
+	REQUIRE_FALSE(a == c);
+
+	netkit::dns::mx_record_data m1{10, "mail.example.com"};
+	netkit::dns::mx_record_data m2{10, "mail.example.com"};
+	netkit::dns::mx_record_data m3{20, "mail.example.com"};
+
+	REQUIRE(m1 == m2);
+	REQUIRE_FALSE(m1 == m3);
+}
+
+TEST_CASE("DNS record serialize/deserialize round-trip") {
+	netkit::dns::record rec;
+	rec.name = "example.com";
+	rec.type = netkit::dns::record_type::CNAME;
+	rec.record_class = 1;
+	rec.ttl = 300;
+	rec.data = netkit::dns::cname_record_data{"target.example.com"};
+
+	std::stringstream ss;
+	rec.serialize(ss);
+
+	ss.seekg(0);
+	netkit::dns::record parsed = netkit::dns::record::deserialize(ss);
+
+	REQUIRE(parsed.name == rec.name);
+	REQUIRE(parsed.type == rec.type);
+	REQUIRE(parsed.record_class == rec.record_class);
+	REQUIRE(parsed.ttl == rec.ttl);
+	REQUIRE(std::holds_alternative<netkit::dns::cname_record_data>(parsed.data));
+	REQUIRE(std::get<netkit::dns::cname_record_data>(parsed.data) ==
+		std::get<netkit::dns::cname_record_data>(rec.data));
+}
+
+TEST_CASE("DNS query_builder produces a well-formed query packet") {
+	netkit::dns::query_builder qb(1234);
+	qb.add_question("example.com", netkit::dns::record_type::A, 1);
+
+	const auto& packet = qb.build();
+
+	REQUIRE(packet.size() == 29);
+
+	/* header: id, flags, qdcount, then three zeroed 16-bit counts */
+	REQUIRE(packet[0] == 0x04);
+	REQUIRE(packet[1] == 0xD2);
+	REQUIRE(packet[2] == 0x01); /* recursion desired by default */
+	REQUIRE(packet[3] == 0x00);
+	REQUIRE(packet[4] == 0x00);
+	REQUIRE(packet[5] == 0x01); /* one question */
+
+	for (int i = 6; i < 12; ++i) {
+		REQUIRE(packet[i] == 0);
+	}
+
+	/* question: encoded name, then qtype/qclass */
+	REQUIRE(packet[12] == 7);
+	REQUIRE(std::string(packet.begin() + 13, packet.begin() + 20) == "example");
+	REQUIRE(packet[20] == 3);
+	REQUIRE(std::string(packet.begin() + 21, packet.begin() + 24) == "com");
+	REQUIRE(packet[24] == 0x00); /* name terminator */
+
+	REQUIRE(packet[25] == 0x00);
+	REQUIRE(packet[26] == 0x01); /* qtype A */
+	REQUIRE(packet[27] == 0x00);
+	REQUIRE(packet[28] == 0x01); /* qclass IN */
+}
+
+TEST_CASE("DNS query_builder honors recursion desired flag") {
+	netkit::dns::query_builder qb(1);
+
+	qb.set_recursion_desired(false);
+	REQUIRE(qb.build()[2] == 0x00);
+	REQUIRE(qb.build()[3] == 0x00);
+
+	qb.set_recursion_desired(true);
+	REQUIRE(qb.build()[2] == 0x01);
+	REQUIRE(qb.build()[3] == 0x00);
+}
+
+TEST_CASE("DNS nameserver_list validates and stores addresses") {
+	REQUIRE_THROWS_AS(netkit::dns::nameserver_list(std::vector<std::string>{}, std::vector<std::string>{}), netkit::parsing_error);
+
+	netkit::dns::nameserver_list list({"1.1.1.1", "1.0.0.1"}, {"2606:4700:4700::1111"});
+
+	REQUIRE(list.contains_ipv4());
+	REQUIRE(list.contains_ipv6());
+	REQUIRE(list.get_ipv4().size() == 2);
+	REQUIRE(list.get_ipv4()[0].ip == "1.1.1.1");
+	REQUIRE(list.get_ipv6()[0].ip == "2606:4700:4700::1111");
+
+	netkit::dns::nameserver_list v4_only({"8.8.8.8"}, {});
+
+	REQUIRE(v4_only.contains_ipv4());
+	REQUIRE_FALSE(v4_only.contains_ipv6());
+	REQUIRE_THROWS_AS(v4_only.get_ipv6(), netkit::parsing_error);
+
+	v4_only.push_back_v6("2001:4860:4860::8888");
+	REQUIRE(v4_only.contains_ipv6());
+}
+
+TEST_CASE("IO cancellation_token and cancellation_source") {
+	netkit::io::cancellation_token token;
+	REQUIRE_FALSE(token.is_cancelled());
+
+	token.cancel();
+	REQUIRE(token.is_cancelled());
+
+	token.reset();
+	REQUIRE_FALSE(token.is_cancelled());
+
+	netkit::io::cancellation_source source;
+	auto shared_token = source.get_token();
+
+	REQUIRE_FALSE(source.is_cancelled());
+	REQUIRE_FALSE(shared_token->is_cancelled());
+
+	source.cancel();
+
+	REQUIRE(source.is_cancelled());
+	REQUIRE(shared_token->is_cancelled());
+}
+
+TEST_CASE("stream::utility::read_until reads up to a delimiter") {
+	auto stream = make_stream("hello\r\nworld");
+
+	auto [line, overflow] = netkit::stream::read_until(stream, "\r\n");
+
+	REQUIRE(line == "hello");
+	REQUIRE(overflow == "world");
+}
+
+TEST_CASE("socket::opt bitwise operators combine and test flags") {
+	using netkit::socket::opt;
+
+	opt combined = opt::reuse_addr | opt::no_delay;
+
+	REQUIRE(combined & opt::reuse_addr);
+	REQUIRE(combined & opt::no_delay);
+	REQUIRE_FALSE(combined & opt::keep_alive);
+}
+
+TEST_CASE("multipart_part_body reads the current part's data") {
+	std::string input =
+		"--boundary\r\n"
+		"Content-Disposition: form-data; name=\"field\"\r\n"
+		"\r\n"
+		"payload data\r\n"
+		"--boundary--\r\n";
+
+	memory_body body(input, 1024);
+
+	netkit::http::utility::multipart_reader reader(body, "boundary");
+	netkit::http::utility::multipart_part part;
+
+	REQUIRE(reader.next(part));
+	REQUIRE(part.name == "field");
+
+	/* part.data is a netkit::body::multipart_part_body under the hood */
+	REQUIRE(part.data->read_all() == "payload data");
+}
+
+TEST_CASE("network::get_interfaces returns at least one interface") {
+	auto interfaces = netkit::network::get_interfaces();
+	REQUIRE_FALSE(interfaces.empty());
 }

@@ -3,6 +3,7 @@
 #include <coroutine>
 #include <cstdint>
 #include <memory>
+#include <netkit/export.hpp>
 #include <netkit/io/io_backend.hpp>
 #include <netkit/io/cancellation.hpp>
 #include <netkit/socket/addr_type.hpp>
@@ -10,7 +11,7 @@
 namespace netkit::io {
 	class io_context; // fw decl.
 
-	struct io_awaitable {
+	struct NETKIT_API io_awaitable {
 		io_backend& ctx;
 		io_handle_t fd;
 		io_event ev;

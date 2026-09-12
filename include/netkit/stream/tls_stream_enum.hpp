@@ -1,16 +1,14 @@
 #pragma once
 
-#include <netkit/definitions.hpp>
-
 namespace netkit::stream {
 
-enum class NETKIT_API version {
+enum class version {
 	TLS_1_1,
 	TLS_1_2,
 	TLS_1_3
 };
 
-enum class NETKIT_API verification {
+enum class verification {
 	peer,
 	none
 };

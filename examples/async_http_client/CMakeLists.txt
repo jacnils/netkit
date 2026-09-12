@@ -13,4 +13,6 @@ endif()
 
 add_executable(async_http_client main.cpp)
 
+netkit_copy_dll(async_http_client)
+
 target_link_libraries(async_http_client PRIVATE netkit::netkit)

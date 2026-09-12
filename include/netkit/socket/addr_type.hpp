@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/network/ip_list.hpp>
 #include <netkit/definitions.hpp>
 
@@ -77,7 +78,7 @@ namespace netkit::socket {
      * @brief Result of a socket receive operation.
      * @note This struct contains the result data and the status of the receive operation.
      */
-    struct recv_result {
+    struct NETKIT_API recv_result {
         std::string data{};
         recv_status status{recv_status::success};
     };

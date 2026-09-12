@@ -6,6 +6,7 @@
 #if (defined(NETKIT_MACOS) || defined(NETKIT_BSD)) \
 	&& defined(NETKIT_KQUEUE)
 
+#include <netkit/export.hpp>
 #include <netkit/io/basic_io_backend.hpp>
 
 #include <coroutine>
@@ -14,7 +15,7 @@
 
 namespace netkit::io {
 
-class io_backend : public basic_io_backend {
+class NETKIT_API io_backend : public basic_io_backend {
 public:
 	io_backend();
 	~io_backend() override;

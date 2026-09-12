@@ -3,6 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <netkit/export.hpp>
 #include <netkit/io/cancellation.hpp>
 #include <netkit/io/task.hpp>
 #include <thread>
@@ -12,7 +13,7 @@ namespace netkit::io {
 /**
  * @brief Exception thrown when an operation times out.
  */
-class timeout_error : public std::runtime_error {
+class NETKIT_API timeout_error : public std::runtime_error {
 public:
 	timeout_error() : std::runtime_error("Operation timed out") {}
 };
@@ -21,13 +22,13 @@ public:
  * @brief Set the cancellation token for the current coroutine context.
  * @internal Used by timeout() to make the token available to nested operations.
  */
-void set_current_cancellation_token(std::shared_ptr<cancellation_token> token) noexcept;
+NETKIT_API void set_current_cancellation_token(std::shared_ptr<cancellation_token> token) noexcept;
 
 /**
  * @brief Get the cancellation token for the current coroutine context.
  * @return The cancellation token if set, nullptr otherwise.
  */
-[[nodiscard]] std::shared_ptr<cancellation_token> get_current_cancellation_token() noexcept;
+[[nodiscard]] NETKIT_API std::shared_ptr<cancellation_token> get_current_cancellation_token() noexcept;
 
 /**
  * @brief Check if cancellation has been requested for the current context.
@@ -44,7 +45,7 @@ void set_current_cancellation_token(std::shared_ptr<cancellation_token> token) n
  *     }
  * }
  */
-void check_cancellation();
+NETKIT_API void check_cancellation();
 
 /**
  * @brief An awaitable that yields control for a specified duration.

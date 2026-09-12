@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 
+#include <netkit/export.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/socket/addr.hpp>
 
@@ -17,7 +18,7 @@
 #endif
 
 namespace netkit::http {
-    class async_client {
+    class NETKIT_API async_client {
         socket::addr addr;
         netkit::io::io_context& ctx;
         scheme scheme_;
@@ -184,19 +185,19 @@ namespace netkit::http {
         }
 
         io::task<async_response> get(const std::string& path, const headers& headers = {}) {
-            co_return co_await request(method::GET, path, nullptr, headers);
+            co_return co_await request(method::method_get, path, nullptr, headers);
         }
 
         io::task<async_response> post(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
-            co_return co_await request(method::POST, path, body, headers);
+            co_return co_await request(method::method_post, path, body, headers);
         }
 
         io::task<async_response> put(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
-            co_return co_await request(method::PUT, path, body, headers);
+            co_return co_await request(method::method_put, path, body, headers);
         }
 
         io::task<async_response> patch(const std::string& path, const std::unique_ptr<body::basic_async_body>& body, const headers& headers = {}) {
-            co_return co_await request(method::PATCH, path, body, headers);
+            co_return co_await request(method::method_patch, path, body, headers);
         }
     };
 }

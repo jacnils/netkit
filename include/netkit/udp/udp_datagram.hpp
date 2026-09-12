@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/datagram/basic_datagram.hpp>
 
 #include <memory>
@@ -7,7 +8,7 @@
 
 namespace netkit::udp {
 
-class udp_datagram : public datagram::basic_datagram {
+class NETKIT_API udp_datagram : public datagram::basic_datagram {
 public:
 	explicit udp_datagram(const socket::addr& addr);
 

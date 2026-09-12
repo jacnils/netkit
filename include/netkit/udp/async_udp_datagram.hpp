@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/datagram/basic_async_datagram.hpp>
 
 #include <memory>
@@ -8,7 +9,7 @@
 
 namespace netkit::udp {
 
-class async_udp_datagram : public datagram::basic_async_datagram {
+class NETKIT_API async_udp_datagram : public datagram::basic_async_datagram {
 public:
 	async_udp_datagram(io::io_context& ctx, const socket::addr& addr);
 

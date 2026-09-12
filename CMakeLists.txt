@@ -279,6 +279,29 @@ if (NETKIT_DKP AND NETKIT_ENABLE_WOLFSSL)
     )
 endif()
 
+function(netkit_copy_dll target)
+    if (NOT WIN32 OR NOT NETKIT_BUILD_SHARED)
+        return()
+    endif()
+
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:netkit>"
+            "$<TARGET_FILE_DIR:${target}>"
+
+            VERBATIM
+    )
+
+    if (TARGET ${WOLFSSL_TARGET})
+        add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:${WOLFSSL_TARGET}>"
+                "$<TARGET_FILE_DIR:${target}>"
+                VERBATIM
+        )
+    endif()
+endfunction()
+
 install(EXPORT netkitTargets
         FILE netkitTargets.cmake
         NAMESPACE netkit::
@@ -311,6 +334,16 @@ if (NETKIT_ENABLE_TESTS)
             netkit
             Catch2::Catch2WithMain
     )
+
+    if (WIN32 AND NETKIT_BUILD_SHARED)
+        add_custom_command(TARGET netkit-tests POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_RUNTIME_DLLS:netkit-tests>
+                "$<TARGET_FILE_DIR:netkit-tests>"
+                COMMAND_EXPAND_LISTS
+                VERBATIM
+        )
+    endif()
 
     include(Catch)
     catch_discover_tests(netkit-tests)

@@ -11,11 +11,12 @@
  */
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/record_type.hpp>
 
 namespace netkit::dns {
-    class query_builder {
+    class NETKIT_API query_builder {
         std::vector<uint8_t> packet;
         uint16_t id;
         bool recursion{true};

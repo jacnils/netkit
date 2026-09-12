@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 
+#include <netkit/export.hpp>
 #include <netkit/stream/basic_stream.hpp>
 #include <netkit/stream/basic_async_stream.hpp>
 
@@ -12,6 +13,6 @@ namespace netkit::stream {
     typedef std::string Data;
     typedef std::pair<Overflow, Data> ReadUntilData;
 
-    ReadUntilData read_until(stream::basic_stream& client_sock, const std::string& delimiter);
-    netkit::io::task<ReadUntilData> read_until(stream::basic_async_stream& client_sock, const std::string& delimiter);
+    NETKIT_API ReadUntilData read_until(stream::basic_stream& client_sock, const std::string& delimiter);
+    NETKIT_API netkit::io::task<ReadUntilData> read_until(stream::basic_async_stream& client_sock, const std::string& delimiter);
 }

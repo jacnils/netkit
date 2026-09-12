@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/socket/addr.hpp>
 
@@ -7,7 +8,7 @@
 
 namespace netkit::datagram {
 
-class basic_datagram {
+class NETKIT_API basic_datagram {
 public:
 	virtual ~basic_datagram() = default;
 

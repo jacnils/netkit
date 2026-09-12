@@ -1,5 +1,6 @@
 #pragma once
 
+#include <netkit/export.hpp>
 #include <netkit/socket/native/basic_native_async_listener.hpp>
 #include <netkit/io/task.hpp>
 
@@ -11,7 +12,7 @@ namespace netkit::uds {
 
 class async_uds_stream;
 
-class async_uds_server {
+class NETKIT_API async_uds_server {
 public:
 	async_uds_server(
 		io::io_context& ctx,

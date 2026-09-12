@@ -63,6 +63,9 @@ target_link_libraries(netkit-example PRIVATE
 	netkit::netkit
 )
 
+# if using windows and dynamic linking:
+netkit_copy_dll(netkit-example)
+
 ...
 ```
 

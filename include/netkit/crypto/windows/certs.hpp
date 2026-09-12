@@ -15,6 +15,7 @@
 #pragma once
 
 #include <netkit/definitions.hpp>
+#include <netkit/export.hpp>
 
 #ifdef NETKIT_WINDOWS
 #if defined(NETKIT_OPENSSL) || defined(NETKIT_WOLFSSL)
@@ -22,8 +23,8 @@
 #include <string>
 
 namespace netkit::crypto::windows {
-    bool is_outdated(const std::wstring& path);
-    bool export_certs(const std::wstring& path);
+    NETKIT_API bool is_outdated(const std::wstring& path);
+    NETKIT_API bool export_certs(const std::wstring& path);
 }
 
 #endif
