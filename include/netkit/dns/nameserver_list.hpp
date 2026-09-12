@@ -27,7 +27,7 @@ namespace netkit::dns {
         std::vector<nameserver> ipv4{};
         std::vector<nameserver> ipv6{};
 
-        friend nameserver_list get_nameservers();
+        friend NETKIT_API nameserver_list get_nameservers();
     public:
         nameserver_list() = default;
         nameserver_list(std::vector<nameserver> ipv4, std::vector<nameserver> ipv6)
