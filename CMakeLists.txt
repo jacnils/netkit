@@ -15,6 +15,7 @@ option(NETKIT_BUILD_SHARED "Build netkit as a shared library" ON)
 option(NETKIT_BUILD_SHARED_WOLFSSL "Build WolfSSL as a shared library" OFF)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
 option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" OFF)
+option(NETKIT_BUILD_MODULES "Build netkit's C++23 module interface (experimental)" OFF)
 option(NETKIT_DEBUG "Build netkit with debugging" OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
@@ -56,7 +57,7 @@ if (NETKIT_ENABLE_TESTS)
     enable_testing()
 endif()
 
-add_library(netkit ${NETKIT_LIB_TYPE}
+set(NETKIT_SOURCE_FILES
         src/utility.cpp
         src/network/utility.cpp
         src/network/local_address.cpp
@@ -106,6 +107,28 @@ add_library(netkit ${NETKIT_LIB_TYPE}
         src/io/timeout.cpp
         src/stream/utility.cpp
         src/stream/wolfssl/async_tls_stream.cpp
+)
+
+set(NETKIT_SOURCE_MODULES
+        modules/netkit.cppm
+        modules/netkit-except.cppm
+        modules/netkit-utility.cppm
+        modules/netkit-network.cppm
+        modules/netkit-socket.cppm
+        modules/netkit-io.cppm
+        modules/netkit-stream.cppm
+        modules/netkit-body.cppm
+        modules/netkit-tcp.cppm
+        modules/netkit-datagram.cppm
+        modules/netkit-udp.cppm
+        modules/netkit-uds.cppm
+        modules/netkit-dns.cppm
+        modules/netkit-http.cppm
+        modules/netkit-crypto.cppm
+)
+
+add_library(netkit ${NETKIT_LIB_TYPE}
+    ${NETKIT_SOURCE_FILES}
 )
 
 add_library(netkit::netkit ALIAS netkit)
@@ -187,6 +210,26 @@ if (NETKIT_ENABLE_WOLFSSL)
     target_link_libraries(netkit PUBLIC ${WOLFSSL_TARGET})
 
     message(STATUS "WolfSSL enabled in netkit")
+endif()
+
+if (NETKIT_BUILD_MODULES)
+    if (CMAKE_VERSION VERSION_LESS "3.30")
+        message(FATAL_ERROR "NETKIT_BUILD_MODULES requires CMake >= 3.30 (found ${CMAKE_VERSION})")
+    endif()
+
+    if (NOT CMAKE_GENERATOR MATCHES "Ninja")
+        message(WARNING "NETKIT_BUILD_MODULES: CMake's C++ module dependency scanning currently only "
+                "works reliably with the Ninja generators. Your generator is '${CMAKE_GENERATOR}'.")
+    endif()
+
+    target_sources(netkit
+            PUBLIC
+            FILE_SET netkit_modules
+            TYPE CXX_MODULES
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/modules
+            FILES
+            ${NETKIT_SOURCE_MODULES}
+    )
 endif()
 
 if (WIN32 AND NETKIT_ENABLE_WINDOWS_CERTSTORE)
@@ -272,12 +315,22 @@ configure_file(
         @ONLY
 )
 
+if (NETKIT_BUILD_MODULES)
 install(TARGETS netkit
         EXPORT netkitTargets
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
+        FILE_SET netkit_modules DESTINATION include
 )
+else()
+    install(TARGETS netkit
+            EXPORT netkitTargets
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+    )
+endif()
 
 if (NETKIT_DKP AND NETKIT_ENABLE_WOLFSSL)
     install(

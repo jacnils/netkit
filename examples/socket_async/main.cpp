@@ -72,14 +72,16 @@ int main() {
 
 	netkit::io::io_context ctx;
 
-	//ctx.spawn(netkit::io::timeout(request(ctx), std::chrono::seconds(5), []() {
-	//	std::cerr << "Request timeout.\n";
-	//	std::exit(EXIT_FAILURE);
-	//}));
-	ctx.spawn(request(ctx));
+	ctx.spawn(netkit::io::timeout(request(ctx), std::chrono::seconds(5), []() {
+		std::cerr << "Request timeout.\n";
+		std::exit(EXIT_FAILURE);
+	}));
+
 	ctx.run_until_idle();
 
+#ifdef NETKIT_DKP
 	while (true) {}
+#endif
 
 	return 0;
 }
