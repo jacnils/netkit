@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -230,13 +231,13 @@ namespace netkit::http {
         const auto first_space = status_line.find(' ');
 
         if (first_space == std::string_view::npos)
-            throw std::logic_error{"invalid HTTP status line"};
+            throw netkit::parsing_error{"invalid HTTP status line"};
 
         const auto code_start = first_space + 1;
         const auto second_space = status_line.find(' ', code_start);
 
         if (second_space == std::string_view::npos)
-            throw std::logic_error{"invalid HTTP status line"};
+            throw netkit::parsing_error{"invalid HTTP status line"};
 
         const auto code_str = status_line.substr(
         code_start,
@@ -248,7 +249,7 @@ namespace netkit::http {
         const auto [ptr, ec] = std::from_chars(code_str.data(), code_str.data() + code_str.size(), code);
 
         if (ec != std::errc{} || ptr != code_str.data() + code_str.size())
-            throw std::logic_error{"invalid HTTP status code"};
+            throw netkit::parsing_error{"invalid HTTP status code"};
 
         return code;
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <atomic>
 #include <memory>
 #include <coroutine>
@@ -10,9 +11,9 @@ namespace netkit::io {
 /**
  * @brief Exception thrown when a task is cancelled.
  */
-class NETKIT_API cancelled_error : public std::runtime_error {
+class NETKIT_API cancelled_error : public netkit::generic_error {
 public:
-	cancelled_error() : std::runtime_error("Task was cancelled") {}
+	cancelled_error() : netkit::generic_error("Task was cancelled") {}
 };
 
 /**

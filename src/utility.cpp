@@ -10,6 +10,7 @@
  *  @brief Implementation of various utility functions used throughout the Netkit library.
  */
 #include <netkit/definitions.hpp>
+#include <netkit/except.hpp>
 #include <netkit/utility.hpp>
 
 #include <iterator>
@@ -267,7 +268,7 @@ namespace netkit::utility {
     [[nodiscard]] std::string read_file(const std::string& path) {
         std::ifstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
         if (!file) {
-            throw std::runtime_error("failed to open file: " + path);
+            throw io_error("failed to open file: " + path);
         }
 
         std::streamsize size = file.tellg();
@@ -275,7 +276,7 @@ namespace netkit::utility {
 
         file.seekg(0, std::ios::beg);
         if (!file.read(&buffer[0], size)) {
-            throw std::runtime_error("failed to read file: " + path);
+            throw io_error("failed to read file: " + path);
         }
 
         return buffer;
@@ -388,7 +389,7 @@ namespace netkit::utility {
     				ret.push_back(static_cast<uint8_t>((four >> three) & 0xFF));
     			}
     		} else {
-    			throw std::runtime_error{"invalid string"};
+    			throw parsing_error{"invalid string"};
     		}
     	}
 

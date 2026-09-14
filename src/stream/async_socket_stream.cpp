@@ -1,4 +1,5 @@
 #include <netkit/stream/async_socket_stream.hpp>
+#include <netkit/except.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/socket/native/native_async_socket.hpp>
 
@@ -42,5 +43,5 @@ netkit::socket::addr netkit::stream::async_socket_stream::peer() const {
 	if (socket_)
 		return socket_->get_peer();
 
-	throw std::runtime_error{"peer(): socket_ not initialized"};
+	throw netkit::logic_error{"peer(): socket_ not initialized"};
 }

@@ -12,8 +12,6 @@
 #include <vector>
 #include <unordered_map>
 #include <ranges>
-#include <stdexcept>
-
 #include <netkit/network/network_interface.hpp>
 #include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
@@ -239,7 +237,7 @@ std::vector<netkit::network::network_interface> netkit::network::get_interfaces(
 
     DWORD ret = GetAdaptersAddresses(family, flags, nullptr, adapters, &out_buf_len);
     if (ret != NO_ERROR) {
-        throw std::runtime_error("GetAdaptersAddresses() failed in get_interfaces()");
+        throw ip_error("GetAdaptersAddresses() failed in get_interfaces()");
     }
 
     for (IP_ADAPTER_ADDRESSES* adapter = adapters; adapter != nullptr; adapter = adapter->Next) {

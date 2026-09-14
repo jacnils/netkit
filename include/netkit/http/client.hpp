@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <netkit/http/predefined.hpp>
 #include <netkit/body/basic_body.hpp>
 #include <netkit/socket/addr.hpp>
@@ -108,11 +109,11 @@ namespace netkit::http {
             ss << method;
 
             if (path.empty()) {
-                throw std::logic_error("path is empty");
+                throw netkit::logic_error("path is empty");
             }
 
             if (path.at(0) != '/') {
-                throw std::logic_error("path must start with /");
+                throw netkit::logic_error("path must start with /");
             }
 
             ss << " " << path << " HTTP/1.1" << "\r\n";
@@ -140,7 +141,7 @@ namespace netkit::http {
             const auto line_end = header_data.find_first_of("\r\n");
 
             if (line_end == std::string::npos)
-                throw std::logic_error{"invalid HTTP response"};
+                throw netkit::parsing_error{"invalid HTTP response"};
 
             const auto status_line = std::string_view{
                 header_data.data(),

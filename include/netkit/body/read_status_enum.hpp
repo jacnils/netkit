@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <netkit/io/task.hpp>
 
 #include <string>
@@ -65,7 +66,7 @@ namespace netkit::body {
 			auto res = reader.read(buffer, sizeof(buffer));
 
 			if (res.get_status() == read_status::error)
-				throw std::runtime_error("read failed");
+				throw netkit::io_error("read failed");
 
 			if (res.get_status() == read_status::timeout)
 				continue;
@@ -96,7 +97,7 @@ namespace netkit::body {
 			auto res = co_await reader.read(buffer, sizeof(buffer));
 
 			if (res.get_status() == read_status::error)
-				throw std::runtime_error("read failed");
+				throw netkit::io_error("read failed");
 
 			if (res.get_status() == read_status::timeout)
 				continue;

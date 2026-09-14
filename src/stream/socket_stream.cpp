@@ -1,15 +1,16 @@
 #include <netkit/stream/socket_stream.hpp>
+#include <netkit/except.hpp>
 
 void netkit::stream::socket_stream::connect() {
 	if (!socket_)
-		throw std::logic_error("socket closed");
+		throw netkit::logic_error("socket closed");
 
 	socket_->connect();
 }
 
 netkit::stream::stream_result netkit::stream::socket_stream::read(std::span<std::byte> buffer) {
 	if (!socket_)
-		throw std::logic_error("socket closed");
+		throw netkit::logic_error("socket closed");
 
 	auto result = socket_->recv(
 		buffer.data(),
@@ -38,7 +39,7 @@ netkit::stream::stream_result netkit::stream::socket_stream::read(std::span<std:
 
 netkit::stream::stream_result netkit::stream::socket_stream::write(std::span<const std::byte> buffer) {
 	if (!socket_)
-		throw std::logic_error("socket closed");
+		throw netkit::logic_error("socket closed");
 
 	auto result = socket_->send(
 		buffer.data(),
@@ -74,7 +75,7 @@ bool netkit::stream::socket_stream::is_open() const noexcept {
 
 netkit::socket::addr netkit::stream::socket_stream::peer() const {
 	if (!socket_)
-		throw std::logic_error("socket closed");
+		throw netkit::logic_error("socket closed");
 
 	return socket_->get_peer();
 }

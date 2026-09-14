@@ -10,6 +10,7 @@
  *  @brief Implementation of predefined HTTP status codes and messages.
  */
 #include <netkit/http/predefined.hpp>
+#include <netkit/except.hpp>
 
 #include <optional>
 #include <string_view>
@@ -50,7 +51,7 @@ std::string netkit::http::get_method_string(netkit::http::method method) {
     case method::method_patch:
         ss << "PATCH"; break;
     case method::method_undefined:
-        throw std::logic_error("undefined method");
+        throw netkit::logic_error("undefined method");
     }
     return ss.str();
 }
