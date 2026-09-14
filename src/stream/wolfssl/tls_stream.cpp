@@ -9,6 +9,7 @@
 #endif
 
 #include <netkit/crypto/fallback_ca.hpp>
+#include <netkit/except.hpp>
 #include <netkit/stream/wolfssl/tls_stream.hpp>
 #include <utility>
 
@@ -53,7 +54,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 	ctx_ = wolfSSL_CTX_new(wolfTLS_client_method());
 
 	if (!ctx_)
-		throw std::runtime_error("wolfSSL_CTX_new failed");
+		throw netkit::ssl_error("wolfSSL_CTX_new failed");
 
 	// TODO: maybe we shouldn't store the version in the class? haven't yet decided on this
 	switch (version_) {
@@ -104,7 +105,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 	if (!loaded_ca && crypto::windows::is_outdated(path.wstring())) {
 		std::filesystem::remove(path);
 		if (!crypto::windows::export_certs(path.wstring())) {
-			throw std::runtime_error("failed to export certificates");
+			throw netkit::ssl_error("failed to export certificates");
 		}
 	}
 
@@ -132,7 +133,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 #endif
 
 	if (!loaded_ca && verification_ == verification::peer) {
-		throw std::runtime_error(
+		throw netkit::ssl_error(
 			"No trusted CA certificates available"
 		);
 	}
@@ -169,7 +170,7 @@ netkit::stream::tls_stream::tls_stream(std::unique_ptr<tcp::tcp_stream> stream, 
 	ssl_ = wolfSSL_new(ctx_);
 
 	if (!ssl_)
-		throw std::runtime_error("wolfSSL_new failed");
+		throw netkit::ssl_error("wolfSSL_new failed");
 
 	wolfSSL_SetIOReadCtx(ssl_, this);
 	wolfSSL_SetIOWriteCtx(ssl_, this);
@@ -188,7 +189,7 @@ void netkit::stream::tls_stream::perform_handshake() const {
 	if (ret != WOLFSSL_SUCCESS) {
 		int err = wolfSSL_get_error(ssl_, ret);
 
-		throw std::runtime_error("TLS handshake failed: " + std::to_string(err));
+		throw netkit::ssl_error("TLS handshake failed: " + std::to_string(err));
 	}
 }
 

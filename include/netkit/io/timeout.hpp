@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <netkit/io/cancellation.hpp>
 #include <netkit/io/task.hpp>
 #include <thread>
@@ -13,9 +14,9 @@ namespace netkit::io {
 /**
  * @brief Exception thrown when an operation times out.
  */
-class NETKIT_API timeout_error : public std::runtime_error {
+class NETKIT_API timeout_error : public netkit::generic_error {
 public:
-	timeout_error() : std::runtime_error("Operation timed out") {}
+	timeout_error() : netkit::generic_error("Operation timed out") {}
 };
 
 /**

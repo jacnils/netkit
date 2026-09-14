@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <exception>
 #include <string>
 #include <utility>
 
@@ -51,11 +52,47 @@ namespace netkit {
         explicit dns_error(std::string msg) : generic_error(std::move(msg)) {}
     };
 
-#ifdef NETKIT_OPENSSL
+    /**
+     * @brief Thrown for TLS/SSL failures (handshake, context/session setup, certificate export, etc.).
+     * @note Not guarded behind a TLS backend macro: the class itself has no backend dependency,
+     *       only the code paths that throw it (e.g. src/stream/wolfssl/*, src/stream/openssl/*) do.
+     */
     class NETKIT_API ssl_error : public generic_error {
     public:
         ssl_error() : generic_error("SSL error") {}
         explicit ssl_error(std::string msg) : generic_error(std::move(msg)) {}
     };
-#endif
+
+    /**
+     * @brief Thrown when netkit is used incorrectly: an object is used in an invalid state,
+     *        a precondition/argument is violated, or an operation is not supported.
+     * @note Mirrors the role std::logic_error plays in the standard library, but lives in
+     *       netkit's own hierarchy so callers only ever need to catch netkit::generic_error.
+     */
+    class NETKIT_API logic_error : public generic_error {
+    public:
+        logic_error() : generic_error("Logic error") {}
+        explicit logic_error(std::string msg) : generic_error(std::move(msg)) {}
+    };
+
+    /**
+     * @brief Thrown when an operation would exceed (or exceeded) an explicit size/length bound.
+     * @note Mirrors std::length_error, and like it, derives from the "logic error" branch of
+     *       the hierarchy since exceeding a caller-specified bound is a precondition violation.
+     */
+    class NETKIT_API length_error : public logic_error {
+    public:
+        length_error() : logic_error("Length error") {}
+        explicit length_error(std::string msg) : logic_error(std::move(msg)) {}
+    };
+
+    /**
+     * @brief Thrown for low-level I/O failures that aren't specific to a socket, IP, or DNS
+     *        operation: file access, and OS event-loop backends (epoll/kqueue/IOCP/etc.).
+     */
+    class NETKIT_API io_error : public generic_error {
+    public:
+        io_error() : generic_error("I/O error") {}
+        explicit io_error(std::string msg) : generic_error(std::move(msg)) {}
+    };
 }

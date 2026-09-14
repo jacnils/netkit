@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <netkit/socket/addr.hpp>
+#include <netkit/except.hpp>
 #include <netkit/socket/addr_type.hpp>
 
 namespace netkit::socket::native {
@@ -34,17 +35,17 @@ namespace netkit::socket::native {
     	virtual void unbind() noexcept = 0;
     	[[nodiscard]] virtual bool is_open() const noexcept = 0;
         virtual addr& get_addr() {
-	        throw std::logic_error{"socket does not have an addr object"};
+	        throw netkit::logic_error{"socket does not have an addr object"};
         }
         [[nodiscard]] virtual const addr& get_addr() const {
-	        throw std::logic_error{"socket does not have an addr object"};
+	        throw netkit::logic_error{"socket does not have an addr object"};
         }
         virtual void close() noexcept = 0;
     	[[nodiscard]] virtual fd_t native_handle() const {
-    		throw std::logic_error{"socket does not have a native handle"};
+    		throw netkit::logic_error{"socket does not have a native handle"};
     	}
     	virtual void set_sock_opts(opt opts) {
-    		throw std::logic_error{"socket does not have opts to set"};
+    		throw netkit::logic_error{"socket does not have opts to set"};
     	}
     	[[nodiscard]] virtual addr get_peer() const = 0;
 

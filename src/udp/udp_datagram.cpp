@@ -1,4 +1,5 @@
 #include <netkit/socket/native/native_sync_socket.hpp>
+#include <netkit/except.hpp>
 #include <netkit/udp/udp_datagram.hpp>
 
 netkit::udp::udp_datagram::udp_datagram(const socket::addr& addr)
@@ -25,7 +26,7 @@ netkit::udp::udp_datagram::recv_from(std::span<std::byte> buffer) {
 			buffer.size()
 		);
 
-	throw std::runtime_error{"recv_from() failed: sock_ == nullptr"};
+	throw netkit::logic_error{"recv_from() failed: sock_ == nullptr"};
 }
 void netkit::udp::udp_datagram::close() noexcept {
 	if (sock_)

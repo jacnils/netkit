@@ -65,7 +65,7 @@ namespace netkit::http::server {
 	    	}
 
 	    	if (!file.is_open()) {
-	    		throw std::runtime_error("failed to open session file (read_from_session_file()): " + f);
+	    		throw netkit::io_error("failed to open session file (read_from_session_file()): " + f);
 	    	}
 
 	    	std::string line{};
@@ -91,7 +91,7 @@ namespace netkit::http::server {
 	    	std::ofstream file(f, std::ios::trunc);
 
 	    	if (!file.is_open() || !file.good()) {
-	    		throw std::runtime_error("failed to open session file (write_to_session_file()): " + f);
+	    		throw netkit::io_error("failed to open session file (write_to_session_file()): " + f);
 	    	}
 
 	    	for (const auto& it : session) {
@@ -467,7 +467,7 @@ namespace netkit::http::server {
 
             		switch (result.get_status()) {
             		case status_t::error:
-            			throw std::runtime_error("Body read error");
+            			throw netkit::io_error("Body read error");
 
             		case status_t::timeout:
             			continue;
@@ -487,7 +487,7 @@ namespace netkit::http::server {
                                     ));
 
             					if (write_status == netkit::stream::stream_status::error)
-            						throw std::runtime_error("Socket write error");
+            						throw netkit::socket_error("Socket write error");
 
             					total_sent += sent;
             				}
@@ -788,7 +788,7 @@ namespace netkit::http::server {
 
             		switch (result.get_status()) {
             		case status_t::error:
-            			throw std::runtime_error("Body read error");
+            			throw netkit::io_error("Body read error");
 
             		case status_t::timeout:
             			continue;
@@ -808,7 +808,7 @@ namespace netkit::http::server {
                                     ));
 
             					if (write_status == netkit::stream::stream_status::error)
-            						throw std::runtime_error("Socket write error");
+            						throw netkit::socket_error("Socket write error");
 
             					total_sent += sent;
             				}

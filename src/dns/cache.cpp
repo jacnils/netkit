@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <netkit/definitions.hpp>
+#include <netkit/except.hpp>
 #include <netkit/dns/cache.hpp>
 #include <netkit/dns/record_type.hpp>
 #include <netkit/utility.hpp>
@@ -104,7 +105,7 @@ void netkit::dns::standard_cache::store(const std::string& hostname, const std::
 
     std::ofstream os(utility::get_standard_cache_location(), std::ios::binary | std::ios::trunc);
     if (!os) {
-        throw std::runtime_error("failed to open DNS cache file for writing");
+        throw io_error("failed to open DNS cache file for writing");
     }
 
     for (const auto& [name, records] : cache) {

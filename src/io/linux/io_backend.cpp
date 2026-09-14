@@ -5,7 +5,7 @@
 #include <coroutine>
 #include <cstring>
 #include <iostream>
-#include <stdexcept>
+#include <netkit/except.hpp>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -18,19 +18,19 @@ netkit::io::io_backend::io_backend() {
 	epoll_fd_ = epoll_create1(0);
 
 	if (epoll_fd_ == -1)
-		throw std::runtime_error("epoll_create1 failed");
+		throw netkit::io_error("epoll_create1 failed");
 
 	wake_fd_ = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 
 	if (wake_fd_ == -1)
-		throw std::runtime_error("eventfd failed");
+		throw netkit::io_error("eventfd failed");
 
 	epoll_event ev{};
 	ev.events  = EPOLLIN;
 	ev.data.fd = wake_fd_;
 
 	if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, wake_fd_, &ev) == -1) {
-		throw std::runtime_error("failed to add wake fd");
+		throw netkit::io_error("failed to add wake fd");
 	}
 }
 
@@ -73,14 +73,14 @@ void netkit::io::io_backend::update_state(int fd, const io_handle_state& state) 
 		ret = epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &ev);
 
 		if (ret == -1)
-			throw std::runtime_error(std::strerror(errno));
+			throw netkit::io_error(std::strerror(errno));
 
 		registered_fds_.insert(fd);
 	} else {
 		ret = epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
 
 		if (ret == -1)
-			throw std::runtime_error(std::strerror(errno));
+			throw netkit::io_error(std::strerror(errno));
 	}
 }
 
@@ -105,7 +105,7 @@ void netkit::io::io_backend::run() {
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
-			throw std::runtime_error("epoll_wait failed");
+			throw netkit::io_error("epoll_wait failed");
 		}
 
 		for (int i = 0; i < n; ++i) {

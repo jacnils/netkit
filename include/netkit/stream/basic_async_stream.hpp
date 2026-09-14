@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <netkit/io/task.hpp>
 #include <netkit/socket/addr.hpp>
@@ -8,7 +9,6 @@
 #include <netkit/body/basic_async_body.hpp>
 
 #include <span>
-#include <stdexcept>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -105,7 +105,7 @@ public:
 				break;
 
 			if (res.status != stream::stream_status::success)
-				throw std::runtime_error("read failed");
+				throw netkit::io_error("read failed");
 
 			result.insert(
 				result.end(),

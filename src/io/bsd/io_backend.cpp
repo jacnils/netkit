@@ -6,7 +6,7 @@
 #include <coroutine>
 #include <cstring>
 #include <iostream>
-#include <stdexcept>
+#include <netkit/except.hpp>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
@@ -21,7 +21,7 @@ netkit::io::io_backend::io_backend() {
 	kqueue_fd_ = kqueue();
 
 	if (kqueue_fd_ == -1)
-		throw std::runtime_error("kqueue failed");
+		throw netkit::io_error("kqueue failed");
 
 	struct kevent ev{};
 
@@ -39,7 +39,7 @@ netkit::io::io_backend::io_backend() {
 		close(kqueue_fd_);
 		kqueue_fd_ = -1;
 
-		throw std::runtime_error("failed to add kqueue wake event");
+		throw netkit::io_error("failed to add kqueue wake event");
 	}
 }
 
@@ -85,7 +85,7 @@ void netkit::io::io_backend::update_state(
 		);
 
 		if (kevent(kqueue_fd_, &ev, 1, nullptr, 0, nullptr) == -1)
-			throw std::runtime_error(
+			throw netkit::io_error(
 				"failed to add kqueue read filter: " +
 				std::string(std::strerror(errno))
 			);
@@ -104,7 +104,7 @@ void netkit::io::io_backend::update_state(
 
 		if (kevent(kqueue_fd_, &ev, 1, nullptr, 0, nullptr) == -1 &&
 		    errno != ENOENT) {
-			throw std::runtime_error("failed to remove kqueue read filter: " + std::string(std::strerror(errno)));
+			throw netkit::io_error("failed to remove kqueue read filter: " + std::string(std::strerror(errno)));
 		}
 	}
 
@@ -122,7 +122,7 @@ void netkit::io::io_backend::update_state(
 		);
 
 		if (kevent(kqueue_fd_, &ev, 1, nullptr, 0, nullptr) == -1)
-			throw std::runtime_error(
+			throw netkit::io_error(
 				"failed to add kqueue write filter: " +
 				std::string(std::strerror(errno))
 			);
@@ -141,7 +141,7 @@ void netkit::io::io_backend::update_state(
 
 		if (kevent(kqueue_fd_, &ev, 1, nullptr, 0, nullptr) == -1 &&
 		    errno != ENOENT) {
-			throw std::runtime_error(
+			throw netkit::io_error(
 				"failed to remove kqueue write filter: " +
 				std::string(std::strerror(errno))
 			);
@@ -188,7 +188,7 @@ void netkit::io::io_backend::run() {
 			if (errno == EINTR)
 				continue;
 
-			throw std::runtime_error("kevent failed");
+			throw netkit::io_error("kevent failed");
 		}
 
 		for (int i = 0; i < n; ++i) {
@@ -266,7 +266,7 @@ void netkit::io::io_backend::poll(int timeout_ms) {
 		if (errno == EINTR)
 			return;
 
-		throw std::runtime_error("kevent failed");
+		throw netkit::io_error("kevent failed");
 	}
 
 	for (int i = 0; i < n; ++i) {
