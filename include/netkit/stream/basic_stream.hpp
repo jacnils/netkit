@@ -1,10 +1,10 @@
 #pragma once
 
 #include <netkit/export.hpp>
+#include <netkit/except.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/stream/stream_enum.hpp>
 #include <span>
-#include <stdexcept>
 #include <string>
 #include <vector>
 #include <array>
@@ -105,7 +105,7 @@ public:
 				break;
 
 			if (res.status != stream_status::success)
-				throw std::runtime_error("read failed");
+				throw netkit::io_error("read failed");
 
 			auto amount = (std::min)(res.bytes, max_bytes - total);
 
@@ -118,7 +118,7 @@ public:
 			total += amount;
 
 			if (amount != res.bytes)
-				throw std::length_error("read_all exceeded maximum size");
+				throw netkit::length_error("read_all exceeded maximum size");
 		}
 
 		return result;

@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <netkit/socket/addr.hpp>
+#include <netkit/except.hpp>
 #include <netkit/socket/addr_type.hpp>
 
 namespace netkit::socket::native {
@@ -21,12 +22,12 @@ namespace netkit::socket::native {
         [[nodiscard]] virtual std::unique_ptr<basic_native_sync_socket> accept() = 0;
 
         [[nodiscard]] virtual const addr& get_local_endpoint() const {
-	        throw std::logic_error{"socket does not have an addr object"};
+	        throw netkit::logic_error{"socket does not have an addr object"};
         }
         virtual void close() noexcept = 0;
 
     	[[nodiscard]] virtual fd_t native_handle() const {
-    		throw std::logic_error{"socket does not have a native handle"};
+    		throw netkit::logic_error{"socket does not have a native handle"};
     	}
     };
 }
