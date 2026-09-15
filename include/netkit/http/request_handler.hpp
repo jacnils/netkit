@@ -260,25 +260,7 @@ namespace netkit::http::server {
                     req.headers = header_map;
                 }
 
-                req.ip_address = [&]() -> std::string {
-                    if (settings.trust_x_forwarded_for) {
-                        for (const auto& it : header_map) {
-                            if (it.first == "X-Forwarded-For") {
-                                auto ips = netkit::utility::split(it.second, ",");
-                                for (const auto& ip : ips) {
-                                    if (netkit::network::is_ipv4(ip) || netkit::network::is_ipv6(ip)) {
-                                        return ip;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return {};
-                }();
-
-                if (req.ip_address.empty()) {
-                    req.ip_address = client_sock->peer().get_ip();
-                }
+                req.ip_address = client_sock->peer().get_ip();
 
                 if (!netkit::network::is_ipv4(req.ip_address) && !netkit::network::is_ipv6(req.ip_address)) {
                     throw parsing_error("invalid IP address: " + req.ip_address);
@@ -580,26 +562,8 @@ namespace netkit::http::server {
                 } else {
                     req.headers = header_map;
                 }
-
-                req.ip_address = [&]() -> std::string {
-                    if (settings.trust_x_forwarded_for) {
-                        for (const auto& it : header_map) {
-                            if (it.first == "X-Forwarded-For") {
-                                auto ips = netkit::utility::split(it.second, ",");
-                                for (const auto& ip : ips) {
-                                    if (netkit::network::is_ipv4(ip) || netkit::network::is_ipv6(ip)) {
-                                        return ip;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return {};
-                }();
-
-                if (req.ip_address.empty()) {
-                    req.ip_address = client_sock->peer().get_ip();
-                }
+				
+				req.ip_address = client_sock->peer().get_ip();
 
                 if (!netkit::network::is_ipv4(req.ip_address) && !netkit::network::is_ipv6(req.ip_address)) {
                     throw parsing_error("invalid IP address: " + req.ip_address);
