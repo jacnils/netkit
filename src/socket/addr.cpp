@@ -170,7 +170,7 @@ netkit::socket::addr::addr(const std::string& hostname, int port, addr_type t, r
     		ip_list = netkit_get_a_aaaa_from_hostname(h, true);
     	}
 #else
-    	if (method != netkit::sock::resolve_method::os) {
+    	if (method != netkit::socket::resolve_method::os) {
     		throw netkit::dns_error{"cannot use this resolve method on this platform/build configuration"};
     	}
 

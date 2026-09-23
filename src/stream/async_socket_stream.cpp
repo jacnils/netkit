@@ -3,7 +3,7 @@
 #include <netkit/io/task.hpp>
 #include <netkit/socket/native/native_async_socket.hpp>
 
-netkit::io::task<void>
+netkit::io::task<>
 netkit::stream::async_socket_stream::connect() const {
 	co_await socket_->connect();
 }

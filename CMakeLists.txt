@@ -16,6 +16,7 @@ option(NETKIT_BUILD_SHARED_WOLFSSL "Build WolfSSL as a shared library" OFF)
 option(NETKIT_USE_SYSTEM_WOLFSSL "Use system WolfSSL if found (not recommended)" OFF)
 option(NETKIT_BUILD_EXAMPLES "Build netkit's examples" OFF)
 option(NETKIT_BUILD_MODULES "Build netkit's C++23 module interface (experimental)" OFF)
+option(NETKIT_BUILD_C_BINDINGS "Build netkit C bindings" ON)
 option(NETKIT_DEBUG "Build netkit with debugging" OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoWii" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoGameCube")
@@ -108,6 +109,21 @@ set(NETKIT_SOURCE_FILES
         src/stream/utility.cpp
         src/stream/wolfssl/async_tls_stream.cpp
 )
+
+set(NETKIT_C_BINDING_SOURCE_FILES
+        src/c/common.cpp
+        src/c/socket.cpp
+        src/c/io.cpp
+        src/c/stream.cpp
+        src/c/body.cpp
+        src/c/tcp.cpp
+        src/c/udp.cpp
+        src/c/uds.cpp
+)
+
+if (NETKIT_BUILD_C_BINDINGS)
+    list(APPEND NETKIT_SOURCE_FILES ${NETKIT_C_BINDING_SOURCE_FILES})
+endif()
 
 set(NETKIT_SOURCE_MODULES
         modules/netkit.cppm
