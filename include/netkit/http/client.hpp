@@ -16,10 +16,7 @@
 #include <netkit/body/chunked_body.hpp>
 #include <netkit/http/header.hpp>
 #include <netkit/stream/utility.hpp>
-
-#ifdef NETKIT_SSL
 #include <netkit/tcp/tcp_stream.hpp>
-#endif
 
 namespace netkit::http {
     class NETKIT_API client {

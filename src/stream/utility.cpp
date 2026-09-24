@@ -10,8 +10,6 @@ netkit::stream::read_until(stream::basic_stream& client_sock, const std::string&
         const auto [bytes, status] =
             client_sock.read(buffer, sizeof(buffer));
 
-        std::cout << buffer << std::endl;
-
         if (status == stream::stream_status::error) {
             throw socket_error{"error occurred"};
         }

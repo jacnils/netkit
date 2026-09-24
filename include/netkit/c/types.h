@@ -7,7 +7,7 @@
  *  @file types.h
  *  @license MIT
  *  @note Part of the Netkit library.
- *  @brief Forward declarations of every relevant handle type
+ *  @brief Forward declarations of every opaque handle type used by netkit's C bindings.
  */
 #pragma once
 
@@ -32,6 +32,14 @@ typedef struct nk_uds_server nk_uds_server_t;
 typedef struct nk_io_context nk_io_context_t;
 typedef struct nk_cancellation_source nk_cancellation_source_t;
 typedef struct nk_cancellation_token nk_cancellation_token_t;
+typedef struct nk_tls_stream nk_tls_stream_t;
+typedef struct nk_http_client nk_http_client_t;
+typedef struct nk_http_headers nk_http_headers_t;
+typedef struct nk_http_response nk_http_response_t;
+typedef struct nk_http_server nk_http_server_t;
+typedef struct nk_http_server_settings nk_http_server_settings_t;
+typedef struct nk_http_request nk_http_request_t;
+typedef struct nk_http_server_response nk_http_server_response_t;
 
 #ifdef __cplusplus
 }

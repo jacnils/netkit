@@ -119,6 +119,10 @@ set(NETKIT_C_BINDING_SOURCE_FILES
         src/c/tcp.cpp
         src/c/udp.cpp
         src/c/uds.cpp
+        src/c/tls.cpp
+        src/c/interface.cpp
+        src/c/http.cpp
+        src/c/http_server.cpp
 )
 
 if (NETKIT_BUILD_C_BINDINGS)

@@ -9,3 +9,7 @@
 #include <netkit/c/tcp.h>
 #include <netkit/c/udp.h>
 #include <netkit/c/uds.h>
+#include <netkit/c/interface.h>
+#include <netkit/c/http.h>
+#include <netkit/c/http_server.h>
+#include <netkit/c/tls.h>
