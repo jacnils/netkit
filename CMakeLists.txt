@@ -185,6 +185,13 @@ if (NETKIT_ENABLE_WOLFSSL)
         set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     endif()
 
+    if (NETKIT_DKP)
+        set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
+        set(WOLFSSL_USER_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h" CACHE STRING "" FORCE)
+        add_compile_definitions(WOLFSSL_USER_SETTINGS)
+        add_compile_definitions(WOLFSSL_USER_SETTINGS_FILE="${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h")
+    endif()
+
     if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG OR NOT NETKIT_USE_SYSTEM_WOLFSSL)
         message(STATUS "wolfSSL not found. Building from source...")
 
@@ -202,13 +209,7 @@ if (NETKIT_ENABLE_WOLFSSL)
 
         if (NETKIT_DKP)
             set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
-
-            add_compile_definitions(
-                    WOLFSSL_USER_SETTINGS
-                    WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
-            )
-
-            include_directories(${CMAKE_SOURCE_DIR}/include/netkit/stream/wolfssl)
+            set(WOLFSSL_USER_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h" CACHE STRING "" FORCE)
         endif()
 
         FetchContent_Declare(
@@ -222,6 +223,14 @@ if (NETKIT_ENABLE_WOLFSSL)
         set_target_properties(wolfssl PROPERTIES
                 POSITION_INDEPENDENT_CODE ON
         )
+
+        if (NETKIT_DKP)
+            if (TARGET wolfssl)
+                target_include_directories(wolfssl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl")
+            elseif (TARGET wolfssl::wolfssl)
+                target_include_directories(wolfssl::wolfssl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl")
+            endif()
+        endif()
 
         set(WOLFSSL_TARGET wolfssl)
     else()
