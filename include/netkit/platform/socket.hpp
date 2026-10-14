@@ -33,13 +33,12 @@
 #include <winsock2.h>
 #else
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
 #include <errno.h>
 #endif
-
-#include <netinet/in.h>
 
 #ifdef NETKIT_DKP
 #include <unordered_map>
