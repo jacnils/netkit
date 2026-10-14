@@ -42,6 +42,7 @@
 
 #ifdef NETKIT_DKP
 #include <unordered_map>
+#include <optional>
 #include <network.h>
 #endif
 
