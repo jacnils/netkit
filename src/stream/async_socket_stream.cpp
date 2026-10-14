@@ -12,17 +12,29 @@ netkit::io::task<netkit::stream::stream_result>
 netkit::stream::async_socket_stream::read(std::span<std::byte> buffer) {
 	auto result = co_await socket_->recv(buffer.data(), buffer.size());
 
+	if (result < 0) {
+		co_return stream_result{ 0, stream_status::error };
+	}
+
 	if (result == 0) {
 		co_return stream_result{ 0, stream_status::eof };
 	}
 
-	co_return stream_result{ result, stream_status::success };
+	co_return stream_result{ static_cast<std::size_t>(result), stream_status::success };
 }
 
 netkit::io::task<netkit::stream::stream_result>
 netkit::stream::async_socket_stream::write(std::span<const std::byte> buffer) {
 	auto result = co_await socket_->send(buffer.data(), buffer.size());
-	co_return stream_result{ result, result == 0 ? stream_status::eof : stream_status::success };
+
+	if (result < 0) {
+		co_return stream_result{ 0, stream_status::error };
+	}
+
+	co_return stream_result{
+		static_cast<std::size_t>(result),
+		result == 0 ? stream_status::eof : stream_status::success
+	};
 }
 
 void netkit::stream::async_socket_stream::close() noexcept {
