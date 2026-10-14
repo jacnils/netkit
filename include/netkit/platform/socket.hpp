@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <errno.h>
 #endif
 
 #include <netinet/in.h>
