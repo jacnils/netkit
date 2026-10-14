@@ -46,14 +46,14 @@ namespace netkit::socket::native {
     	void unbind() noexcept override;
     	[[nodiscard]] bool is_open() const noexcept override;
 
-        netkit::io::task<std::size_t> send(const void* buf, size_t len) override;
-    	[[nodiscard]] netkit::io::task<std::size_t> recv(void* buf, std::size_t size) override;
+		::netkit::io::task<platform::socket_result> send(const void* buf, size_t len) override;
+    	[[nodiscard]] io::task<platform::socket_result> recv(void* buf, std::size_t size) override;
         void close() noexcept override;
         [[nodiscard]] socket::addr get_peer() const override;
     	[[nodiscard]] fd_t native_handle() const override;
     	[[nodiscard]] io::io_context& native_io_context() override;
-		netkit::io::task<std::pair<std::size_t, netkit::socket::addr>> recvfrom(void*	buf, size_t size) override;
-		netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) override;
+		io::task<std::pair<platform::socket_result, addr>> recvfrom(void* buf, size_t size) override;
+		io::task<platform::socket_result> sendto(const void* buf, std::size_t len, const addr& dest) override;
 
 		void set_sock_opts(opt opts) override;
     };

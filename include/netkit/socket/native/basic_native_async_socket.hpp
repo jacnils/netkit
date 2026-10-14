@@ -11,9 +11,11 @@
  */
 #pragma once
 
+#include "netkit/platform/socket.hpp"
+
 #include <memory>
-#include <netkit/io/io_context.hpp>
 #include <netkit/except.hpp>
+#include <netkit/io/io_context.hpp>
 #include <netkit/socket/addr.hpp>
 #include <netkit/socket/addr_type.hpp>
 
@@ -27,10 +29,10 @@ namespace netkit::socket::native {
     public:
         virtual ~basic_native_async_socket() = default;
         virtual netkit::io::task<void> connect() = 0;
-    	virtual netkit::io::task<std::size_t> send(const void* buf, std::size_t len) = 0;
-    	[[nodiscard]] virtual netkit::io::task<std::size_t> recv(void* buf, std::size_t len) = 0;
-    	virtual netkit::io::task<std::pair<std::size_t, addr>> recvfrom(void* buf, std::size_t len) = 0;
-    	virtual netkit::io::task<std::size_t> sendto(const void* buf, std::size_t len, const addr& dest) = 0;
+    	virtual io::task<netkit::platform::socket_result> send(const void* buf, std::size_t len) = 0;
+    	[[nodiscard]] virtual io::task<platform::socket_result> recv(void* buf, std::size_t len) = 0;
+    	virtual io::task<std::pair<platform::socket_result, addr>> recvfrom(void* buf, std::size_t len) = 0;
+    	virtual io::task<platform::socket_result> sendto(const void* buf, std::size_t len, const addr& dest) = 0;
     	virtual void close() noexcept = 0;
     	[[nodiscard]] virtual bool is_open() const noexcept = 0;
 

@@ -25,8 +25,6 @@
  */
 #pragma once
 
-#include <netkit/stream/socket_stream.hpp>
-
 #include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
 #include <netkit/socket/addr_type.hpp>
@@ -233,6 +231,38 @@ inline std::string last_error_message() {
 }
 #endif
 
+static bool initialized = false;
+
+/* generic function for initializing network stack, needed on some platforms, nop for others */
+inline bool initialize_net() {
+	if (initialized) {
+		return true;
+	}
+
+#ifdef NETKIT_DKP
+	if (!initialized) {
+		net_init();
+
+		char localip[16] = {0};
+		char gateway[16] = {0};
+		char netmask[16] = {0};
+
+		// we don't check return here, maybe we should?
+		auto ret = if_config(localip, netmask, gateway, true, 20);
+		if (ret < 0) {
+			initialized = true;
+			return false;
+		}
+
+		initialized = true;
+	}
+
+	return true;
+#endif
+
+	return true;
+}
+
 inline socket_t socket(int domain, int type, int protocol) {
 	return ::socket(domain, type, protocol);
 }
@@ -338,7 +368,7 @@ inline int listen(socket_t sock, int backlog) {
 	return ::listen(sock, backlog);
 }
 
-inline socket_result recvfrom(socket_t sock, void* buffer, size_t length, int flags, sockaddr* addr, socklen_t* addrlen) {
+inline socket_result recvfrom(socket_t sock, void* buffer, size_t length, int flags, sockaddr* addr, socket_length_t* addrlen) {
 #ifdef NETKIT_WINDOWS
 	return ::recvfrom(sock, static_cast<char*>(buffer), static_cast<int>(length), flags, addr, addrlen);
 #else
@@ -346,7 +376,7 @@ inline socket_result recvfrom(socket_t sock, void* buffer, size_t length, int fl
 #endif
 }
 
-inline socket_result sendto(socket_t sock, const void* buffer, size_t length, int flags, const sockaddr* addr, socklen_t addrlen) {
+inline socket_result sendto(socket_t sock, const void* buffer, size_t length, int flags, const sockaddr* addr, socket_length_t addrlen) {
 #ifdef NETKIT_WINDOWS
 	return ::sendto(sock, static_cast<const char*>(buffer), static_cast<int>(length), flags, addr, addrlen);
 #else

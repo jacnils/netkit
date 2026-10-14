@@ -55,15 +55,15 @@ namespace netkit::socket::native {
         [[nodiscard]] const socket::addr& get_addr() const override;
     	void connect() override;
         /**
-         * @brief Send data to the server.
-         * @param buf The data to send.
-         * @param len The length of the data.
-         * @return The number of bytes sent.
-         */
-        std::size_t send(const void* buf, std::size_t len) override;
-        [[nodiscard]] std::size_t recv(void* buf, std::size_t len) override;
-    	std::pair<std::size_t, addr> recvfrom(void* buf, size_t size) override;
-    	std::size_t sendto(const void* buf, std::size_t len, const addr& dest) override;
+		 * @brief Send data to the server.
+		 * @param buf The data to send.
+		 * @param len The length of the data.
+		 * @return The number of bytes sent.
+		 */
+		platform::socket_result send(const void* buf, std::size_t len) override;
+        [[nodiscard]] netkit::platform::socket_result recv(void* buf, std::size_t len) override;
+		std::pair<platform::socket_result, addr>	  recvfrom(void* buf, size_t size) override;
+		platform::socket_result sendto(const void* buf, std::size_t len, const addr& dest) override;
 
     	void bind() override;
     	void bind(const addr& addr) override;

@@ -12,13 +12,12 @@ public:
 	explicit socket_datagram(std::unique_ptr<socket::native::basic_native_sync_socket> socket)
 		: sock_(std::move(socket)) {}
 
-	std::size_t
-	send_to(std::span<const std::byte> buffer, const socket::addr& to) override {
+  platform::socket_result send_to(std::span<const std::byte> buffer,
+								  const socket::addr&		 to) override {
 		return sock_->sendto(buffer.data(), buffer.size(), to);
 	}
 
-	std::pair<std::size_t, socket::addr>
-	recv_from(std::span<std::byte> buffer) override {
+  std::pair<platform::socket_result, socket::addr> recv_from(std::span<std::byte> buffer) override {
 		return sock_->recvfrom(buffer.data(), buffer.size());
 	}
 

@@ -18,7 +18,6 @@
 #include <netkit/definitions.hpp>
 #include <netkit/except.hpp>
 #include <netkit/export.hpp>
-#include <netkit/utility.hpp>
 
 // Networking headers
 #include <netkit/network/utility.hpp>

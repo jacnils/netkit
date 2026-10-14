@@ -15,6 +15,7 @@
 #include <netkit/socket/addr.hpp>
 #include <netkit/except.hpp>
 #include <netkit/socket/addr_type.hpp>
+#include <netkit/platform/socket.hpp>
 
 namespace netkit::socket::native {
 	/**
@@ -26,10 +27,10 @@ namespace netkit::socket::native {
     public:
         virtual ~basic_native_sync_socket() = default;
     	virtual void connect() = 0;
-        virtual std::size_t send(const void* buf, std::size_t len) = 0;
-        [[nodiscard]] virtual std::size_t recv(void* buf, std::size_t len) = 0;
-    	virtual std::pair<std::size_t, addr> recvfrom(void* buf, size_t size) = 0;
-    	virtual std::size_t sendto(const void* buf, std::size_t len, const addr& dest) = 0;
+        virtual platform::socket_result send(const void* buf, std::size_t len) = 0;
+        [[nodiscard]] virtual netkit::platform::socket_result recv(void* buf, std::size_t len) = 0;
+    	virtual std::pair<platform::socket_result, addr> recvfrom(void* buf, size_t size) = 0;
+    	virtual platform::socket_result sendto(const void* buf, std::size_t len, const addr& dest) = 0;
     	virtual void bind() = 0;
     	virtual void bind(const addr& addr) = 0;
     	virtual void unbind() noexcept = 0;
