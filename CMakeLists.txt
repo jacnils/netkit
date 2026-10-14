@@ -185,13 +185,8 @@ if (NETKIT_ENABLE_WOLFSSL)
         set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     endif()
 
-    # Only needed when targeting DevkitPro / custom wolfSSL config
     if (NETKIT_DKP)
         set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
-        set(WOLFSSL_USER_SETTINGS_FILE
-            "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h"
-            CACHE STRING "" FORCE
-        )
     endif()
 
     if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG OR NOT NETKIT_USE_SYSTEM_WOLFSSL)
@@ -211,10 +206,6 @@ if (NETKIT_ENABLE_WOLFSSL)
 
         if (NETKIT_DKP)
             set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
-            set(WOLFSSL_USER_SETTINGS_FILE
-                "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h"
-                CACHE STRING "" FORCE
-            )
         endif()
 
         FetchContent_Declare(
@@ -225,8 +216,15 @@ if (NETKIT_ENABLE_WOLFSSL)
 
         FetchContent_MakeAvailable(wolfssl)
 
+        # wolfSSL includes this header from wolfcrypt/settings.h
+        if (NETKIT_DKP)
+            target_include_directories(wolfssl PRIVATE
+                "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl"
+            )
+        endif()
+
         set_target_properties(wolfssl PROPERTIES
-                POSITION_INDEPENDENT_CODE ON
+            POSITION_INDEPENDENT_CODE ON
         )
 
         set(WOLFSSL_TARGET wolfssl)
