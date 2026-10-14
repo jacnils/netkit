@@ -110,7 +110,8 @@ netkit::socket::native::native_async_socket::connect() {
 	co_return;
 }
 
-netkit::io::task<std::size_t> netkit::socket::native::native_async_socket::send(const void* buf, size_t len) {
+netkit::io::task<netkit::platform::socket_result>
+netkit::socket::native::native_async_socket::send(const void* buf, size_t len) {
 	size_t total_sent = 0;
 	const char* data = static_cast<const char*>(buf);
 
@@ -148,8 +149,7 @@ netkit::io::task<std::size_t> netkit::socket::native::native_async_socket::send(
 	co_return total_sent;
 }
 
-netkit::io::task<std::size_t>
-netkit::socket::native::native_async_socket::recv(void* buf, size_t size) {
+netkit::io::task<netkit::platform::socket_result> netkit::socket::native::native_async_socket::recv(void* buf, size_t size) {
 	for (;;) {
 		auto n = platform::recv(this->sockfd, static_cast<char*>(buf), size, 0);
 
@@ -196,7 +196,7 @@ netkit::io::io_context& netkit::socket::native::native_async_socket::native_io_c
 	return this->context_;
 }
 
-netkit::io::task<std::pair<std::size_t, netkit::socket::addr>>
+netkit::io::task<std::pair<netkit::platform::socket_result, netkit::socket::addr>>
 netkit::socket::native::native_async_socket::recvfrom(void* buf, size_t size) {
 	for (;;) {
 		sockaddr_storage sa{};
@@ -237,8 +237,9 @@ netkit::socket::native::native_async_socket::recvfrom(void* buf, size_t size) {
 	}
 }
 
-netkit::io::task<std::size_t>
-netkit::socket::native::native_async_socket::sendto(const void* buf, std::size_t len, const addr& dest) {
+netkit::io::task<netkit::platform::socket_result> netkit::socket::native::native_async_socket::sendto(const void* buf,
+																		  std::size_t len,
+																		  const addr& dest) {
 	while (true) {
 		co_await context_.wait_writable(sockfd);
 

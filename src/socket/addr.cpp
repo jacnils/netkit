@@ -9,6 +9,8 @@
  *  @note Part of the Netkit library.
  *  @brief Implementation of the sock_addr class.
  */
+#include "../../include/netkit/platform/socket.hpp"
+
 #include <cstring>
 #include <filesystem>
 #include <iostream>
@@ -130,6 +132,8 @@
 
 netkit::socket::addr::addr(const std::string& hostname, int port, addr_type t, resolve_method method) :
     hostname(hostname), port(port), type(t) {
+
+	netkit::platform::initialize_net();
 
 #ifdef NETKIT_DKP
 	static std::once_flag flag;
@@ -253,6 +257,7 @@ netkit::socket::addr::addr(const std::string& hostname, int port, addr_type t, r
 
 #ifndef NETKIT_DKP
 netkit::socket::addr::addr(std::filesystem::path path) : path(std::move(path)), type(addr_type::filename) {
+	netkit::platform::initialize_net();
 	prep_sa();
 }
 #endif
@@ -371,6 +376,8 @@ void netkit::socket::addr::prep_sa() {
 }
 
 netkit::socket::addr::addr(const sockaddr* sa, sockaddr_len len) {
+	netkit::platform::initialize_net();
+
 	switch (sa->sa_family) {
 	case AF_INET: {
 		auto* sa4 = reinterpret_cast<const sockaddr_in*>(sa);
