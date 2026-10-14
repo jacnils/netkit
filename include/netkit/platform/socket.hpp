@@ -1,28 +1,3 @@
-/* There would normally be a useful file header here, but I am going to use the header
- * to complain, instead:
- *
- * This file only has to exist because Microsoft Windows is the most retarded operating system
- * that has ever existed. In (somewhat) recent years, they've implemented tons of features that were essentially
- * backports from the Unix socket implementation, such as support for
- * UDS sockets (in typical Microsoft fashion, it's half-assed.)
- *
- * Instead of doing this properly, i.e. copying it in such a way that code written for Unix systems
- * just works, in true Microsoft fashion, they ALWAYS have to fuck it up their own shitty Windows-isms,
- * like defining a special unsigned SOCKET type. Oh, we're so special, we have to do it in our own shitty
- * fucking way, so that consumers writing cross-platform code have to pollute their code with #ifdef cancer.
- *
- * On Unix systems, we have the concept of a file descriptor, which we store using a signed integer.
- * This makes checking the validity of a file descriptor trivial; just check whether it is greater than or equal to 0.
- *
- * On Windows however, we don't have file descriptors, but we still have socket identifiers, and instead of being
- * signed, they're unsigned, so we have to check if it's equal to INVALID_SOCKET which, further, means that
- * in order to support both operating systems, we have to have a bunch of shitty helper functions.
- *
- * That's what this header is for -- abstracting away a few of Microsoft's many horrible design choices.
- * Frankly, having to support Windows is a nuisance more than anything.
- *
- * Linux/BSD/macOS users, count your blessings; at least you don't have to deal with this utter piece of shit.
- */
 #pragma once
 
 #include <netkit/definitions.hpp>
