@@ -153,8 +153,10 @@ add_library(netkit ${NETKIT_LIB_TYPE}
 
 add_library(netkit::netkit ALIAS netkit)
 
+# Use /O2 on MSVC and -O3 on other compilers for Release builds
 target_compile_options(netkit PRIVATE
-        $<$<CONFIG:Release>:-O3>
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/O2>
+    $<$<AND:$<CONFIG:Release>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-O3>
 )
 
 set_target_properties(netkit PROPERTIES
