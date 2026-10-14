@@ -38,6 +38,8 @@
 #include <cstring>
 #endif
 
+#include <netinet/in.h>
+
 #ifdef NETKIT_DKP
 #include <unordered_map>
 #endif
