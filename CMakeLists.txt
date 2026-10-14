@@ -153,10 +153,8 @@ add_library(netkit ${NETKIT_LIB_TYPE}
 
 add_library(netkit::netkit ALIAS netkit)
 
-# Use /O2 on MSVC and -O3 on other compilers for Release builds
 target_compile_options(netkit PRIVATE
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/O2>
-    $<$<AND:$<CONFIG:Release>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-O3>
+        $<$<CONFIG:Release>:-O3>
 )
 
 set_target_properties(netkit PROPERTIES
@@ -178,78 +176,60 @@ target_include_directories(netkit
         $<INSTALL_INTERFACE:include>
 )
 
-
 if (NETKIT_ENABLE_WOLFSSL)
-    if (NETKIT_DKP)
-        set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
-        set(WOLFSSL_USER_SETTINGS_FILE
-            "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl/user_settings.h"
-            CACHE STRING "" FORCE
-        )
-    else()
-        set(WOLFSSL_USER_SETTINGS OFF CACHE BOOL "" FORCE)
-        set(WOLFSSL_USER_SETTINGS_FILE "" CACHE STRING "" FORCE)
-    endif()
-
     find_package(wolfSSL QUIET)
 
-    if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG
-        OR NOT NETKIT_USE_SYSTEM_WOLFSSL)
+    if (NOT NETKIT_BUILD_SHARED OR NOT NETKIT_BUILD_SHARED_WOLFSSL)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    endif()
 
-        message(STATUS "Building wolfSSL from source...")
+    if (NOT wolfSSL_FOUND OR NETKIT_DKP OR NETKIT_WOLFSSL_DEBUG OR NOT NETKIT_USE_SYSTEM_WOLFSSL)
+        message(STATUS "wolfSSL not found. Building from source...")
 
         include(FetchContent)
 
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-        if (NETKIT_BUILD_SHARED_WOLFSSL)
-            set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-        endif()
-
         set(WOLFSSL_CRYPT_TESTS OFF CACHE BOOL "" FORCE)
         set(WOLFSSL_EXAMPLES OFF CACHE BOOL "" FORCE)
-        set(WOLFSSL_ALT_CERT_CHAINS ON CACHE BOOL "" FORCE)
+        set(WOLFSSL_ALT_CERT_CHAINS ON CACHE BOOL "" FORCE) # im not sure why wolfssl is not built with this by default but it fixes handshake with fallback certs
 
         if (NETKIT_WOLFSSL_DEBUG)
-            message(STATUS "Compiling wolfSSL with DEBUG_WOLFSSL")
-            set(DEBUG_WOLFSSL ON CACHE BOOL "" FORCE)
+            message(STATUS "Compiling WolfSSL with DEBUG_WOLFSSL")
             add_compile_definitions(DEBUG_WOLFSSL)
+            set(DEBUG_WOLFSSL ON CACHE BOOL "" FORCE)
+        endif()
+
+        if (NETKIT_DKP)
+            set(WOLFSSL_USER_SETTINGS ON CACHE BOOL "" FORCE)
+
+            add_compile_definitions(
+                    WOLFSSL_USER_SETTINGS
+                    WOLFSSL_USER_SETTINGS_FILE="user_settings.h"
+            )
+
+            include_directories(${CMAKE_SOURCE_DIR}/include/netkit/stream/wolfssl)
         endif()
 
         FetchContent_Declare(
-            wolfssl
-            GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
-            GIT_TAG v5.9.2-stable
+                wolfssl
+                GIT_REPOSITORY https://github.com/wolfSSL/wolfssl.git
+                GIT_TAG v5.9.2-stable
         )
 
         FetchContent_MakeAvailable(wolfssl)
 
-        set(WOLFSSL_TARGET wolfssl)
-
         set_target_properties(wolfssl PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
+                POSITION_INDEPENDENT_CODE ON
         )
 
-        if (NETKIT_DKP)
-            target_include_directories(wolfssl PRIVATE
-                "${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl"
-            )
-        endif()
+        set(WOLFSSL_TARGET wolfssl)
     else()
-        set(WOLFSSL_TARGET wolfssl::wolfssl)
-    endif()
-
-    if (NETKIT_DKP)
-        target_include_directories(netkit PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/netkit/stream/wolfssl>
-        )
-
-        target_compile_definitions(netkit PUBLIC WOLFSSL_USER_SETTINGS)
+        set(WOLFSSL_TARGET wolfssl)
     endif()
 
     target_compile_definitions(netkit PUBLIC NETKIT_WOLFSSL)
     target_link_libraries(netkit PUBLIC ${WOLFSSL_TARGET})
 
-    message(STATUS "wolfSSL enabled in netkit")
+    message(STATUS "WolfSSL enabled in netkit")
 endif()
 
 if (NETKIT_BUILD_MODULES)
