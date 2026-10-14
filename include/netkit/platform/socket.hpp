@@ -44,6 +44,7 @@
 #include <unordered_map>
 #include <optional>
 #include <network.h>
+#include <netkit/socket/addr.hpp>
 #endif
 
 namespace netkit::platform {
