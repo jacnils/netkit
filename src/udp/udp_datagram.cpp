@@ -10,7 +10,8 @@ void netkit::udp::udp_datagram::bind() const {
 	sock_->bind(addr_);
 }
 
-std::size_t netkit::udp::udp_datagram::send_to(std::span<const std::byte> buffer, const socket::addr& dest) {
+netkit::platform::socket_result
+netkit::udp::udp_datagram::send_to(std::span<const std::byte> buffer, const socket::addr& dest) {
 	return sock_->sendto(
 		buffer.data(),
 		buffer.size(),
@@ -18,7 +19,7 @@ std::size_t netkit::udp::udp_datagram::send_to(std::span<const std::byte> buffer
 	);
 }
 
-std::pair<std::size_t, netkit::socket::addr>
+std::pair<netkit::platform::socket_result, netkit::socket::addr>
 netkit::udp::udp_datagram::recv_from(std::span<std::byte> buffer) {
 	if (sock_)
 		return sock_->recvfrom(

@@ -14,9 +14,11 @@ public:
 
 	void bind() const;
 
-	std::size_t send_to(std::span<const std::byte> buffer, const socket::addr& dest) override;
+	platform::socket_result send_to(std::span<const std::byte> buffer,
+									const socket::addr&		   dest) override;
 
-	std::pair<std::size_t, socket::addr> recv_from(std::span<std::byte> buffer) override;
+	std::pair<platform::socket_result, socket::addr>
+	recv_from(std::span<std::byte> buffer) override;
 
 	void close() noexcept override;
 

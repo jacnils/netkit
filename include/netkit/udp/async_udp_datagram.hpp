@@ -15,9 +15,11 @@ public:
 
 	void bind() const;
 
-	io::task<std::size_t> send_to(std::span<const std::byte> buffer, const socket::addr& dest) override;
+	io::task<platform::socket_result> send_to(std::span<const std::byte> buffer,
+											  const socket::addr&		 dest) override;
 
-	io::task<std::pair<std::size_t, socket::addr>> recv_from(std::span<std::byte> buffer) override;
+	io::task<std::pair<platform::socket_result, socket::addr>>
+	recv_from(std::span<std::byte> buffer) override;
 
 	void close() noexcept override;
 

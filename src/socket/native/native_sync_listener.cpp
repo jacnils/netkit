@@ -84,11 +84,21 @@ void netkit::socket::native::native_sync_listener::listen() {
 std::unique_ptr<netkit::socket::native::basic_native_sync_socket>
 netkit::socket::native::native_sync_listener::accept() {
 	sockaddr_storage client_addr{};
-	socklen_t addr_len = sizeof(client_addr);
+	socklen_t addr_len{};
+	platform::socket_t client_sockfd;
 
-	auto client_sockfd = platform::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
-	if (!platform::valid_socket(client_sockfd)) {
-		throw socket_error("failed to accept connection: " + std::string(std::strerror(errno)));
+	for (;;) {
+		addr_len = sizeof(client_addr);
+		client_sockfd = platform::accept(this->sockfd_, reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
+
+		if (platform::valid_socket(client_sockfd))
+			break;
+
+		if (platform::last_socket_error() == platform::socket_err::interrupted) {
+			continue;
+		}
+
+		throw socket_error("failed to accept connection: " + platform::last_error_message());
 	}
 
 #ifndef NETKIT_DKP

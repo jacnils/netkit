@@ -35,7 +35,6 @@
 #endif
 
 #include <chrono>
-#include <unordered_map>
 
 void netkit::socket::native::native_sync_socket::connect() {
 	if (platform::connect(sockfd, addr_.get_sa(), addr_.get_sa_len()) < 0) {
@@ -91,43 +90,74 @@ const netkit::socket::addr& netkit::socket::native::native_sync_socket::get_addr
     return this->addr_;
 }
 
-std::size_t netkit::socket::native::native_sync_socket::send(const void* buf, size_t len) {
-	return platform::send(this->sockfd, static_cast<const char*>(buf), len, 0);
+netkit::platform::socket_result netkit::socket::native::native_sync_socket::send(const void* buf, size_t len) {
+	for (;;) {
+		auto ret = platform::send(this->sockfd, static_cast<const char*>(buf), len, 0);
+
+		if (ret >= 0) {
+			return ret;
+		}
+
+		if (platform::last_socket_error() == platform::socket_err::interrupted) {
+			continue;
+		}
+
+		throw socket_error("send failed: " + platform::last_error_message());
+	}
 }
 
-std::size_t netkit::socket::native::native_sync_socket::recv(void* buf, std::size_t len) {
-	return platform::recv(this->sockfd, static_cast<char*>(buf), len, 0);
+netkit::platform::socket_result netkit::socket::native::native_sync_socket::recv(void* buf, std::size_t len) {
+	for (;;) {
+		auto ret = platform::recv(this->sockfd, static_cast<char*>(buf), len, 0);
+
+		if (ret >= 0) {
+			return ret;
+		}
+
+		if (platform::last_socket_error() == platform::socket_err::interrupted) {
+			continue;
+		}
+
+		throw socket_error("recv failed: " + platform::last_error_message());
+	}
 }
 
-std::pair<std::size_t, netkit::socket::addr>
+std::pair<netkit::platform::socket_result, netkit::socket::addr>
 netkit::socket::native::native_sync_socket::recvfrom(void* buf, size_t size) {
-	sockaddr_storage sa{};
-	socklen_t sa_len = sizeof(sa);
+	for (;;) {
+		sockaddr_storage sa{};
+		socklen_t sa_len = sizeof(sa);
 
-	auto ret = platform::recvfrom(this->sockfd, buf, size, 0, reinterpret_cast<sockaddr*>(&sa), &sa_len);
+		auto ret = platform::recvfrom(this->sockfd, buf, size, 0, reinterpret_cast<sockaddr*>(&sa), &sa_len);
 
-	if (ret < 0) {
+		if (ret >= 0) {
+			addr from(reinterpret_cast<sockaddr*>(&sa), sa_len);
+			return {static_cast<std::size_t>(ret), std::move(from)};
+		}
+
+		if (platform::last_socket_error() == platform::socket_err::interrupted) {
+			continue;
+		}
+
 		throw socket_error("recvfrom failed: " + platform::last_error_message());
 	}
-
-	addr from(reinterpret_cast<sockaddr*>(&sa), sa_len);
-
-	return {
-		static_cast<std::size_t>(ret),
-		std::move(from)
-	};
 }
 
-
-std::size_t
+netkit::platform::socket_result
 netkit::socket::native::native_sync_socket::sendto(const void* buf, std::size_t len, const addr& dest) {
-	auto ret = platform::sendto(this->sockfd, static_cast<const char*>(buf), static_cast<int>(len), 0, dest.get_sa(), dest.get_sa_len());
+	for (;;) {
+		auto ret = platform::sendto(this->sockfd, static_cast<const char*>(buf), len, 0, dest.get_sa(), dest.get_sa_len());
 
-	if (ret < 0) {
+		if (ret >= 0) {
+			return ret;
+		}
+
+		if (platform::last_socket_error() == platform::socket_err::interrupted) {
+			continue;
+		}
+
 		throw socket_error("sendto failed: " + platform::last_error_message());
 	}
-
-	return static_cast<std::size_t>(ret);
 }
 
 void netkit::socket::native::native_sync_socket::close() noexcept {
