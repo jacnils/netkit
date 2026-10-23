@@ -1,6 +1,7 @@
 # netkit
 
 [![CMake on Linux, macOS, and Windows](https://github.com/jacnils/netkit/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/jacnils/netkit/actions/workflows/cmake-multi-platform.yml)
+[![CMake for Nintendo Wii](https://github.com/jacnils/netkit/actions/workflows/devkitppc.yml/badge.svg)](https://github.com/jacnils/netkit/actions/workflows/devkitppc.yml)
 
 [Docs](https://jacnils.github.io/netkit) [Wii HTTPS client showcase](https://www.youtube.com/watch?v=24BDbhny-eA)
 
