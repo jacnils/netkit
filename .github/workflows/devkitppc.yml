@@ -30,11 +30,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify toolchain
+      - name: Install build dependencies
+        shell: bash
         run: |
-          test -x "${DEVKITPPC}/bin/powerpc-eabi-g++"
-          test -f "${DEVKITPRO}/cmake/Wii.cmake"
-          powerpc-eabi-g++ --version
+          set -e
+            
+          apt-get update
+          apt-get install -y cmake
 
       - name: Configure CMake
         run: |
