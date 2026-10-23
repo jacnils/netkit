@@ -1,0 +1,48 @@
+name: CMake for Nintendo Wii
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/**'
+  pull_request:
+    branches: ["master"]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-wii:
+    runs-on: ubuntu-latest
+
+    container:
+      image: devkitpro/devkitppc:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify toolchain
+        run: |
+          test -x "${DEVKITPPC}/bin/powerpc-eabi-g++"
+          test -f "${DEVKITPRO}/cmake/Wii.cmake"
+          powerpc-eabi-g++ --version
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_TOOLCHAIN_FILE="${DEVKITPRO}/cmake/Wii.cmake" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DNETKIT_ENABLE_TESTS=OFF \
+            -DNETKIT_BUILD_SHARED=OFF
+
+      - name: Build library
+        run: cmake --build build --parallel 2
