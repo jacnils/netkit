@@ -122,10 +122,12 @@ Former goals which we have since shifted away from:
   - This changed with 0.2.0, where we decided to design our own classes from scratch instead of writing basic wrappers around Unix sockets.
 - Providing support for all backends one might use. As an example of this, OpenSSL support was dropped in 0.2.0.
 
-## Common issues
+## Projects using this library
 
-- I get a stack overflow, what could be causing this?
-  - Enable compiler optimizations, we recommend -O3
+- [forwarderfactory.com](https://forwarderfactory.com)
+  - Wii hacking site
+- [SMBii](https://github.com/jacnils/smbii)
+  - SMB server for the Nintendo Wii
 
 ## License
 
